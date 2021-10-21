@@ -1,0 +1,564 @@
+:root{
+    --main-radius: 5px;
+    --main-padding: 2px;
+}
+
+h1 {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+#divHeader {
+    background-color: #00274c;
+    grid-area: divHeader;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    /*font-size: 30px;*/
+    color: #ffffff
+}
+
+#divBodyLeft {
+    background-color: #333333;
+    grid-area: divBodyLeft;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+}
+
+#gridTop1 {
+    background-color: #ffcb05;
+    grid-area: gridTop1;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    color: #0d57aa;
+
+    display: flex;
+    flex-direction: column;
+
+}
+
+#currentText {
+    width: 98%;
+    height: 72%;
+
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    /*padding-left: 10px;*/
+    color: #0d57aa;
+
+    position: relative;
+    margin: auto;
+    margin-top: 7%;
+}
+
+#labelRadioSelection, #summarySectionBody, #difficultTextsBody {
+    margin-top: 24px;
+    align: center;
+    height: 72%;
+}
+
+#currentTextBody {
+    height: 96%;
+    padding-left: 10px;
+}
+
+#currentTextBody, #group1Message, #group2Message, #group3Message {
+    width: 97%;
+    /*height: 10%;*/
+
+    margin: 2px;
+    /*background-color: white;*/
+    /*border-radius: var(--main-radius);*/
+    /*padding: var(--main-padding);*/
+    padding-left: 10px;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    color: #808080;
+}
+
+#divLabelButtonSingle {
+    width: 100%;
+}
+
+#labelButtonSingle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 16px;
+}
+
+#gridTop0 {
+    background-color: #ffcb05;
+    grid-area: gridTop0;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    color: #0d57aa;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#labelRadioSelection {
+    width: 95%;
+    height: 72%;
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    color: #808080;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+
+    /*margin-top: 8%;*/
+    margin: auto;
+    margin-top: 28%;
+}
+
+
+#labelMessage {
+
+}
+
+#gridBottomLeft {
+    background-color: #ffcb05;
+    grid-area: gridBottomLeft;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+
+    display: flex;
+    flex-direction: column;
+}
+
+#allTexts {
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    /*padding: var(--main-padding);*/
+    color: #0d57aa;
+}
+
+#allTextsTable {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 12px;
+    text-align: left;
+
+    margin: auto;
+
+}
+
+#allTextTableNextButtons {
+    display: inline-block;
+    padding-right: 11px;
+    padding-left: 11px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    font-size: 12px;
+}
+
+#similarTexts1Buttons, #similarTexts2Buttons {
+    display: inline-block;
+    padding-right: 11px;
+    padding-left: 11px;
+    margin-top: 1.5%;
+    margin-bottom: 1px;
+    font-size: 12px;
+}
+
+allTextTableNextButtons:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+#divAllTextsTable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 87%;
+    width: 99%;
+    min-width: 100px;
+
+    margin: auto;
+    margin-top: 0%;
+}
+
+#allTextsTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+#allTextsTable tr {
+    background: #ffffff;
+    color: #808080;
+}
+
+#allTextsTable tr:hover {
+    background: #999999;
+    color: #ffffff;
+}
+#allTextsTable tr.alt:hover {
+    background: #999999;
+    color: #808080;
+}
+
+
+#gridTop2 {
+    background-color: #ffcb05;
+    grid-area: gridTop2;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    color: #0d57aa;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.subHeading {
+    font-weight: 100;
+    font-size: 12px;
+    padding-left: 12px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+
+}
+
+#gridTop3 {
+    background-color: #ffcb05;
+    grid-area: gridTop3;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    /*font-size: 20px;*/
+    text-align: left;
+    color: #0d57aa;
+
+    display: flex;
+    flex-direction: column;
+}
+
+h2 {
+    padding-left: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-weight: 750;
+    font-size: 22px;
+}
+
+#similarTexts1, #similarTexts2 {
+    font-family: sans-serif;
+    /*font-weight: 800;*/
+    font-size: 20px;
+    text-align: left;
+
+    width: 98%;
+    height: 72%;
+
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #0d57aa;
+
+    margin: auto;
+    margin-top: 0%;
+}
+
+#recommendedText1, #recommendedText2 {
+    /*border-width: 2px;
+    border-style: solid;*/
+    border-radius: var(--main-radius);
+    /*border-color: #c2c4c6;*/
+    width: 100%;
+    height: 98%;
+
+    /*position:relative;*/
+}
+
+/*
+#recommendedText1RadioSelection {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    color: #808080;
+}
+*/
+
+#divGroup1Table, #divGroup2Table, #divDifficultTextsTable, #divSummarySectionTable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    /*height: 100px;*/
+    min-width: 100px;
+    height: 100%
+}
+
+#group1Table, #group2Table, #difficultTextsTable {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 12px;
+    text-align: left;
+    color: #808080;
+}
+
+#group1Table th, #group2Table, #difficultTextsTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+#divLabelButtonSingle {
+    margin-top: 5%;
+}
+
+#divGroup1Button, #divGroup2Button {
+    width: 100%;
+    margin-top: 3%;
+
+}
+
+#group1Button, #group2Button, #generateDifficultTextsButton {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 16px;
+
+    /*position:absolute;
+    bottom:0;*/
+}
+
+#recommendedTextBody1, #recommendedTextBody2, #difficultTextsBody {
+    /*overflow-y: auto;
+    overflow-x: hidden;*/
+    height: 98%;
+    min-width: 100px;
+
+    position: relative;
+}
+
+#gridBottomRight1 {
+    grid-area: gridBottomRight1;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#gridBottomRight2 {
+    grid-area: gridBottomRight2;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#gridBottomRight1, #gridBottomRight2 {
+    background-color: #ffcb05; /*yellow*/
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+
+    height: 99.0%;
+}
+
+#summarySection, #difficultTexts {
+    font-family: sans-serif;
+    text-align: left;
+    /*padding: var(--main-padding);*/
+    color: #0d57aa; /*blue*/
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+}
+
+/*
+#summarySectionBody {
+
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    width: 48%;
+    height: 100%;
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #0d57aa;
+    height: 100%;
+} */
+
+#difficultTextsBody {
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    width: 98%;
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #0d57aa;
+
+    height: 78%;
+    min-width: 100px;
+
+    position: relative;
+
+    margin: auto;
+    /*margin-top: 5%;*/
+}
+
+#summarySectionBody {
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    width: 98%;
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #0d57aa;
+
+    height: 78%;
+    min-width: 100px;
+
+    position: relative;
+
+    margin: auto;
+    margin-top: 1%;
+}
+
+#summarySectionTable {
+    padding-right: 16px;
+    padding-left: 16px;
+    padding-top : 0px;
+    padding-bottom : 0px;
+    font-size: 16px;
+    font-family: sans-serif;
+    font-weight: 200;
+    color: #808080; /*grey*/
+    height: 100%;
+
+}
+
+#summarySectionTable td {
+    padding-right: 45px;
+    padding-left: 8px;
+}
+
+/*#summarySectionTable2 {
+
+}*/
+
+#divSummarySectionButtons {
+    margin: auto;
+    margin-top: 2.5%;
+    width: 100%
+    margin-left: 2%;
+}
+
+#divDifficultTextsButtons {
+    margin: auto;
+    margin-top: 0.5%;
+    width: 100%;
+    margin-left: 1%;
+
+}
+
+#exportRecordsButton, #generateDifficultTextsButton {
+    /*position: absolute;
+    bottom: 0;*/
+    /*margin-bottom: 2.5%;*/
+
+    width: 98%;
+    display: flex;
+    justify-content: center;
+    font-size: 16px;
+}
+
+#divBodyRight {
+    background-color: #333333;
+    grid-area: divBodyRight;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+}
+
+#divFooter {
+    background-color: #00274c;
+    grid-area: divFooter;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-size: 12px;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 95%;
+    /* width: 99.5%; */
+    background-color: #c2c4c6;
+
+}
+
+
+
+.container {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 2% 8% 20% 6% 28% 14% 20% 2%;
+  grid-template-rows: auto 45% 45% auto;
+  grid-template-areas:
+    "divHeader divHeader divHeader divHeader divHeader divHeader divHeader divHeader"
+    "divBodyLeft gridTop0 gridTop1 gridTop2 gridTop2 gridTop3 gridTop3 divBodyRight"
+    "divBodyLeft gridBottomLeft gridBottomLeft gridBottomLeft gridBottomRight1 gridBottomRight1 gridBottomRight2 divBodyRight"
+    "divFooter divFooter divFooter divFooter divFooter divFooter divFooter divFooter";
+  grid-gap: 0.3rem;
+  font-family: sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  color: #808080;
+  text-align: center;
+  style: "padding-left: 20px";
+
+}
+
+
+@media only screen and (max-width: 550px) {
+    .container{
+        grid-template-columns: 5fr;
+        grid-template-rowss: 0.1fr 0.1fr 1fr 1fr 1fr 1fr 0.1fr 0.1fr;
+        grid-template-areas:
+            "divHeader"
+            "divBodyLeft"
+            "gridTopLeft"
+            "gridTopRight"
+            "gridBottomLeft"
+            "gridBottomRight"
+            "divBodyRight"
+            "divFooter";
+        grid-gap: 0.2rem;
+    }
+}
