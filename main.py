@@ -6,6 +6,7 @@ import copy
 import pandas as pd
 from datetime import datetime
 from collections import Counter
+from sklearn.cluster import KMeans
 
 
 start_time = datetime.now()
@@ -37,6 +38,7 @@ TEXTS_GROUP_3 = []
 CLASSIFIER_LIST = []
 FIRST_LABELING_FLAG = True
 Y_CLASSES = ["Earthquake", "Fire", "Flood", "Hurricane"]
+SHUFFLE_BY = "random" # kmeans random
 
 consolidated_disaster_tweet_data_df = utils.get_demo_data(number_samples=None,
                                                           filter_data_types=["train"],
@@ -50,19 +52,27 @@ CORPUS_TEXT_IDS = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id
 # print("type(vectorized_corpus) :", type(VECTORIZED_CORPUS))
 # print("vectorized_corpus.shape :", VECTORIZED_CORPUS.shape)
 
-from sklearn.cluster import KMeans
-kmeans = KMeans(n_clusters=len(Y_CLASSES), random_state=RND_STATE).fit(VECTORIZED_CORPUS)
-KMEANS_LABELS = kmeans.labels_
-print("KMEANS_LABELS :", KMEANS_LABELS[:10])
-print("Counter(KMEANS_LABELS) :", Counter(KMEANS_LABELS))
-print("len(KMEANS_LABELS) :", len(KMEANS_LABELS))
 
+if SHUFFLE_BY == "kmeans":
+    kmeans = KMeans(n_clusters=len(Y_CLASSES), random_state=RND_STATE).fit(VECTORIZED_CORPUS)
+    KMEANS_LABELS = kmeans.labels_
+    print("KMEANS_LABELS :", KMEANS_LABELS[:10])
+    print("Counter(KMEANS_LABELS) :", Counter(KMEANS_LABELS))
+    print("len(KMEANS_LABELS) :", len(KMEANS_LABELS))
+    TEXTS_LIST, adj_text_ids = utils.convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df,
+                                                                      limit=TEXTS_LIMIT,
+                                                                      keep_labels=False,
+                                                                      shuffle_list=KMEANS_LABELS,
+                                                                      random_shuffle=False,
+                                                                      random_state=RND_STATE)
+else:
+    TEXTS_LIST, adj_text_ids = utils.convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df,
+                                                                      limit=TEXTS_LIMIT,
+                                                                      keep_labels=False,
+                                                                      shuffle_list=[],
+                                                                      random_shuffle=True,
+                                                                      random_state=RND_STATE)
 
-# ALL_TEXTS = utils.convert_demo_data_into_list(consolidated_disaster_tweet_data_df, limit=TEXTS_LIMIT)
-TEXTS_LIST, adj_text_ids = utils.convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df,
-                                                                  limit=TEXTS_LIMIT,
-                                                                  keep_labels=False,
-                                                                  shuffle_list=KMEANS_LABELS)
 TEXTS_LIST_LIST = [TEXTS_LIST[i:i + TABLE_LIMIT] for i in range(0, len(TEXTS_LIST), TABLE_LIMIT)]
 TOTAL_PAGES = len(TEXTS_LIST_LIST)
 # print("TOTAL_PAGES :", TOTAL_PAGES)

@@ -54,7 +54,7 @@ def get_demo_data(number_samples=None, filter_data_types=None, random_state=1144
 
 
 def convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=50, keep_labels=False,
-                                     shuffle_list=[]):
+                                     shuffle_list=[], random_shuffle=False, random_state=21524):
     id_col = "tweet_id"
     text_col = "tweet_text"
     label_col = "assigned_label"
@@ -88,6 +88,11 @@ def convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=
             # sort_indices = list(filter(None, sort_indices))
 
         consolidated_disaster_tweet_data_df = consolidated_disaster_tweet_data_df.iloc[sort_indices, :]
+
+    if len(shuffle_list) == 0 and random_shuffle:
+        consolidated_disaster_tweet_data_df = consolidated_disaster_tweet_data_df\
+                                                .sample(frac=1, random_state=random_state)\
+                                                .reset_index(drop=True)
 
     print(">> convert_demo_data_into_list_json > len(consolidated_disaster_tweet_data_df) :")
     print(len(consolidated_disaster_tweet_data_df))

@@ -1,11 +1,17 @@
 :root{
     --main-radius: 5px;
-    --main-padding: 2px;
+    --main-padding: 0.15vw;
 }
 
 h1 {
-    margin-top: 2px;
-    margin-bottom: 2px;
+    margin-top: 0.1vw;
+    margin-bottom: 0.1vw;
+    font-size: 1.5vw;
+}
+
+div {
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 #divHeader {
@@ -13,8 +19,7 @@ h1 {
     grid-area: divHeader;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-    /*font-size: 30px;*/
-    color: #ffffff
+    color: #ffffff;
 }
 
 #divBodyLeft {
@@ -30,71 +35,67 @@ h1 {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
     color: #0d57aa;
-
     display: flex;
     flex-direction: column;
 
 }
 
 #currentText {
-    width: 98%;
-    height: 72%;
-
-    background-color: white;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    width: 100%;
+    height: 82%;
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
-    /*padding-left: 10px;*/
     color: #0d57aa;
 
     position: relative;
     margin: auto;
-    margin-top: 7%;
+    margin-top: 2.75vh;
+
+
 }
 
 #labelRadioSelection, #summarySectionBody, #difficultTextsBody {
     margin-top: 24px;
     align: center;
     height: 72%;
+    border-radius: var(--main-radius);
 }
 
 #currentTextBody {
-    height: 96%;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    background-color: white;
+    width: 98%;
+    height: 88%;
     padding-left: 10px;
+
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #currentTextBody, #group1Message, #group2Message, #group3Message {
     width: 97%;
-    /*height: 10%;*/
-
     margin: 2px;
-    /*background-color: white;*/
-    /*border-radius: var(--main-radius);*/
-    /*padding: var(--main-padding);*/
     padding-left: 10px;
     font-family: sans-serif;
     font-weight: 200;
-    font-size: 16px;
+    font-size: 0.85vw;
     text-align: left;
     color: #808080;
 }
 
 #divLabelButtonSingle {
     width: 100%;
+    margin-top: 5.5vh;
 }
 
 #labelButtonSingle {
     width: 100%;
     display: flex;
     justify-content: center;
-    font-size: 16px;
+    font-size: 0.75vw;
 }
 
 #gridTop0 {
@@ -103,11 +104,8 @@ h1 {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
     color: #0d57aa;
-
     display: flex;
     flex-direction: column;
 }
@@ -117,21 +115,20 @@ h1 {
     height: 72%;
     background-color: white;
     font-family: sans-serif;
-    font-weight: 200;
-    font-size: 16px;
+    font-weight: 600;
+    font-size: 0.90vw;
     text-align: left;
     color: #808080;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-
-    /*margin-top: 8%;*/
     margin: auto;
-    margin-top: 28%;
+    margin-top: 5.5vh;
 }
 
 
 #labelMessage {
-
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #gridBottomLeft {
@@ -146,10 +143,7 @@ h1 {
 
 #allTexts {
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
-    /*padding: var(--main-padding);*/
     color: #0d57aa;
 }
 
@@ -157,7 +151,7 @@ h1 {
     background-color: white;
     font-family: sans-serif;
     font-weight: 200;
-    font-size: 12px;
+    font-size: 0.65vw;
     text-align: left;
 
     margin: auto;
@@ -170,7 +164,7 @@ h1 {
     padding-left: 11px;
     margin-top: 1px;
     margin-bottom: 1px;
-    font-size: 12px;
+    font-size: 0.65vw;
 }
 
 #similarTexts1Buttons, #similarTexts2Buttons {
@@ -179,7 +173,7 @@ h1 {
     padding-left: 11px;
     margin-top: 1.5%;
     margin-bottom: 1px;
-    font-size: 12px;
+    font-size: 0.65vw;
 }
 
 allTextTableNextButtons:hover {
@@ -188,14 +182,16 @@ allTextTableNextButtons:hover {
 }
 
 #divAllTextsTable {
+    border-radius: var(--main-radius);
     overflow-y: auto;
     overflow-x: hidden;
     height: 87%;
     width: 99%;
     min-width: 100px;
-
     margin: auto;
-    margin-top: 0%;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #allTextsTable th {
@@ -226,21 +222,19 @@ allTextTableNextButtons:hover {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
     color: #0d57aa;
-
     display: flex;
     flex-direction: column;
 }
 
 .subHeading {
     font-weight: 100;
-    font-size: 12px;
-    padding-left: 12px;
+    font-size: 0.75vw;
+    padding-left: 0.60vw;
     margin-top: 1px;
-    margin-bottom: 1px;
+    margin-bottom: 0.5vh;
+
 
 }
 
@@ -250,13 +244,11 @@ allTextTableNextButtons:hover {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    /*font-size: 20px;*/
     text-align: left;
     color: #0d57aa;
-
     display: flex;
     flex-direction: column;
+
 }
 
 h2 {
@@ -264,36 +256,25 @@ h2 {
     margin-top: 2px;
     margin-bottom: 2px;
     font-weight: 750;
-    font-size: 22px;
+    font-size: 1.25vw;
 }
 
 #similarTexts1, #similarTexts2 {
     font-family: sans-serif;
-    /*font-weight: 800;*/
-    font-size: 20px;
     text-align: left;
-
     width: 98%;
-    height: 72%;
-
-    background-color: white;
+    height: 100%;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     color: #0d57aa;
-
     margin: auto;
-    margin-top: 0%;
+    margin-top: 0.1vh;
 }
 
 #recommendedText1, #recommendedText2 {
-    /*border-width: 2px;
-    border-style: solid;*/
     border-radius: var(--main-radius);
-    /*border-color: #c2c4c6;*/
     width: 100%;
-    height: 98%;
-
-    /*position:relative;*/
+    height: 100%;
 }
 
 /*
@@ -308,23 +289,29 @@ h2 {
 */
 
 #divGroup1Table, #divGroup2Table, #divDifficultTextsTable, #divSummarySectionTable {
+    background-color: white;
     overflow-y: auto;
     overflow-x: hidden;
-    /*height: 100px;*/
     min-width: 100px;
-    height: 100%
+    min-height: 90%;
+    max-height: 90%;
+    height: 90%
+    border-radius: var(--main-radius);
+    margin-top: 0.15vh;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #group1Table, #group2Table, #difficultTextsTable {
     background-color: white;
     font-family: sans-serif;
     font-weight: 200;
-    font-size: 12px;
+    font-size: 0.65vw;
     text-align: left;
     color: #808080;
 }
 
-#group1Table th, #group2Table, #difficultTextsTable th {
+#group1Table th, #group2Table th, #difficultTextsTable th {
     position: sticky;
     top: 2px;
     background: #999999;
@@ -332,12 +319,12 @@ h2 {
 }
 
 #divLabelButtonSingle {
-    margin-top: 5%;
+    margin-top: 0.5vh;
 }
 
 #divGroup1Button, #divGroup2Button {
     width: 100%;
-    margin-top: 3%;
+    margin-top: 0.5vh;
 
 }
 
@@ -345,18 +332,12 @@ h2 {
     width: 100%;
     display: flex;
     justify-content: center;
-    font-size: 16px;
-
-    /*position:absolute;
-    bottom:0;*/
+    font-size: 0.75vw;
 }
 
 #recommendedTextBody1, #recommendedTextBody2, #difficultTextsBody {
-    /*overflow-y: auto;
-    overflow-x: hidden;*/
-    height: 98%;
+    height: 100%;
     min-width: 100px;
-
     position: relative;
 }
 
@@ -378,17 +359,15 @@ h2 {
     background-color: #ffcb05; /*yellow*/
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-
-    height: 99.0%;
+    height: 100.0%;
 }
 
 #summarySection, #difficultTexts {
     font-family: sans-serif;
     text-align: left;
-    /*padding: var(--main-padding);*/
     color: #0d57aa; /*blue*/
     height: 100%;
-
+    width: 98%;
     display: flex;
     flex-direction: column;
 }
@@ -412,19 +391,15 @@ h2 {
 #difficultTextsBody {
     font-family: sans-serif;
     font-weight: 200;
-    font-size: 16px;
     text-align: left;
-    width: 98%;
+    width: 100%;
     background-color: white;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     color: #0d57aa;
-
     height: 78%;
     min-width: 100px;
-
     position: relative;
-
     margin: auto;
     /*margin-top: 5%;*/
 }
@@ -432,33 +407,32 @@ h2 {
 #summarySectionBody {
     font-family: sans-serif;
     font-weight: 200;
-    font-size: 16px;
     text-align: left;
     width: 98%;
-    background-color: white;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
     color: #0d57aa;
-
-    height: 78%;
+    height: 100%;
     min-width: 100px;
-
     position: relative;
-
     margin: auto;
-    margin-top: 1%;
+    margin-top: 0.1vh;
+    position: relative;
 }
 
 #summarySectionTable {
-    padding-right: 16px;
-    padding-left: 16px;
-    padding-top : 0px;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    background-color: white;
+    padding-right: 0.5vw;
+    padding-left: 0.5vw;
+    padding-top : 0.5vw;
     padding-bottom : 0px;
-    font-size: 16px;
+    font-size: 0.75vw;
     font-family: sans-serif;
     font-weight: 200;
     color: #808080; /*grey*/
-    height: 100%;
+    height: 95%;
+    max-height: 95%;
+    min-height: 95%;
 
 }
 
@@ -491,10 +465,10 @@ h2 {
     bottom: 0;*/
     /*margin-bottom: 2.5%;*/
 
-    width: 98%;
+    width: 100%;
     display: flex;
     justify-content: center;
-    font-size: 16px;
+    font-size: 0.75vw;
 }
 
 #divBodyRight {
@@ -509,7 +483,7 @@ h2 {
     grid-area: divFooter;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-    font-size: 12px;
+    font-size: 0.55vw;
 }
 
 html {
@@ -518,9 +492,7 @@ html {
 
 body {
     height: 95%;
-    /* width: 99.5%; */
     background-color: #c2c4c6;
-
 }
 
 
@@ -538,7 +510,7 @@ body {
   grid-gap: 0.3rem;
   font-family: sans-serif;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 0.75vw;
   color: #808080;
   text-align: center;
   style: "padding-left: 20px";
