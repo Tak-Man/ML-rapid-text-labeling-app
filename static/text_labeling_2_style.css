@@ -1,0 +1,623 @@
+:root{
+    --main-radius: 5px;
+    --main-padding: 0.15vw;
+}
+
+h1 {
+    margin-top: 0.1vw;
+    margin-bottom: 0.1vw;
+    font-size: 1.5vw;
+}
+
+div {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#divHeader {
+    background-color: #00274c;
+    grid-area: divHeader;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #ffffff;
+}
+
+#divBodyLeft {
+    background-color: #333333;
+    grid-area: divBodyLeft;
+    border-radius: var(--main-radius);
+    /*padding: var(--main-padding);*/
+}
+
+#gridTop1 {
+    background-color: #ffcb05;
+    grid-area: gridTop1;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+}
+
+#currentText {
+    width: 98%;
+    height: 82%;
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+    /*border-radius: var(--main-radius);*/
+    vertical-align: middle;
+    /*position: relative;*/
+    /*margin: auto;*/
+    margin-top: 8.5vh;
+
+    position: absolute;
+}
+
+#summarySectionBody, #difficultTextsBody {
+    /*margin-top: 24px;*/
+    align: center;
+    height: 100%;
+    /*border-radius: var(--main-radius);*/
+}
+
+#currentTextBody {
+    /*border-radius: var(--main-radius);*/
+    padding: var(--main-padding);
+    background-color: white;
+    height: 85%;
+    /*padding-right: 1.5vw;*/
+
+    white-space: normal;
+    overflow-wrap: break-word;
+
+
+}
+
+#currentTextBody, #group1Message, #group2Message, #group3Message {
+    width: 97%;
+    margin: 2px;
+    padding-left: 0.6vw;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+}
+
+#divLabelButtonSingle {
+    width: 100%;
+    margin-top: 5.5vh;
+}
+
+#labelButtonSingle {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 0.75vw;
+}
+
+#gridTop0 {
+    background-color: #ffcb05;
+    grid-area: gridTop0;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+    display: flex;
+    flex-direction: column;
+
+    position: relative;
+}
+
+#labelRadioSelection {
+    align: center;
+    width: 90%;
+    height: 70%;
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 600;
+    font-size: 0.90vw;
+    text-align: left;
+    color: #808080;
+    /*border-radius: var(--main-radius);*/
+    padding: var(--main-padding);
+    margin: auto;
+    margin-top: 8.5vh;
+
+    position: absolute;
+}
+
+
+#labelMessage {
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#gridBottomLeft {
+    background-color: #ffcb05;
+    grid-area: gridBottomLeft;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+
+    display: flex;
+    flex-direction: column;
+}
+
+#allTexts {
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+}
+
+#allTextsTable {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.65vw;
+    text-align: left;
+
+    margin: auto;
+
+}
+
+#allTextTableNextButtons {
+    display: inline-block;
+    padding-right: 0.1vw;
+    padding-left: 0.1vw;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    font-size: 0.65vw;
+    float: right;
+}
+
+#divSearchTexts {
+    padding-bottom: 0.1vh;
+    display: inline-block;
+}
+
+#searchAllTexts {
+    background-image: url('/css/searchicon.png');
+    background-repeat: no-repeat;
+    width: 30%;
+    float: left;
+    padding-left: 0.65vw;
+}
+
+#searchAllTextsButton {
+    padding:left: 15.0vw;
+    float: left;
+    display: inline-block;
+    font-size: 0.65vw;
+    font-family: sans-serif;
+}
+
+#searchTextsMessage {
+    font-size: 0.80vw;
+    font-family: sans-serif;
+    font-weight: 400;
+    text-align: right;
+    padding-left: 1.65vw;
+    color: #0d57aa;
+    display: inline-block;
+}
+
+#clearSearchButton {
+    display: inline-block;
+    font-size: 0.65vw;
+    font-family: sans-serif;
+}
+
+#similarTexts1Buttons, #similarTexts2Buttons {
+    display: inline-block;
+    padding-right: 0.65vw;
+    padding-left: 0.65vw;
+    margin-top: 1.5%;
+    /*margin-bottom: 1px;*/
+    font-size: 0.65vw;
+    color: #0d57aa; /*alt_blue*/
+    min-height: 1.95vh;
+}
+
+.submitButton {
+    width: 3.5vw;
+    height: 1.85vh;
+    font-size: 0.65vw;
+}
+
+.selectDropDown  {
+    width: 3.5vw;
+    height: 1.85vh;
+    font-size: 0.65vw;
+}
+
+allTextTableNextButtons:hover {
+    background-color: #ddd;
+    color: black;
+    margin: auto;
+}
+
+#divAllTextsTable {
+    border-radius: var(--main-radius);
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 87%;
+    width: 99%;
+    min-width: 100px;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#allTextsTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+#allTextsTable tr {
+    background: #ffffff;
+    color: #808080;
+}
+
+#allTextsTable tr:hover {
+    background: #999999;
+    color: #ffffff;
+}
+#allTextsTable tr.alt:hover {
+    background: #999999;
+    color: #808080;
+}
+
+
+#gridTop2 {
+    background-color: #ffcb05;
+    grid-area: gridTop2;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+    display: flex;
+    flex-direction: column;
+
+    /*position: relative;*/
+}
+
+.subHeading {
+    font-weight: 100;
+    font-size: 0.75vw;
+    padding-left: 0.60vw;
+    margin-top: 1px;
+    margin-bottom: 0.5vh;
+}
+
+#gridTop3 {
+    background-color: #ffcb05;
+    grid-area: gridTop3;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+    display: flex;
+    flex-direction: column;
+
+}
+
+h2 {
+    padding-left: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-weight: 750;
+    font-size: 1.25vw;
+}
+
+#similarTexts1, #similarTexts2 {
+    font-family: sans-serif;
+    text-align: left;
+    width: 100%;
+    height: 100%;
+    /*border-radius: var(--main-radius);*/
+    /*padding: var(--main-padding);*/
+    color: #0d57aa;
+    /*margin: auto;*/
+    margin-top: 0.15vh;
+    /*vertical-align: middle;*/
+
+
+}
+
+#recommendedText1, #recommendedText2 {
+    /*border-radius: var(--main-radius);*/
+    width: 99%;
+    height: 100%;
+    /*vertical-align: middle;*/
+    display: flex;
+}
+
+/*
+#recommendedText1RadioSelection {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    color: #808080;
+}
+*/
+
+
+#divGroup1Table, #divGroup2Table, #divDifficultTextsTable {
+    background-color: white;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 100px;
+    min-height: 90%;
+    max-height: 90%;
+    height: 90%
+    margin-top: 0.25vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divSummarySectionTable {
+    background-color: white;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 100px;
+    min-height: 79%;
+    max-height: 79%;
+    height: 79%
+    margin-top: 0.25vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#group1Table, #group2Table, #difficultTextsTable {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.65vw;
+    text-align: left;
+    color: #808080;
+}
+
+#group1Table th, #group2Table th, #difficultTextsTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+#divLabelButtonSingle {
+    margin-top: 0.5vh;
+}
+
+#divGroup1Button, #divGroup2Button {
+    width: 100%;
+    margin-top: 0.5vh;
+
+}
+
+#group1Button, #group2Button, #generateDifficultTextsButton {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 0.75vw;
+}
+
+ #difficultTextsBody {
+    height: 100%;
+    vertical-align: middle;
+    margin: 0 auto;
+}
+
+#recommendedTextBody1, #recommendedTextBody2 {
+
+    margin: 0 auto;
+    margin-left: 0.25vh;
+    width: 100%;
+}
+
+#gridBottomRight1 {
+    grid-area: gridBottomRight1;
+
+    display: flex;
+    /*flex-direction: column;*/
+
+    /*position: absolute;*/
+}
+
+#gridBottomRight2 {
+    grid-area: gridBottomRight2;
+
+    display: flex;
+    flex-direction: column;
+}
+
+#gridBottomRight1, #gridBottomRight2 {
+    background-color: #ffcb05; /*yellow*/
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    height: 100.0%;
+
+
+}
+
+#summarySection, #difficultTexts {
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa; /*blue*/
+    height: 100%;
+    width: 99%;
+    margin: 0 auto;
+}
+
+/*
+#summarySectionBody {
+
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 16px;
+    text-align: left;
+    width: 48%;
+    height: 100%;
+    background-color: white;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #0d57aa;
+    height: 100%;
+} */
+
+#difficultTextsBody {
+    font-family: sans-serif;
+    font-weight: 200;
+    text-align: left;
+    width: 100%;
+    background-color: white;
+    /*border-radius: var(--main-radius);*/
+    padding: var(--main-padding);
+    color: #0d57aa;
+    height: 78%;
+    min-width: 100px;
+    /*position: relative;*/
+    margin: auto;
+    /*margin-top: 5%;*/
+}
+
+#summarySectionBody {
+    font-family: sans-serif;
+    font-weight: 200;
+    text-align: left;
+    width: 98%;
+    color: #0d57aa;
+    height: 100%;
+    min-width: 100px;
+    position: relative;
+    margin: 0 auto;
+    margin-top: 0.1vh;
+    /*position: relative;*/
+}
+
+#summarySectionTable {
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    background-color: white;
+    padding-right: 0.5vw;
+    padding-left: 0.5vw;
+    padding-top : 0.5vw;
+    padding-bottom : 0px;
+    font-size: 0.75vw;
+    font-family: sans-serif;
+    font-weight: 200;
+    color: #808080; /*grey*/
+    height: 95%;
+    max-height: 95%;
+    min-height: 95%;
+    margin: 0 auto;
+}
+
+#summarySectionTable td {
+    padding-right: 45px;
+    padding-left: 8px;
+}
+
+/*#summarySectionTable2 {
+
+}*/
+
+#divSummarySectionButtons {
+    margin: auto;
+    margin-top: 0.5vh;
+    width: 100%
+    margin-left: 2%;
+}
+
+#divDifficultTextsButtons {
+    margin: auto;
+    margin-top: 0.5%;
+    width: 100%;
+}
+
+#exportRecordsButton, #generateDifficultTextsButton {
+    /*position: absolute;
+    bottom: 0;*/
+    /*margin-bottom: 2.5%;*/
+
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    font-size: 0.75vw;
+}
+
+#divBodyRight {
+    background-color: #333333;
+    grid-area: divBodyRight;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+}
+
+#divFooter {
+    background-color: #00274c;
+    grid-area: divFooter;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    font-size: 0.55vw;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 95%;
+    background-color: #c2c4c6;
+}
+
+
+
+.container {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 2% 8% 20% 6% 28% 14% 20% 2%;
+  grid-template-rows: auto 45% 45% auto;
+  grid-template-areas:
+    "divHeader divHeader divHeader divHeader divHeader divHeader divHeader divHeader"
+    "divBodyLeft gridTop0 gridTop1 gridTop2 gridTop2 gridTop3 gridTop3 divBodyRight"
+    "divBodyLeft gridBottomLeft gridBottomLeft gridBottomLeft gridBottomRight1 gridBottomRight1 gridBottomRight2 divBodyRight"
+    "divFooter divFooter divFooter divFooter divFooter divFooter divFooter divFooter";
+  grid-gap: 0.3rem;
+  font-family: sans-serif;
+  font-weight: 800;
+  font-size: 0.75vw;
+  color: #808080;
+  text-align: center;
+  style: "padding-left: 20px";
+
+}
+
+
+@media only screen and (max-width: 550px) {
+    .container{
+        grid-template-columns: 5fr;
+        grid-template-rowss: 0.1fr 0.1fr 1fr 1fr 1fr 1fr 0.1fr 0.1fr;
+        grid-template-areas:
+            "divHeader"
+            "divBodyLeft"
+            "gridTopLeft"
+            "gridTopRight"
+            "gridBottomLeft"
+            "gridBottomRight"
+            "divBodyRight"
+            "divFooter";
+        grid-gap: 0.2rem;
+    }
+}

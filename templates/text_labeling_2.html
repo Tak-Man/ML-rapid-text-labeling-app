@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapid Text Labeling (Format 1)</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='text_labeling_1_style.css') }}" media="all">
+    <script>
+        function which_label_selected() {
+            document.getElementById("labelMessage").innerHTML = "Something was clicked.";
+            var selections = document.getElementsByName("assigned_label");
+
+            for(var x = 0; x < selections.length; x++) {
+                if(selections[x].checked == true) {
+                    var selected_label = selections[x].value;
+                }
+              }
+            document.getElementById("labelMessage").innerHTML = selected_label;
+            document.getElementById("selected_label_single").setAttribute("value", selected_label);
+            document.getElementById("selected_label_group1").setAttribute("value", selected_label);
+            document.getElementById("selected_label_group2").setAttribute("value", selected_label);
+            document.getElementById("group1Button").setAttribute("value", "Label Group '" + selected_label + "'");
+            document.getElementById("group2Button").setAttribute("value", "Label Group '" + selected_label + "'");
+        }
+
+        function which_value_group_1_limit_selected(valueToSelect) {
+            let element = document.getElementById("group1_table_limit");
+            element.value = valueToSelect;
+        }
+
+        function searchAllTexts() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchAllTexts");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("divAllTextsTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                    if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="divHeader">
+            <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
+        </div>
+        <div id="divBodyLeft"></div>
+        <div id="gridTop0">
+            <h2>Label</h2>
+            <div id="labelRadioSelection">
+                <form action="{{ url_for('label_selected') }}" method="POST">
+                    <br/>
+                    {% if label_selected is defined%}
+
+                    {% set count = namespace(value=0) %}
+                    {% for dataset_label in y_classes %}
+                    {% set count.value = count.value + 1 %}
+                    {% set id_str = 'category' + count.value|string %}
+
+                    {% if label_selected == dataset_label %}
+                    <input type="radio" id="{{ id_str }}" name="assigned_label" value="{{ dataset_label }}"
+                           onclick="window.location.href='{{ url_for('label_selected',
+                                                                      label_selected=dataset_label,
+                                                                      selected_text_id=selected_text_id,
+                                                                      selected_text=selected_text,
+                                                                      page_number=page_number) }}'" checked>
+                    {% else %}
+                    <input type="radio" id="{{ id_str }}" name="assigned_label" value="{{ dataset_label }}"
+                           onclick="window.location.href='{{ url_for('label_selected',
+                                                                      label_selected=dataset_label,
+                                                                      selected_text_id=selected_text_id,
+                                                                      selected_text=selected_text,
+                                                                      page_number=page_number) }}'">
+                    {% endif %}
+                    <label for="{{ id_str }}">{{ dataset_label }}</label><br/>
+                    {% endfor %}
+
+                    {% else %}
+                    {% set count = namespace(value=0) %}
+                    {% for dataset_label in y_classes %}
+                    {% set count.value = count.value + 1 %}
+                    {% set id_str = 'category' + count.value|string %}
+                    <input type="radio"
+                           id="{{ id_str }}"
+                           name="assigned_label"
+                           value="{{ dataset_label }}"
+                           onclick="window.location.href='{{ url_for('label_selected',
+                                                                      label_selected=dataset_label,
+                                                                      selected_text_id=selected_text_id,
+                                                                      selected_text=selected_text,
+                                                                      page_number=page_number) }}'">
+                    <label for="{{ id_str }}" >{{ dataset_label }}</label><br/>
+<!--                    {{ id_str | safe }}-->
+                    {% endfor %}
+
+
+
+                    {% endif %}
+                    <br/>
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+
+                    <div id="labelMessage"><p>{{ info_message }}</p></div>
+                </form>
+            </div>
+            <div id="labelAddCategory"></div>
+        </div>
+        <div id="gridTop1">
+            <h2>Current Text</h2>
+            <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
+<!--            <form id="currentText" action="{{ url_for('single_text') }}" method="POST"></form>-->
+            <div id="currentText">
+                <div id="currentTextBody"><br/><p>{{ selected_text }}</p></div>
+                <div id="divLabelButtonSingle">
+                    <form id="formLabelButtonSingle" action="{{ url_for('single_text') }}" method="POST">
+                        <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                        <input name="page_number" type="hidden" value="{{ page_number }}">
+                        <input id="selected_label_single" name="selected_label_single" type="hidden"
+                               value="{{ label_selected }}">
+                        {% if label_selected is defined %}
+                        <input id="labelButtonSingle" type="submit" value="Label Single Text '{{ label_selected }}'">
+                        {% else %}
+                        <input id="labelButtonSingle" type="submit" value="Label Single Text">
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="gridTop2">
+            <h2>Similar Texts</h2>
+            <p class="subHeading">Based on the similarity to the entire corpus.</p>
+            <div id="similarTexts1Buttons">
+                <form id="formSimilarTexts1Buttons"
+                      action="{{ url_for('set_group_1_record_limit') }}"
+                      method="POST">
+                    <label for="group1_table_limit">Display a maximum of </label>
+                    <select name="group1_table_limit" id="group1_table_limit" class="selectDropDown">
+                        <option value=10
+                                {% if group1_table_limit_value==10 %} selected="selected" {% endif %}>10</option>
+                    <option value=20
+                            {% if group1_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
+                    <option value=50
+                            {% if group1_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
+                      <option value=100
+                              {% if group1_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
+                      <option value=1000
+                              {% if group1_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
+                      <option value=10000
+                              {% if group1_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                    </select>
+                    records
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="table_limit" type="hidden" value=10>
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    <input id="buttonSimilarTexts1Buttons" type="submit" value="Submit" class="submitButton">
+                </form>
+            </div>
+            <div id="similarTexts1">
+                <div id="recommendedText1">
+                    <div id="recommendedTextBody1">
+                        <div id="divGroup1Table">
+                            {% if texts_group_1 is defined and texts_group_1|length > 0 %}
+                            <table id="group1Table" class="fixed_headers">
+                                <thead>
+                                    <tr>
+                                        <th>Text ID</th>
+                                        <th>Text</th>
+                                        <th>Label</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for text_group_record_1 in texts_group_1 %}
+                                    <tr>
+                                        <td>
+                                            <a methods="POST"
+                                               href="{{ url_for('text_labeling',
+                                                                 selected_text_id=text_group_record_1['id'],
+                                                                 selected_text=text_group_record_1['text'],
+                                                                 label_selected=label_selected,
+                                                                 page_number=page_number) }}">
+                                                {{ text_group_record_1['id'] }}
+                                            </a>
+                                        </td>
+                                        <td>{{ text_group_record_1['text'] }}</td>
+                                        <td>{{ text_group_record_1['label'] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                             </table></br>
+                            {% else %}
+                            <div id="group1Message"></br>
+                                <p>
+                                    Select a text to label.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div id="divGroup1Button">
+                            <form id="formRecommendedTextBody1" action="{{ url_for('grouped_1_texts') }}" method="POST">
+                                <input name="texts_group_1" type="hidden" value="{{ texts_group_1 }}">
+                                <input name="texts_list" type="hidden" value="{{ texts_list }}">
+                                <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                                <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                                <input name="page_number" type="hidden" value="{{ page_number }}">
+                                <input id="selected_label_group1" name="selected_label_group1" type="hidden"
+                                       value="{{ label_selected }}">
+                                {% if label_selected is defined %}
+                                {% if texts_group_1 is defined and texts_group_1|length > 0 %}
+                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_1|length }} texts)">
+                                {% else %}
+                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}'">
+                                {% endif %}
+                                {% else %}
+                                <input id="group1Button" type="submit" value="Label Group">
+                                {% endif %}
+                            </form>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="gridTop3">
+            <h2>Recommended Texts</h2>
+            <p class="subHeading">Based on the labels assigned. Generally, the more labels, the better the recommendations</p>
+            <div id="similarTexts2Buttons">
+                <form id="formSimilarTexts2Buttons"
+                      action="{{ url_for('set_group_2_record_limit') }}"
+                      method="POST">
+                    <label for="group2_table_limit">Display a maximum of </label>
+                    <select name="group2_table_limit" id="group2_table_limit" class="selectDropDown">
+                        <option value=10
+                                {% if group2_table_limit_value==10 %} selected="selected" {% endif %}>10</option>
+                    <option value=20
+                            {% if group2_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
+                    <option value=50
+                            {% if group2_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
+                      <option value=100
+                              {% if group2_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
+                      <option value=1000
+                              {% if group2_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
+                      <option value=10000
+                              {% if group2_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                    </select>
+                    records
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="table_limit" type="hidden" value=10>
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    <input id="buttonSimilarTexts2Buttons" type="submit" value="Submit" class="submitButton">
+                </form>
+            </div>
+            <div id="similarTexts2">
+                <div id="recommendedText2">
+                    <div id="recommendedTextBody2">
+                        <div id="divGroup2Table">
+                            {% if texts_group_2 is defined and texts_group_2|length > 0 %}
+                            <table id="group2Table" class="fixed_headers">
+                                <thead>
+                                    <tr>
+                                        <th>Text ID</th>
+                                        <th>Text</th>
+                                        <th>Label</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for text_group_record_2 in texts_group_2 %}
+                                    <tr>
+                                        <td>
+                                            <a methods="POST"
+                                               href="{{ url_for('text_labeling',
+                                                                 selected_text_id=text_group_record_2['id'],
+                                                                 selected_text=text_group_record_2['text'],
+                                                                 label_selected=label_selected,
+                                                                 page_number=page_number) }}">
+                                                {{ text_group_record_2['id'] }}
+                                            </a>
+
+                                        </td>
+                                        <td>{{ text_group_record_2['text'] }}</td>
+                                        <td>{{ text_group_record_2['label'] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                             </table></br>
+                            {% else %}
+                            <div id="group2Message"></br>
+                                <p>
+                                    No texts to recommend yet.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div id="divGroup2Button">
+                            <form id="group2ButtonForm" action="{{ url_for('grouped_2_texts') }}" method="POST">
+                                <input name="texts_group_2" type="hidden" value="{{ texts_group_2 }}">
+                                <input name="texts_list" type="hidden" value="{{ texts_list }}">
+                                <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                                <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                                <input name="page_number" type="hidden" value="{{ page_number }}">
+                                <input id="selected_label_group2" name="selected_label_group2" type="hidden"
+                                       value="{{ label_selected }}">
+                                {% if label_selected is defined %}
+                                {% if texts_group_2 is defined and texts_group_2|length > 0 %}
+                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_2|length }} texts)">
+                                {% else %}
+                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}'">
+                                {% endif %}
+                                {% else %}
+                                <input id="group2Button" type="submit" value="Label Group">
+                                {% endif %}
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="gridBottomLeft">
+            <div id="allTexts"><h2>All Texts</h2></div>
+            <div id="divSearchTexts">
+                <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
+                    <input type="text" id="searchAllTexts" name="search_term" placeholder="Search for texts..">
+                    <input id="searchAllTextsButton" type="submit" value="Submit">
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                </form>
+                <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
+                    <b id="searchTextsMessage">{{ search_message }}</b>
+                    <input id="clearSearchButton" type="submit" value="Clear">
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                </form>
+            </div>
+
+
+            <div id="allTextTableNextButtons">
+                <a href="{{ url_for('go_to_page',
+                                     page_number=0,
+                                     label_selected=label_selected) }}" method="POST">first
+                    <input name="page_number" type="hidden" value=0>
+                </a>
+                {% if page_number > 0 %}
+                    <a href="{{ url_for('go_to_page',
+                                         page_number=page_number - 1,
+                                         label_selected=label_selected) }}" method="POST">&laquo;
+                        <input name="page_number" type="hidden" value={{ page_number - 1}}>
+                    </a>
+                {% else %}
+                    <a href="#">&laquo;</a>
+                {% endif %}
+                <a href="#">{{ page_number + 1}}</a>
+                <a href="#">of </a>
+                <a href="#">{{ total_pages }}</a>
+                {% if page_number < (total_pages - 1) %}
+                    <a href="{{ url_for('go_to_page',
+                                         page_number=page_number + 1,
+                                         label_selected=label_selected) }}" method="POST">&raquo;
+                        <input name="page_number" type="hidden" value={{ page_number + 1}}>
+                    </a>
+                {% else %}
+                    <a href="#">&raquo;</a>
+                {% endif %}
+                <a  href="{{ url_for('go_to_page',
+                                     page_number=total_pages - 1,
+                                     label_selected=label_selected) }}" method="POST">last
+                    <input name="page_number" type="hidden" value={{ total_pages - 1 }}>
+                </a>
+            </div>
+            <div id="divAllTextsTable">
+                <table id="allTextsTable" class="fixed_headers">
+                    <thead>
+                        <tr>
+                            <th>Text ID</th>
+                            <th>Text</th>
+                            <th>Label</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% if texts_list %}
+                    {% for text_record in texts_list %}
+                        <tr>
+                            <td>
+                                <a methods="POST"
+                                   href="{{ url_for('text_labeling',
+                                                    selected_text_id=text_record['id'],
+                                                    selected_text=text_record['text'],
+                                                    label_selected=label_selected,
+                                                    info_message='',
+                                                    page_number=page_number,
+                                                    texts_list=texts_list,
+                                                    texts_group_1=texts_group_1,
+                                                    texts_group_2=[]) }}">
+                                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                                    {{ text_record['id'] }}
+                                </a>
+                            </td>
+                            <td>{{ text_record['text'] }}</td>
+                            <td>{{ text_record['label'] }}</td>
+                        </tr>
+
+
+                        {% endfor %}
+                    {% else %}
+
+                        <tr>
+                            <td>
+                                <a methods="POST"
+                                   href="{{ url_for('text_labeling',
+                                                    selected_text_id='12547885616465',
+                                                    selected_text='The quick brown fox jumped over the lazy dog.') }}">
+                                    12547885616465
+                                </a>
+
+                            </td>
+                            <td>"The quick brown fox jumped over the lazy dog."</td>
+                            <td>"-"</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a methods="POST"
+                                   href="{{ url_for('text_labeling',
+                                                    selected_text_id='0047885616465',
+                                                    selected_text='It was the best of times, it was the worst of times,
+                                                                   it was the age of wisdom,
+                                                                   it was the age of foolishness, it was the epoch of belief,
+                                                                   it was the epoch of
+                                                                   incredulity, it was the season of light,
+                                                                   it was the season of darkness, it was the
+                                                                   spring of hope, it was the winter of despair.')  }}">
+                                    0047885616465
+                                </a>
+
+                            </td>
+
+                            <td>"It was the best of times, it was the worst of times, it was the age of wisdom,
+                                it was the age of foolishness, it was the epoch of belief, it was the epoch of
+                                incredulity, it was the season of light, it was the season of darkness, it was the
+                                spring of hope, it was the winter of despair."</td>
+                            <td>"-"</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <a methods="POST"
+                                   href="{{ url_for('text_labeling',
+                                                    selected_text_id='00000000616465',
+                                                    selected_text='Call me Ishmael. Some years ago--never mind how long
+                                                                    precisely--having little or no
+                                                                    money in my purse, and nothing particular
+                                                                    to interest me on shore') }}">
+                                    00000000616465
+                                </a>
+                            </td>
+                            <td>"Call me Ishmael. Some years ago--never mind how long precisely--having little or no
+                                money in my purse, and nothing particular to interest me on shore"</td>
+                            <td>"-"</td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+
+
+                </table>
+            </div>
+        </div>
+        <div id="gridBottomRight1">
+            <div id="difficultTexts"><h2>Difficult Texts</h2>
+                <p class="subHeading">
+<!--                    These texts were difficult to assign to a label.-->
+                    Try labeling some of these texts to improve recommendations
+                </p>
+                <div id="difficultTextsBody">
+                    <div id="divDifficultTextsTable">
+                            {% if texts_group_3 is defined and texts_group_3|length > 0 %}
+                            <table id="difficultTextsTable" class="fixed_headers">
+                                <thead>
+                                    <tr>
+                                        <th>Text ID</th>
+                                        <th>Text</th>
+                                        {% for class in y_classes %}
+                                        <th>{{ class }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for text_group_record_3 in texts_group_3 %}
+                                    <tr>
+                                        <td>
+                                            <a methods="POST"
+                                               href="{{ url_for('text_labeling',
+                                                                 selected_text_id=text_group_record_3['id'],
+                                                                 selected_text=text_group_record_3['text'],
+                                                                 label_selected=label_selected,
+                                                                 page_number=page_number) }}">
+                                                {{ text_group_record_3['id'] }}
+                                            </a>
+
+                                        </td>
+                                        <td>{{ text_group_record_3['text'] }}</td>
+                                        {% for class in y_classes %}
+                                        <td>{{ text_group_record_3[class] }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                             </table></br>
+                            {% else %}
+                            <div id="group3Message"></br>
+                                <p>
+                                    No difficult texts generated yet.
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                </div>
+                <div id="divDifficultTextsButtons">
+                    <form id="formDifficultTextsButtons" action="{{ url_for('generate_difficult_texts') }}" method="POST">
+                        <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                        <input name="page_number" type="hidden" value="{{ page_number }}">
+                        <input id="selected_label" name="selected_label" type="hidden"
+                                       value="{{ label_selected }}">
+                        <input id="generateDifficultTextsButton"
+                               type="submit"
+                               name="generate_difficult_texts_button" value="Generate Difficult Texts List">
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="gridBottomRight2">
+            <div id="summarySection"><h2>Summary</h2>
+                <p class="subHeading">-</p>
+                <div id="summarySectionBody">
+                    <div id="divSummarySectionTable">
+                        <table id="summarySectionTable">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><b><u>Overall</u></b></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            {% if total_summary is defined and total_summary|length > 0 %}
+                            {% for summary_line in total_summary %}
+                            <tr>
+                                <td><b>{{ summary_line["name"] }}</b></td>
+                                <td>{{ summary_line["number"] }}</td>
+                                <td>{{ summary_line["percentage"] }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td><b>Total Texts</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Total Labeled</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><b><u>Labels</u></b></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+
+                            {% if label_summary is defined and label_summary|length > 0 %}
+                            {% for summary_line_labels in label_summary %}
+                            <tr>
+                                <td><b>{{ summary_line_labels["name"] }}</b></td>
+                                <td>{{ summary_line_labels["number"] }}</td>
+                                <td>{{ summary_line_labels["percentage"] }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td><b>Earthquake</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Fire</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Flood</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            <tr>
+                                <td><b>Hurricane</b></td>
+                                <td>0</td>
+                                <td>0.0%</td>
+                            </tr>
+                            {% endif %}
+                    </table>
+                    </div>
+                    <div id="divSummarySectionButtons">
+                        <form id="summarySectionButtons" action="{{ url_for('export_records') }}" method="POST">
+                            <input name="dummy_name" type="hidden" value="dummy_value">
+                            <input id="exportRecordsButton" type="submit" name="export_records_button" value="Export Records">
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div id="divBodyRight"></div>
+        <div id="divFooter">last updated 2021-10-19</div>
+    </div>
+</body>
+</html>

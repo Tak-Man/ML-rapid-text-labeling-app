@@ -1,0 +1,274 @@
+:root{
+    --main-radius: 5px;
+    --main-padding: 0.15vw;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    background-color: #c2c4c6;
+}
+
+h1 {
+    font-size: 1.5vw;
+    text-align: center;
+    margin: auto;
+}
+
+h2 {
+    padding-left: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-weight: 750;
+    font-size: 1.25vw;
+}
+
+div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+}
+
+#divHeader {
+    background-color: #00274c;
+    grid-area: divHeader;
+    border-radius: var(--main-radius);
+    padding: var(--main-padding);
+    color: #ffffff;
+}
+
+#divBodyLeft {
+    background-color: #333333;
+    grid-area: divBodyLeft;
+    border-radius: var(--main-radius);
+}
+
+#bodyLeft1 {
+    height: 100%;
+}
+
+#bodyLeft2 {
+    height: 100%;
+}
+
+#gridTopLeft {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridTopLeft;
+    border-radius: var(--main-radius);
+}
+
+#gridMiddleLeft {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridMiddleLeft;
+    border-radius: var(--main-radius);
+    height: 100%;
+}
+
+#gridBottomLeft {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridBottomLeft;
+    border-radius: var(--main-radius);
+    height: 100%;
+}
+
+#divRadioConfiguration {
+    display: flex;
+}
+
+#config1 {
+    padding-left: 0.8vw;
+}
+
+#config2 {
+}
+
+#divBottomLeftBody {
+    overflow-y: auto;
+    background-color: white;
+    border-radius: var(--main-radius);
+    height: 65%;
+    width: 96.5%;
+    margin: auto;
+    padding-left: 0.5vw;
+    color: #808080;
+}
+
+#gridFootLeft {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridFootLeft;
+    border-radius: var(--main-radius);
+    height: 100%;
+}
+
+#gridTopMiddle {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridTopMiddle;
+    border-radius: var(--main-radius);
+}
+
+#gridMiddleMiddle {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridMiddleMiddle;
+    border-radius: var(--main-radius);
+}
+
+#gridBottomMiddle {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridBottomMiddle;
+    border-radius: var(--main-radius);
+}
+
+#gridFootMiddle {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridFootMiddle;
+    border-radius: var(--main-radius);
+}
+
+#gridTopRight {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridTopRight;
+    border-radius: var(--main-radius);
+}
+
+#gridBottomRight {
+    color: #0d57aa; /*blue*/
+    background-color: #ffcb05;
+    grid-area: gridBottomRight;
+    border-radius: var(--main-radius);
+}
+
+#divBodyRight {
+    background-color: #333333;
+    grid-area: divBodyRight;
+    border-radius: var(--main-radius);
+}
+
+#divFooter {
+    background-color: #00274c;
+    grid-area: divFooter;
+    border-radius: var(--main-radius);
+    font-size: 0.55vw;
+}
+
+.container {
+  display: grid;
+  height: 100%;
+  grid-template-columns: 2% 32% 32% 32% 2%;
+  grid-template-rows: 5% 33% 22% 20% 15% 5%;
+  grid-template-areas:
+    "divHeader divHeader divHeader divHeader divHeader"
+    "divBodyLeft gridTopLeft gridTopMiddle gridTopRight divBodyRight"
+    "divBodyLeft gridMiddleLeft gridMiddleMiddle gridTopRight divBodyRight"
+    "divBodyLeft gridBottomLeft gridBottomMiddle gridTopRight divBodyRight"
+    "divBodyLeft gridFootLeft gridFootMiddle gridTopRight divBodyRight"
+    "divFooter divFooter divFooter divFooter divFooter";
+  grid-gap: 0.3rem;
+  font-family: sans-serif;
+  font-weight: 800;
+  font-size: 0.75vw;
+  color: #808080;
+  text-align: center;
+  style: "padding-left: 20px";
+}
+
+.subHeading {
+    font-weight: 100;
+    font-size: 0.75vw;
+    padding-left: 0.60vw;
+    margin-top: 1px;
+    margin-bottom: 0.5vh;
+}
+
+#divBodyLeftTable1 {
+    border-radius: var(--main-radius);
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 83%;
+    width: 98%;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divBodyLeftTable2 {
+    border-radius: var(--main-radius);
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 98%;
+    height: 75%;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#bodyLeftTable1 {
+
+}
+
+#bodyLeftTable2 {
+
+}
+
+#divBodyLeft2InfoMessage {
+    justify-content: center;
+    margin-left: 0.5vw;
+    margin-top: 0.5vw;
+}
+
+#divBodyLeftButtons {
+
+}
+
+#loadDataSetButton {
+    width: 98%;
+    font-size: 1.5vh;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    margin: auto;
+}
+
+.startTable {
+    background-color: white;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.65vw;
+    text-align: left;
+    margin: auto;
+}
+
+.startTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+.startTable tr {
+    background: #ffffff;
+    color: #808080;
+}
+
+.startTable tr:hover {
+    background: #999999;
+    color: #ffffff;
+}
+
+.startTable tr.alt:hover {
+    background: #999999;
+    color: #808080;
+}

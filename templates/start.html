@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapid Text Labeling - Start</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='start.css') }}" media="all">
+    <script>
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="divHeader">
+            <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
+        </div>
+        <div id="divBodyLeft"></div>
+        <div id="gridTopLeft">
+            <h2>Select an existing dataset</h2>
+            <p class="subHeading">The available datasets are shown below</p>
+            <div id="bodyLeft1">
+                <div id="divBodyLeftTable1">
+                    <table id="bodyLeftTable1" class="startTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% if dataset_list %}
+                        {% for dataset_record in dataset_list %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('dataset_selected',
+                                                         dataset_name=dataset_record['name']) }}">
+                                        <input name="dataset_name" type="hidden" value="{{ dataset_record['name'] }}">
+                                        {{ dataset_record['name'] }}
+                                    </a>
+
+                                </td>
+                                <td>{{ dataset_record['description'] }}</td>
+                                <td><a href="{{ dataset_record['url'] }}"
+                                       target="_blank">{{ dataset_record['url'] }}</a></td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td>
+                                    <a href="#">
+                                        No dataset data available
+                                    </a>
+
+                                </td>
+                                <td>No dataset data available</td>
+                                <td>No dataset data available</td>
+                            </tr>
+                             <tr>
+                                <td>
+                                    <a href="#">
+                                        No dataset data available
+                                    </a>
+
+                                </td>
+                                <td>No dataset data available</td>
+                                <td>No dataset data available</td>
+                            </tr>
+                                                    <tr>
+                                <td>
+                                    <a href="#">
+                                        No dataset data available
+                                    </a>
+
+                                </td>
+                                <td>No dataset data available</td>
+                                <td>No dataset data available</td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="gridMiddleLeft">
+            <h2>Dataset preview</h2>
+            <p class="subHeading">A preview of the selected data is shown below</p>
+            <div id="bodyLeft2">
+                <div id="divBodyLeftTable2">
+                    <table id="bodyLeftTable2" class="startTable">
+                        <thead>
+                            <tr>
+                                <th>Text ID</th>
+                                <th>Text</th>
+                                <th>Label</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% if texts_list %}
+                        {% for text_record in texts_list %}
+                            <tr>
+                                <td>
+                                    <a href="#">
+                                        {{ text_record['id'] }}
+                                    </a>
+
+                                </td>
+                                <td>{{ text_record['text'] }}</td>
+                                <td>{{ text_record['label'] }}</td>
+                            </tr>
+                        {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td>
+                                    <a>
+                                        Select an existing dataset above to see details.
+                                    </a>
+                                </td>
+                                <td>Select an existing dataset above to see details.</td>
+                                <td>Select an existing dataset above to see details.</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a>
+                                        Select an existing dataset above to see details.
+                                    </a>
+                                </td>
+                                <td>Select an existing dataset above to see details.</td>
+                                <td>Select an existing dataset above to see details.</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a>
+                                        Select an existing dataset above to see details.
+                                    </a>
+                                </td>
+                                <td>Select an existing dataset above to see details.</td>
+                                <td>Select an existing dataset above to see details.</td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="gridBottomLeft">
+            <h2>Dataset labels</h2>
+            <p class="subHeading">These labels have been defined to label this dataset</p>
+            <div id="divBottomLeftBody">
+                <p>
+                    {% for dataset_label in dataset_labels %}
+                    {{ dataset_label }}<br>
+                    {% endfor %}
+                </p>
+
+            </div>
+        </div>
+        <div id="gridFootLeft">
+            <h2>Configuration</h2>
+
+            <div id="divBodyLeftButtons">
+                <form id="bodyLeftButtons"
+                      action="{{ url_for('begin_labeling', dataset_name=dataset_name) }}"
+                      method="POST">
+                    <p class="subHeading">Select an interface configuration</p>
+                    <input name="dataset_name" type="hidden" value="{{ dataset_name }}">
+                    <div id="divRadioConfiguration">
+                        <input type="radio" id="config1" name="selected_config" value="config1">
+                        <label for="config1">Configuration 1</label>
+                        <input type="radio" id="config2" name="selected_config" value="config2">
+                        <label for="config2">Configuration 2</label>
+                    </div>
+                    <div id="divBodyLeft2InfoMessage">If this dataset is suitable click 'Select Dataset'</div>
+                    <input id="loadDataSetButton" type="submit" name="load_dataset" value="Select Dataset">
+                </form>
+                <p class="subHeading">{{ config1_message }}</p>
+            </div>
+        </div>
+        <div id="gridTopMiddle">
+            <h2>Select a new dataset</h2>
+            <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
+            <div id="bodyMiddle1"></div>
+        </div>
+        <div id="gridMiddleMiddle"></div>
+        <div id="gridBottomMiddle"></div>
+        <div id="gridFootMiddle"></div>
+        <div id="gridTopRight">
+            <h2>Watch a demo video</h2>
+            <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
+            <div id="bodyRight1"></div>
+        </div>
+        <div id="divBodyRight"></div>
+        <div id="divFooter">last updated 2021-10-26</div>
+    </div>
+</body>
+</html>
