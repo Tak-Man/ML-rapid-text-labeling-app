@@ -26,7 +26,7 @@ div {
     background-color: #333333;
     grid-area: divBodyLeft;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    /*padding: var(--main-padding);*/
 }
 
 #gridTop1 {
@@ -40,45 +40,48 @@ div {
     display: flex;
     flex-direction: column;
 
+    position: relative;
 }
 
 #currentText {
-    width: 100%;
+    width: 98%;
     height: 82%;
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
+    /*border-radius: var(--main-radius);*/
+    vertical-align: middle;
+    /*position: relative;*/
+    /*margin: auto;*/
+    margin-top: 8.5vh;
 
-    position: relative;
-    margin: auto;
-    margin-top: 2.75vh;
-
-
+    position: absolute;
 }
 
-#labelRadioSelection, #summarySectionBody, #difficultTextsBody {
-    margin-top: 24px;
+#summarySectionBody, #difficultTextsBody {
+    /*margin-top: 24px;*/
     align: center;
-    height: 72%;
-    border-radius: var(--main-radius);
+    height: 100%;
+    /*border-radius: var(--main-radius);*/
 }
 
 #currentTextBody {
-    border-radius: var(--main-radius);
+    /*border-radius: var(--main-radius);*/
     padding: var(--main-padding);
     background-color: white;
-    width: 98%;
-    height: 88%;
-    padding-left: 10px;
+    height: 85%;
+    /*padding-right: 1.5vw;*/
 
     white-space: normal;
     overflow-wrap: break-word;
+
+
 }
 
 #currentTextBody, #group1Message, #group2Message, #group3Message {
     width: 97%;
     margin: 2px;
-    padding-left: 10px;
+    padding-left: 0.6vw;
     font-family: sans-serif;
     font-weight: 200;
     font-size: 0.85vw;
@@ -108,21 +111,26 @@ div {
     color: #0d57aa;
     display: flex;
     flex-direction: column;
+
+    position: relative;
 }
 
 #labelRadioSelection {
-    width: 95%;
-    height: 72%;
+    align: center;
+    width: 90%;
+    height: 70%;
     background-color: white;
     font-family: sans-serif;
     font-weight: 600;
     font-size: 0.90vw;
     text-align: left;
     color: #808080;
-    border-radius: var(--main-radius);
+    /*border-radius: var(--main-radius);*/
     padding: var(--main-padding);
     margin: auto;
-    margin-top: 5.5vh;
+    margin-top: 8.5vh;
+
+    position: absolute;
 }
 
 
@@ -160,25 +168,78 @@ div {
 
 #allTextTableNextButtons {
     display: inline-block;
-    padding-right: 11px;
-    padding-left: 11px;
+    padding-right: 0.1vw;
+    padding-left: 0.1vw;
     margin-top: 1px;
     margin-bottom: 1px;
     font-size: 0.65vw;
+    float: right;
+}
+
+#divSearchTexts {
+    padding-bottom: 0.1vh;
+    display: inline-block;
+}
+
+#searchAllTexts {
+    background-image: url('/css/searchicon.png');
+    background-repeat: no-repeat;
+    width: 30%;
+    float: left;
+    padding-left: 0.65vw;
+}
+
+#searchAllTextsButton {
+    padding:left: 15.0vw;
+    float: left;
+    display: inline-block;
+    font-size: 0.65vw;
+    font-family: sans-serif;
+}
+
+#searchTextsMessage {
+    font-size: 0.80vw;
+    font-family: sans-serif;
+    font-weight: 400;
+    text-align: right;
+    padding-left: 1.65vw;
+    color: #0d57aa;
+    display: inline-block;
+}
+
+#clearSearchButton {
+    display: inline-block;
+    font-size: 0.65vw;
+    font-family: sans-serif;
 }
 
 #similarTexts1Buttons, #similarTexts2Buttons {
     display: inline-block;
-    padding-right: 11px;
-    padding-left: 11px;
+    padding-right: 0.65vw;
+    padding-left: 0.65vw;
     margin-top: 1.5%;
-    margin-bottom: 1px;
+    /*margin-bottom: 1px;*/
+    font-size: 0.65vw;
+    color: #0d57aa; /*alt_blue*/
+    min-height: 1.95vh;
+}
+
+.submitButton {
+    width: 3.5vw;
+    height: 1.85vh;
+    font-size: 0.65vw;
+}
+
+.selectDropDown  {
+    width: 3.5vw;
+    height: 1.85vh;
     font-size: 0.65vw;
 }
 
 allTextTableNextButtons:hover {
     background-color: #ddd;
     color: black;
+    margin: auto;
 }
 
 #divAllTextsTable {
@@ -226,6 +287,8 @@ allTextTableNextButtons:hover {
     color: #0d57aa;
     display: flex;
     flex-direction: column;
+
+    /*position: relative;*/
 }
 
 .subHeading {
@@ -234,8 +297,6 @@ allTextTableNextButtons:hover {
     padding-left: 0.60vw;
     margin-top: 1px;
     margin-bottom: 0.5vh;
-
-
 }
 
 #gridTop3 {
@@ -262,19 +323,24 @@ h2 {
 #similarTexts1, #similarTexts2 {
     font-family: sans-serif;
     text-align: left;
-    width: 98%;
+    width: 100%;
     height: 100%;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    /*border-radius: var(--main-radius);*/
+    /*padding: var(--main-padding);*/
     color: #0d57aa;
-    margin: auto;
-    margin-top: 0.1vh;
+    /*margin: auto;*/
+    margin-top: 0.15vh;
+    /*vertical-align: middle;*/
+
+
 }
 
 #recommendedText1, #recommendedText2 {
-    border-radius: var(--main-radius);
-    width: 100%;
+    /*border-radius: var(--main-radius);*/
+    width: 99%;
     height: 100%;
+    /*vertical-align: middle;*/
+    display: flex;
 }
 
 /*
@@ -288,7 +354,8 @@ h2 {
 }
 */
 
-#divGroup1Table, #divGroup2Table, #divDifficultTextsTable, #divSummarySectionTable {
+
+#divGroup1Table, #divGroup2Table, #divDifficultTextsTable {
     background-color: white;
     overflow-y: auto;
     overflow-x: hidden;
@@ -296,8 +363,20 @@ h2 {
     min-height: 90%;
     max-height: 90%;
     height: 90%
-    border-radius: var(--main-radius);
-    margin-top: 0.15vh;
+    margin-top: 0.25vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divSummarySectionTable {
+    background-color: white;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 100px;
+    min-height: 79%;
+    max-height: 79%;
+    height: 79%
+    margin-top: 0.25vh;
     white-space: normal;
     overflow-wrap: break-word;
 }
@@ -335,17 +414,26 @@ h2 {
     font-size: 0.75vw;
 }
 
-#recommendedTextBody1, #recommendedTextBody2, #difficultTextsBody {
+ #difficultTextsBody {
     height: 100%;
-    min-width: 100px;
-    position: relative;
+    vertical-align: middle;
+    margin: 0 auto;
+}
+
+#recommendedTextBody1, #recommendedTextBody2 {
+
+    margin: 0 auto;
+    margin-left: 0.25vh;
+    width: 100%;
 }
 
 #gridBottomRight1 {
     grid-area: gridBottomRight1;
 
     display: flex;
-    flex-direction: column;
+    /*flex-direction: column;*/
+
+    /*position: absolute;*/
 }
 
 #gridBottomRight2 {
@@ -360,6 +448,8 @@ h2 {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     height: 100.0%;
+
+
 }
 
 #summarySection, #difficultTexts {
@@ -367,9 +457,8 @@ h2 {
     text-align: left;
     color: #0d57aa; /*blue*/
     height: 100%;
-    width: 98%;
-    display: flex;
-    flex-direction: column;
+    width: 99%;
+    margin: 0 auto;
 }
 
 /*
@@ -394,12 +483,12 @@ h2 {
     text-align: left;
     width: 100%;
     background-color: white;
-    border-radius: var(--main-radius);
+    /*border-radius: var(--main-radius);*/
     padding: var(--main-padding);
     color: #0d57aa;
     height: 78%;
     min-width: 100px;
-    position: relative;
+    /*position: relative;*/
     margin: auto;
     /*margin-top: 5%;*/
 }
@@ -413,9 +502,9 @@ h2 {
     height: 100%;
     min-width: 100px;
     position: relative;
-    margin: auto;
+    margin: 0 auto;
     margin-top: 0.1vh;
-    position: relative;
+    /*position: relative;*/
 }
 
 #summarySectionTable {
@@ -433,7 +522,7 @@ h2 {
     height: 95%;
     max-height: 95%;
     min-height: 95%;
-
+    margin: 0 auto;
 }
 
 #summarySectionTable td {
@@ -447,7 +536,7 @@ h2 {
 
 #divSummarySectionButtons {
     margin: auto;
-    margin-top: 2.5%;
+    margin-top: 0.5vh;
     width: 100%
     margin-left: 2%;
 }
@@ -456,8 +545,6 @@ h2 {
     margin: auto;
     margin-top: 0.5%;
     width: 100%;
-    margin-left: 1%;
-
 }
 
 #exportRecordsButton, #generateDifficultTextsButton {

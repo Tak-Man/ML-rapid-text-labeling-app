@@ -22,6 +22,30 @@
             document.getElementById("group2Button").setAttribute("value", "Label Group '" + selected_label + "'");
         }
 
+        function which_value_group_1_limit_selected(valueToSelect) {
+            let element = document.getElementById("group1_table_limit");
+            element.value = valueToSelect;
+        }
+
+        function searchAllTexts() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchAllTexts");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("divAllTextsTable");
+            tr = table.getElementsByTagName("tr");
+
+            for (i = 0; i < tr.length; i++) {
+                td = tr[i].getElementsByTagName("td")[0];
+                    if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
     </script>
 </head>
 <body>
@@ -36,106 +60,49 @@
                 <form action="{{ url_for('label_selected') }}" method="POST">
                     <br/>
                     {% if label_selected is defined%}
-                    {% if label_selected == 'Earthquake' %}
-                    <input type="radio" id="category1" name="assigned_label" value="Earthquake"
+
+                    {% set count = namespace(value=0) %}
+                    {% for dataset_label in y_classes %}
+                    {% set count.value = count.value + 1 %}
+                    {% set id_str = 'category' + count.value|string %}
+
+                    {% if label_selected == dataset_label %}
+                    <input type="radio" id="{{ id_str }}" name="assigned_label" value="{{ dataset_label }}"
                            onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Earthquake',
+                                                                      label_selected=dataset_label,
                                                                       selected_text_id=selected_text_id,
                                                                       selected_text=selected_text,
                                                                       page_number=page_number) }}'" checked>
                     {% else %}
-                    <input type="radio" id="category1" name="assigned_label" value="Earthquake"
+                    <input type="radio" id="{{ id_str }}" name="assigned_label" value="{{ dataset_label }}"
                            onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Earthquake',
+                                                                      label_selected=dataset_label,
                                                                       selected_text_id=selected_text_id,
                                                                       selected_text=selected_text,
                                                                       page_number=page_number) }}'">
                     {% endif %}
-                    <label for="category1">Earthquake</label><br/>
-
-                    {% if label_selected == 'Fire' %}
-                    <input type="radio" id="category2" name="assigned_label" value="Fire"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Fire',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'" checked>
-                    {% else %}
-                    <input type="radio" id="category2" name="assigned_label" value="Fire"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Fire',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    {% endif %}
-                    <label for="category2">Fire</label><br/>
-
-                    {% if label_selected == 'Flood' %}
-                    <input type="radio" id="category3" name="assigned_label" value="Flood"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Flood',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'" checked>
-                    {% else %}
-                    <input type="radio" id="category3" name="assigned_label" value="Flood"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Flood',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    {% endif %}
-                    <label for="category3">Flood</label><br/>
-
-                    {% if label_selected == 'Hurricane' %}
-                    <input type="radio" id="category4" name="assigned_label" value="Hurricane"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Hurricane',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'" checked>
-                    {% else %}
-                    <input type="radio" id="category4" name="assigned_label" value="Hurricane"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Hurricane',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    {% endif %}
-                    <label for="category4">Hurricane</label><br/>
+                    <label for="{{ id_str }}">{{ dataset_label }}</label><br/>
+                    {% endfor %}
 
                     {% else %}
-                    <input type="radio" id="category1" name="assigned_label" value="Earthquake"
+                    {% set count = namespace(value=0) %}
+                    {% for dataset_label in y_classes %}
+                    {% set count.value = count.value + 1 %}
+                    {% set id_str = 'category' + count.value|string %}
+                    <input type="radio"
+                           id="{{ id_str }}"
+                           name="assigned_label"
+                           value="{{ dataset_label }}"
                            onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Earthquake',
+                                                                      label_selected=dataset_label,
                                                                       selected_text_id=selected_text_id,
                                                                       selected_text=selected_text,
                                                                       page_number=page_number) }}'">
-                    <label for="category1">Earthquake</label><br/>
+                    <label for="{{ id_str }}" >{{ dataset_label }}</label><br/>
+<!--                    {{ id_str | safe }}-->
+                    {% endfor %}
 
-                    <input type="radio" id="category2" name="assigned_label" value="Fire"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Fire',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    <label for="category2">Fire</label><br/>
 
-                    <input type="radio" id="category3" name="assigned_label" value="Flood"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Flood',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    <label for="category3">Flood</label><br/>
-
-                    <input type="radio" id="category4" name="assigned_label" value="Hurricane"
-                           onclick="window.location.href='{{ url_for('label_selected',
-                                                                      label_selected='Hurricane',
-                                                                      selected_text_id=selected_text_id,
-                                                                      selected_text=selected_text,
-                                                                      page_number=page_number) }}'">
-                    <label for="category4">Hurricane</label><br/>
 
                     {% endif %}
                     <br/>
@@ -169,16 +136,37 @@
                     </form>
                 </div>
             </div>
-
-
         </div>
         <div id="gridTop2">
             <h2>Similar Texts</h2>
             <p class="subHeading">Based on the similarity to the entire corpus.</p>
             <div id="similarTexts1Buttons">
-                <a href="#">Display a maximum of </a>
-                <a href="#">50</a>
-                <a href="#">records.</a>
+                <form id="formSimilarTexts1Buttons"
+                      action="{{ url_for('set_group_1_record_limit') }}"
+                      method="POST">
+                    <label for="group1_table_limit">Display a maximum of </label>
+                    <select name="group1_table_limit" id="group1_table_limit" class="selectDropDown">
+                        <option value=10
+                                {% if group1_table_limit_value==10 %} selected="selected" {% endif %}>10</option>
+                    <option value=20
+                            {% if group1_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
+                    <option value=50
+                            {% if group1_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
+                      <option value=100
+                              {% if group1_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
+                      <option value=1000
+                              {% if group1_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
+                      <option value=10000
+                              {% if group1_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                    </select>
+                    records
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="table_limit" type="hidden" value=10>
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    <input id="buttonSimilarTexts1Buttons" type="submit" value="Submit" class="submitButton">
+                </form>
             </div>
             <div id="similarTexts1">
                 <div id="recommendedText1">
@@ -250,9 +238,32 @@
             <h2>Recommended Texts</h2>
             <p class="subHeading">Based on the labels assigned. Generally, the more labels, the better the recommendations</p>
             <div id="similarTexts2Buttons">
-                <a href="#">Display a maximum of </a>
-                <a href="#">50</a>
-                <a href="#">records.</a>
+                <form id="formSimilarTexts2Buttons"
+                      action="{{ url_for('set_group_2_record_limit') }}"
+                      method="POST">
+                    <label for="group2_table_limit">Display a maximum of </label>
+                    <select name="group2_table_limit" id="group2_table_limit" class="selectDropDown">
+                        <option value=10
+                                {% if group2_table_limit_value==10 %} selected="selected" {% endif %}>10</option>
+                    <option value=20
+                            {% if group2_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
+                    <option value=50
+                            {% if group2_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
+                      <option value=100
+                              {% if group2_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
+                      <option value=1000
+                              {% if group2_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
+                      <option value=10000
+                              {% if group2_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                    </select>
+                    records
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="table_limit" type="hidden" value=10>
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    <input id="buttonSimilarTexts2Buttons" type="submit" value="Submit" class="submitButton">
+                </form>
             </div>
             <div id="similarTexts2">
                 <div id="recommendedText2">
@@ -322,6 +333,26 @@
         </div>
         <div id="gridBottomLeft">
             <div id="allTexts"><h2>All Texts</h2></div>
+            <div id="divSearchTexts">
+                <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
+                    <input type="text" id="searchAllTexts" name="search_term" placeholder="Search for texts..">
+                    <input id="searchAllTextsButton" type="submit" value="Submit">
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                </form>
+                <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
+                    <b id="searchTextsMessage">{{ search_message }}</b>
+                    <input id="clearSearchButton" type="submit" value="Clear">
+                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                    <input name="page_number" type="hidden" value="{{ page_number }}">
+                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                </form>
+            </div>
+
+
             <div id="allTextTableNextButtons">
                 <a href="{{ url_for('go_to_page',
                                      page_number=0,
@@ -382,7 +413,6 @@
                                     <input name="page_number" type="hidden" value="{{ page_number }}">
                                     {{ text_record['id'] }}
                                 </a>
-
                             </td>
                             <td>{{ text_record['text'] }}</td>
                             <td>{{ text_record['label'] }}</td>
@@ -608,7 +638,7 @@
             </div>
         </div>
         <div id="divBodyRight"></div>
-        <div id="divFooter">last updated 2021-10-19</div>
+        <div id="divFooter">last updated 2021-10-28</div>
     </div>
 </body>
 </html>
