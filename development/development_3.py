@@ -29,11 +29,6 @@ if __name__ == "__main__":
     print(texts_list_labeled[:5])
     print()
 
-    corpus_text_id = "798262465234542592"
-    print('consolidated_disaster_tweet_data_df[consolidated_disaster_tweet_data_df["tweet_id"] == corpus_text_id] :')
-    print(consolidated_disaster_tweet_data_df[consolidated_disaster_tweet_data_df["tweet_id"] == corpus_text_id])
-    print()
-
     vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=100)
     vectorized_corpus = \
         vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"])
@@ -50,19 +45,16 @@ if __name__ == "__main__":
                                              y_classes=y_classes,
                                              classifier_list=[])
 
-    predictions = utils.get_top_predictions(selected_class="fire",
-                                            fitted_classifier=fitted_classifier,
-                                            sparse_vectorized_corpus=vectorized_corpus,
-                                            corpus_text_ids=corpus_text_ids,
-                                            texts_list=all_texts_json,
-                                            top=5,
-                                            cutoff_proba=0.8,
-                                            y_classes=y_classes,
-                                            verbose=True,
-                                            exclude_already_labeled=True,
-                                            similar_texts=[])
-    print("predictions :")
-    print(predictions[:5])
+    predictions_all = utils.get_all_predictions(fitted_classifier=fitted_classifier,
+                                                sparse_vectorized_corpus=vectorized_corpus,
+                                                corpus_text_ids=corpus_text_ids,
+                                                texts_list=all_texts_json,
+                                                top=5,
+                                                y_classes=y_classes,
+                                                verbose=False,
+                                                similar_texts=[])
+    print("predictions_all :")
+    print(predictions_all[:5])
     print()
     # ******************************************************************************************************************
 

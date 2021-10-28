@@ -34,15 +34,12 @@ if __name__ == "__main__":
     vectorized_corpus_df = pd.DataFrame.sparse.from_spmatrix(vectorized_corpus, columns=vectorizer.get_feature_names_out())
     corpus_text_ids = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
 
-    similarities_alt = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=vectorized_corpus,
-                                                                corpus_text_ids=corpus_text_ids,
-                                                                text_id=corpus_text_id)
-    top_5_texts = utils.get_top_similar_texts(all_texts_json=all_texts_json, similarities_series=similarities_alt, top=5,
-                                              exclude_already_labeled=True, similar_texts=[])
-    print("top_5_texts :")
-    print(top_5_texts)
+    # *****************************************************************************************************************
+    # Enter the development code here.
+    # Enter the development code here.
+    # Enter the development code here.
+    # *****************************************************************************************************************
 
-    # ********************************************************************************************************
     end_time = datetime.now()
     duration = end_time - start_time
 
