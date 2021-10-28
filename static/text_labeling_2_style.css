@@ -15,7 +15,7 @@ div {
 }
 
 #divHeader {
-    background-color: #00274c;
+    background-color: #D3D3D3; /*#00274c;*/
     grid-area: divHeader;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -23,14 +23,14 @@ div {
 }
 
 #divBodyLeft {
-    background-color: #333333;
+    background-color: #D3D3D3; /*#333333;*/
     grid-area: divBodyLeft;
     border-radius: var(--main-radius);
     /*padding: var(--main-padding);*/
 }
 
 #gridTop1 {
-    background-color: #ffcb05;
+    background-color: #D3D3D3; /*#ffcb05;*/
     grid-area: gridTop1;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -102,7 +102,7 @@ div {
 }
 
 #gridTop0 {
-    background-color: #ffcb05;
+    background-color: #D3D3D3; /*#ffcb05;*/
     grid-area: gridTop0;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -140,7 +140,7 @@ div {
 }
 
 #gridBottomLeft {
-    background-color: #ffcb05;
+    background-color: #D3D3D3; /* #ffcb05;*/
     grid-area: gridBottomLeft;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -278,7 +278,7 @@ allTextTableNextButtons:hover {
 
 
 #gridTop2 {
-    background-color: #ffcb05;
+    background-color: #D3D3D3; /*#ffcb05;*/
     grid-area: gridTop2;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -300,7 +300,7 @@ allTextTableNextButtons:hover {
 }
 
 #gridTop3 {
-    background-color: #ffcb05;
+    background-color: #D3D3D3; /*#ffcb05;*/
     grid-area: gridTop3;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
@@ -444,7 +444,7 @@ h2 {
 }
 
 #gridBottomRight1, #gridBottomRight2 {
-    background-color: #ffcb05; /*yellow*/
+    background-color: #D3D3D3; /*#ffcb05; /*yellow*/
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     height: 100.0%;
@@ -559,14 +559,14 @@ h2 {
 }
 
 #divBodyRight {
-    background-color: #333333;
+    background-color: #D3D3D3; /*#333333;*/
     grid-area: divBodyRight;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
 }
 
 #divFooter {
-    background-color: #00274c;
+    background-color: #D3D3D3; /*#00274c;*/
     grid-area: divFooter;
     border-radius: var(--main-radius);
     padding: var(--main-padding);

@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from collections import Counter
 import itertools
+import re
 
 
 pd.options.display.max_columns = 50
@@ -23,9 +24,9 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
-def get_demo_data(number_samples=None, filter_data_types=None, random_state=1144):
-    data_df = \
-        pd.read_csv("./data/consolidated_disaster_tweet_data.tsv", sep="\t")
+def get_disaster_tweet_demo_data(number_samples=None, filter_data_types=None, random_state=1144,
+                                 source_file="./data/consolidated_disaster_tweet_data.tsv"):
+    data_df = pd.read_csv(source_file, sep="\t")
 
     if filter_data_types:
         data_df = data_df[data_df["data_type"].isin(filter_data_types)]
@@ -94,9 +95,6 @@ def convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=
                                                 .sample(frac=1, random_state=random_state)\
                                                 .reset_index(drop=True)
 
-    print(">> convert_demo_data_into_list_json > len(consolidated_disaster_tweet_data_df) :")
-    print(len(consolidated_disaster_tweet_data_df))
-
     all_texts = consolidated_disaster_tweet_data_df[[id_col, text_col, label_col]].values.tolist()
 
     max_length = len(all_texts)
@@ -142,6 +140,33 @@ def filter_all_texts(all_text, filter_list, exclude_already_labeled=False):
 
     filtered_all_text = filtered_all_text_df.to_dict("records")
 
+    return filtered_all_text
+
+
+def search_all_texts(all_text, search_term, exclude_already_labeled=False, behavior="conjunction", all_upper=True):
+    all_text_df = pd.DataFrame(all_text)
+    search_terms = search_term.split()
+    print(f"search_terms - '{search_terms}'")
+
+    if all_upper:
+        if behavior == "disjunction":
+            filtered_all_text_df = all_text_df[all_text_df["text"].astype(str).str.upper().apply(
+                lambda text: any(word.upper() in text for word in search_terms))]
+        else:
+            filtered_all_text_df = all_text_df[all_text_df["text"].astype(str).str.upper().apply(
+                lambda text: all(word.upper() in text for word in search_terms))]
+    else:
+        if behavior == "disjunction":
+            filtered_all_text_df = all_text_df[all_text_df["text"].astype(str).apply(
+                lambda text: any(word in text for word in search_terms))]
+        else:
+            filtered_all_text_df = all_text_df[all_text_df["text"].astype(str).apply(
+                lambda text: all(word in text for word in search_terms))]
+
+    if exclude_already_labeled:
+        filtered_all_text_df = filtered_all_text_df[filtered_all_text_df["label"].isin(["-"])]
+
+    filtered_all_text = filtered_all_text_df.to_dict("records")
     return filtered_all_text
 
 
@@ -249,28 +274,19 @@ def get_all_similarities_one_at_a_time(sparse_vectorized_corpus, corpus_text_ids
 
 def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled,
                    y_classes=["earthquake", "fire", "flood", "hurricane"],
+                   verbose=False,
                    classifier_list=[]):
-    # Collaborative filtering recommendations
-    # print("sparse_vectorized_corpus.shape :", sparse_vectorized_corpus.shape)
-    # print("len(corpus_text_ids) :", len(corpus_text_ids))
-
-    # ids = [obj["id"] for obj in texts_list_labeled]
-    # labels = [obj["label"] for obj in texts_list_labeled]
     texts_list_labeled_df = pd.DataFrame.from_dict(texts_list_labeled)
-    # print("texts_list_labeled_df.shape :", texts_list_labeled_df.shape)
-    print("texts_list_labeled_df :")
-    print(texts_list_labeled_df.head())
+
+    if verbose:
+        print("texts_list_labeled_df :")
+        print(texts_list_labeled_df.head())
 
     ids = texts_list_labeled_df["id"].values
     y_train = texts_list_labeled_df["label"].values
     indices = [corpus_text_ids.index(x) for x in ids]
-    # print(f"len(ids) : {len(ids)}, len(y_train) : {len(y_train)}, len(indices) : {len(indices)}")
 
-    # print("indices :")
-    # print(indices[:5])
-    # print("type(sparse_vectorized_corpus) :", type(sparse_vectorized_corpus))
     X_train = sparse_vectorized_corpus[indices, :]
-    # print("X_train.shape :", X_train.shape)
 
     if len(classifier_list) == 0:
         # clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, random_state=2584))
@@ -286,10 +302,11 @@ def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled
 
 
 def get_top_predictions(selected_class, fitted_classifier, sparse_vectorized_corpus, corpus_text_ids,
-                        tweet_data_df, texts_list,
+                        texts_list,
                         top=5,
                         cutoff_proba=0.95,
-                        fat_df=True,
+                        # tweet_data_df,
+                        # fat_df=True,
                         y_classes=["earthquake", "fire", "flood", "hurricane"],
                         verbose=False,
                         exclude_already_labeled=True,
@@ -301,21 +318,9 @@ def get_top_predictions(selected_class, fitted_classifier, sparse_vectorized_cor
     predictions_df.columns = y_classes
     predictions_df["id"] = corpus_text_ids
 
-    # ----------------------------------
-    if fat_df:
-        predictions_df = predictions_df.merge(tweet_data_df, left_on="id", right_on="tweet_id")
-        keep_cols = ["id", "event_type", "tweet_text"]
-        keep_cols.extend(y_classes)
-        predictions_df = predictions_df[keep_cols]
-        keep_cols_2 = ["id", "event_type", "tweet_text"]
-        keep_cols_2.extend([selected_class])
-        predictions_df = predictions_df[keep_cols_2]
-
-        predictions_df = predictions_df.sort_values([selected_class], ascending=False)
-    else:
-        keep_cols = ["id"]
-        keep_cols.extend([selected_class])
-        predictions_df = predictions_df[keep_cols]
+    keep_cols = ["id"]
+    keep_cols.extend([selected_class])
+    predictions_df = predictions_df[keep_cols]
 
     predictions_df = predictions_df[predictions_df[selected_class] > cutoff_proba]
     predictions_df = predictions_df.sort_values([selected_class], ascending=False)
@@ -328,7 +333,6 @@ def get_top_predictions(selected_class, fitted_classifier, sparse_vectorized_cor
     if verbose:
         print(">> get_top_predictions > predictions_df :")
         print(predictions_df.head(top))
-
 
     filter_list = predictions_df.head(top)["id"].values
     top_texts = filter_all_texts(texts_list, filter_list, exclude_already_labeled=False)
@@ -344,22 +348,18 @@ def score_predictions(predictions_df):
     all_scores_num_non_zero = []
     all_scores_std = []
     for prediction in prediction_values:
-        # print("prediction :", prediction)
         score_std = np.std(prediction)
         all_scores_std.append(score_std)
-
-        # score_max = np.max(prediction)
-        # score_min = np.min(prediction)
         score_num_non_zero = len([x for x in prediction if x > 0.0])
         all_scores_num_non_zero.append(score_num_non_zero)
 
     all_score_combined = np.array(all_scores_std) / np.array(all_scores_num_non_zero)
 
-    return all_score_combined # all_scores_std, all_scores_num_non_zero # prediction_values # None # scored_predictions
+    return all_score_combined
 
 
-def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids,
-                        tweet_data_df, top=5, fat_df=True,
+def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
+                        top=5,
                         y_classes=["earthquake", "fire", "flood", "hurricane"],
                         verbose=False,
                         round_to=2,
@@ -372,16 +372,12 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
     predictions_df.columns = y_classes
     predictions_df["id"] = corpus_text_ids
 
-    predictions_df = predictions_df.merge(tweet_data_df, left_on="id", right_on="tweet_id")
+    texts_list_df = pd.DataFrame(texts_list)
+    predictions_df = predictions_df.merge(texts_list_df, left_on="id", right_on="id")
 
-    if fat_df:
-        keep_cols = ["id", "event_type", "tweet_text"]
-        keep_cols.extend(y_classes)
-        predictions_df = predictions_df[keep_cols]
-    else:
-        keep_cols = ["id", "tweet_text"]
-        keep_cols.extend(y_classes)
-        predictions_df = predictions_df[keep_cols]
+    keep_cols = ["id", "text"]
+    keep_cols.extend(y_classes)
+    predictions_df = predictions_df[keep_cols]
 
     if round_to and not format_as_percentage:
         predictions_df[y_classes] = predictions_df[y_classes].round(round_to)
@@ -390,8 +386,9 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
     predictions_df["pred_scores"] = pred_scores
 
     if format_as_percentage:
-        print(">> get_all_predictions > predictions_df.head() :")
-        print(predictions_df.head(top))
+        if verbose:
+            print(">> get_all_predictions > predictions_df.head() :")
+            print(predictions_df.head(top))
         predictions_df[y_classes] = predictions_df[y_classes]\
             .astype(float)\
             .applymap(lambda x: "{0:.0%}".format(x))
@@ -404,10 +401,9 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
         print(">> get_all_predictions > predictions_df.tail() :")
         print(predictions_df.tail(top))
 
-    keep_cols = ["id", "tweet_text"]
+    keep_cols = ["id", "text"]
     keep_cols.extend(y_classes)
     top_texts = predictions_df.head(top)[keep_cols]\
-        .rename(columns={"tweet_text": "text"})\
         .to_dict("records")
 
     similar_texts.clear()
@@ -417,9 +413,6 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
 
 
 def get_similarities_single_record(similarities_df, corpus_text_id):
-    # keep_indices = [x for x in similarities_df.index.values if x not in [corpus_text_id]]
-    # similarities = similarities_df.filter(keep_indices, axis=0)[corpus_text_id].sort_values(ascending=False)
-
     keep_indices = [x for x in similarities_df.index.values if x not in [corpus_text_id]]
     similarities = similarities_df[corpus_text_id]
     similarities = similarities.filter(keep_indices)
@@ -428,17 +421,19 @@ def get_similarities_single_record(similarities_df, corpus_text_id):
     return similarities
 
 
-def get_top_similar_texts(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, similar_texts=[]):
+def get_top_similar_texts(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, verbose=True,
+                          similar_texts=[]):
 
     if exclude_already_labeled:
         all_texts_df = pd.DataFrame.from_dict(all_texts_json)
         similarities_df = pd.DataFrame(similarities_series).reset_index().rename(columns={0: "proba", "index": "id"})
 
-        print(">> get_top_similar_texts > similarities_df :")
-        print(similarities_df.head())
+        if verbose:
+            print(">> get_top_similar_texts > similarities_df :")
+            print(similarities_df.head())
 
-        print(">> all_texts_df > all_texts_df :")
-        print(all_texts_df.head())
+            print(">> all_texts_df > all_texts_df :")
+            print(all_texts_df.head())
 
         similarities_df = similarities_df.merge(all_texts_df, left_on="id", right_on="id")
         similarities_df = similarities_df[similarities_df["label"].isin(["-"])]
@@ -451,6 +446,10 @@ def get_top_similar_texts(all_texts_json, similarities_series, top=5, exclude_al
         filter_list = similarities_series.head(top).index.values
 
     top_texts = filter_all_texts(all_texts_json, filter_list, exclude_already_labeled=False)
+
+    if verbose:
+        print(">> all_texts_df > len(top_texts) :", len(top_texts))
+
     similar_texts.clear()
     similar_texts.extend(top_texts)
 
@@ -495,7 +494,7 @@ if __name__ == "__main__":
     start_time = datetime.now()
     print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
 
-    consolidated_disaster_tweet_data_df = get_demo_data()
+    consolidated_disaster_tweet_data_df = get_disaster_tweet_demo_data()
     # print("consolidated_disaster_tweet_data_df :")
     # print(consolidated_disaster_tweet_data_df.head())
     #
@@ -508,6 +507,16 @@ if __name__ == "__main__":
     # print("all_texts_json :")
     # print(all_texts_json[:5])
     # print()
+
+    search_term = "hurrican earthquake"
+    search_results = search_all_texts(all_text=all_texts_json, search_term=search_term,
+                                      exclude_already_labeled=False,
+                                      behavior="conjunction", # disjunction conjunction
+                                      all_upper=False)
+    print("len(search_results) :", len(search_results))
+    print("search_results :")
+    print(search_results[:5])
+    print()
 
     # print("type(all_texts_adj) :")
     # print(type(all_texts_adj))
@@ -547,7 +556,7 @@ if __name__ == "__main__":
 
     print("vectorized_corpus.shape :", vectorized_corpus.shape)
     print("type(vectorized_corpus) :", type(vectorized_corpus))
-    vectorized_corpus_df = pd.DataFrame.sparse.from_spmatrix(vectorized_corpus, columns=vectorizer.get_feature_names())
+    vectorized_corpus_df = pd.DataFrame.sparse.from_spmatrix(vectorized_corpus, columns=vectorizer.get_feature_names_out())
     print("vectorized_corpus_df.shape :", vectorized_corpus_df.shape)
     # print("vectorized_corpus_df.head ")
     # print(vectorized_corpus_df.head)
@@ -609,7 +618,9 @@ if __name__ == "__main__":
 
     # ********************************************************************************************************
     temp_start_time = datetime.now()
-    ml_test_tweet_data_df = get_demo_data(number_samples=100, filter_data_types=["dev"], random_state=2584)
+    ml_test_tweet_data_df = get_disaster_tweet_demo_data(number_samples=100,
+                                                         filter_data_types=["dev"],
+                                                         random_state=2584)
     # print("ml_test_tweet_data_df :")
     # print(ml_test_tweet_data_df.head())
 
@@ -633,11 +644,13 @@ if __name__ == "__main__":
                                       fitted_classifier=fitted_classifier,
                                       sparse_vectorized_corpus=vectorized_corpus,
                                       corpus_text_ids=corpus_text_ids,
-                                      tweet_data_df=consolidated_disaster_tweet_data_df,
                                       texts_list=all_texts_json,
                                       top=5,
                                       cutoff_proba=0.8,
-                                      fat_df=True,
+
+                                      # tweet_data_df=consolidated_disaster_tweet_data_df,
+                                      # fat_df=True,
+
                                       y_classes=y_classes,
                                       verbose=True,
                                       exclude_already_labeled=True,
@@ -649,9 +662,10 @@ if __name__ == "__main__":
     predictions_all = get_all_predictions(fitted_classifier=fitted_classifier,
                                           sparse_vectorized_corpus=vectorized_corpus,
                                           corpus_text_ids=corpus_text_ids,
-                                          tweet_data_df=consolidated_disaster_tweet_data_df,
+                                          texts_list=all_texts_json,
+                                          # tweet_data_df=consolidated_disaster_tweet_data_df,
+                                          # fat_df=True,
                                           top=5,
-                                          fat_df=True,
                                           y_classes=y_classes,
                                           verbose=False,
                                           similar_texts=[])
