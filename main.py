@@ -34,6 +34,8 @@ def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
         vectorized_corpus = \
             vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"])
+        print("vectorized_corpus.shape :", vectorized_corpus.shape)
+
         if shuffle_by == "kmeans":
             kmeans = KMeans(n_clusters=len(y_classes), random_state=config.RND_STATE).fit(vectorized_corpus)
             kmeans_labels = kmeans.labels_
