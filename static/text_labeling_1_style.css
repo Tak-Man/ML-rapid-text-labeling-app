@@ -33,19 +33,18 @@ div {
     background-color: #ffcb05;
     grid-area: gridTop1;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    /*padding: var(--main-padding);*/
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
     display: flex;
     flex-direction: column;
-
     position: relative;
 }
 
 #currentText {
     width: 98%;
-    height: 82%;
+    height: 89.5%;
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
@@ -53,20 +52,15 @@ div {
     vertical-align: middle;
     /*position: relative;*/
     /*margin: auto;*/
-    margin-top: 8.5vh;
-
+    margin: 0 auto;
+    margin-top: 6.4vh;
     position: absolute;
+    padding-left: 0.2vw;
 }
 
-#summarySectionBody, #difficultTextsBody {
-    /*margin-top: 24px;*/
-    align: center;
-    height: 100%;
-    /*border-radius: var(--main-radius);*/
-}
 
 #currentTextBody {
-    /*border-radius: var(--main-radius);*/
+    border-radius: var(--main-radius);
     padding: var(--main-padding);
     background-color: white;
     height: 85%;
@@ -74,13 +68,11 @@ div {
 
     white-space: normal;
     overflow-wrap: break-word;
-
-
 }
 
 #currentTextBody, #group1Message, #group2Message, #group3Message {
     width: 97%;
-    margin: 2px;
+    /*margin: 2px;*/
     padding-left: 0.6vw;
     font-family: sans-serif;
     font-weight: 200;
@@ -90,8 +82,10 @@ div {
 }
 
 #divLabelButtonSingle {
-    width: 100%;
+    width: 99%;
     margin-top: 5.5vh;
+    margin: auto;
+
 }
 
 #labelButtonSingle {
@@ -99,6 +93,7 @@ div {
     display: flex;
     justify-content: center;
     font-size: 0.75vw;
+    margin: auto;
 }
 
 #gridTop0 {
@@ -111,32 +106,31 @@ div {
     color: #0d57aa;
     display: flex;
     flex-direction: column;
-
     position: relative;
 }
 
 #labelRadioSelection {
     align: center;
-    width: 90%;
-    height: 70%;
+    width: 92%;
+    height: 84%;
     background-color: white;
     font-family: sans-serif;
     font-weight: 600;
     font-size: 0.90vw;
     text-align: left;
     color: #808080;
-    /*border-radius: var(--main-radius);*/
-    padding: var(--main-padding);
+    border-radius: var(--main-radius);
+    padding-left: 0.25vw;
     margin: auto;
-    margin-top: 8.5vh;
-
+    margin-top: 6.0vh;
     position: absolute;
 }
-
 
 #labelMessage {
     white-space: normal;
     overflow-wrap: break-word;
+    font-weight: 600;
+    font-size: 0.65vw;
 }
 
 #gridBottomLeft {
@@ -144,7 +138,6 @@ div {
     grid-area: gridBottomLeft;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-
     display: flex;
     flex-direction: column;
 }
@@ -161,56 +154,85 @@ div {
     font-weight: 200;
     font-size: 0.65vw;
     text-align: left;
-
     margin: auto;
-
 }
 
 #allTextTableNextButtons {
-    display: inline-block;
     padding-right: 0.1vw;
     padding-left: 0.1vw;
     margin-top: 1px;
-    margin-bottom: 1px;
+    padding-bottom: 0.2vh;
     font-size: 0.65vw;
     float: right;
 }
 
 #divSearchTexts {
-    padding-bottom: 0.1vh;
-    display: inline-block;
+    padding-top: 0.75vh;
+    padding-bottom: 0.85vh;
 }
 
-#searchAllTexts {
+#divSearchInput {
+    /*display: inline-block;*/
+    float: left;
+    padding-left: 0.5vw;
+}
+
+#labelSearchAllTextsInclude, #labelSearchAllTextsExclude {
+    font-family: sans-serif;
+    color: #0d57aa;
+    font-weight: 600;
+    text-align: right;
+    margin-left: 0;
+}
+
+#labelSearchAllTextsExclude {
+    padding-left: 2.5vw;
+}
+
+#searchAllTextsInclude {
     background-image: url('/css/searchicon.png');
     background-repeat: no-repeat;
-    width: 30%;
-    float: left;
-    padding-left: 0.65vw;
+    width: 10vw;
+}
+
+#searchAllTextsExclude {
+    background-image: url('/css/searchicon.png');
+    background-repeat: no-repeat;
+    width: 10vw;
 }
 
 #searchAllTextsButton {
-    padding:left: 15.0vw;
-    float: left;
-    display: inline-block;
     font-size: 0.65vw;
     font-family: sans-serif;
+    width: 3.0vw;
+}
+
+#divSearchTextMessage {
+    /*display: inline-block;*/
+    margin-top: 0.25vh;
+    width: 33.75vw;
+    float: left;
+    font-weight: 600;
+    text-align: right;
 }
 
 #searchTextsMessage {
     font-size: 0.80vw;
     font-family: sans-serif;
-    font-weight: 400;
+    font-weight: 600;
     text-align: right;
     padding-left: 1.65vw;
     color: #0d57aa;
-    display: inline-block;
+    /*display: inline-block;*/
 }
 
 #clearSearchButton {
-    display: inline-block;
+    /*display: inline-block;*/
     font-size: 0.65vw;
     font-family: sans-serif;
+    float: right;
+    margin-left: 0.5vw;
+    width: 3.0vw;
 }
 
 #similarTexts1Buttons, #similarTexts2Buttons {
@@ -218,7 +240,7 @@ div {
     padding-right: 0.65vw;
     padding-left: 0.65vw;
     margin-top: 1.5%;
-    /*margin-bottom: 1px;*/
+    padding-bottom: 0.2vh;
     font-size: 0.65vw;
     color: #0d57aa; /*alt_blue*/
     min-height: 1.95vh;
@@ -337,10 +359,11 @@ h2 {
 
 #recommendedText1, #recommendedText2 {
     /*border-radius: var(--main-radius);*/
-    width: 99%;
+    width: 100%;
     height: 100%;
     /*vertical-align: middle;*/
     display: flex;
+    padding-left: 0.05vw;
 }
 
 /*
@@ -353,16 +376,31 @@ h2 {
     color: #808080;
 }
 */
+#divDifficultTextsTable {
+    /*width: 60%;*/
+}
 
-
-#divGroup1Table, #divGroup2Table, #divDifficultTextsTable {
+#divGroup1Table, #divGroup2Table {
     background-color: white;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     min-width: 100px;
-    min-height: 90%;
-    max-height: 90%;
-    height: 90%
+    min-height: 91%;
+    max-height: 91%;
+    height: 91%
+    margin-top: 0.5vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divDifficultTextsTable {
+    background-color: white;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-width: 100px;
+    min-height: 100%;
+    max-height: 100%;
+    height: 100%
     margin-top: 0.25vh;
     white-space: normal;
     overflow-wrap: break-word;
@@ -373,12 +411,12 @@ h2 {
     overflow-y: auto;
     overflow-x: hidden;
     min-width: 100px;
-    min-height: 79%;
-    max-height: 79%;
-    height: 79%
-    margin-top: 0.25vh;
+    min-height: 79.25%;
+    max-height: 79.25%;
+    height: 79.25%
     white-space: normal;
     overflow-wrap: break-word;
+    margin-top: 0.5vh;
 }
 
 #group1Table, #group2Table, #difficultTextsTable {
@@ -401,27 +439,22 @@ h2 {
     margin-top: 0.5vh;
 }
 
-#divGroup1Button, #divGroup2Button {
-    width: 100%;
+#divGroup1Button, #divGroup2Button, #labelSearchTextsButton  {
+    width: 99%;
+    margin: auto;
     margin-top: 0.5vh;
-
 }
 
 #group1Button, #group2Button, #generateDifficultTextsButton {
-    width: 100%;
     display: flex;
     justify-content: center;
     font-size: 0.75vw;
+    width: 100%;
 }
 
- #difficultTextsBody {
-    height: 100%;
-    vertical-align: middle;
-    margin: 0 auto;
-}
+
 
 #recommendedTextBody1, #recommendedTextBody2 {
-
     margin: 0 auto;
     margin-left: 0.25vh;
     width: 100%;
@@ -429,16 +462,13 @@ h2 {
 
 #gridBottomRight1 {
     grid-area: gridBottomRight1;
-
-    display: flex;
+    /*display: flex;*/
     /*flex-direction: column;*/
-
     /*position: absolute;*/
 }
 
 #gridBottomRight2 {
     grid-area: gridBottomRight2;
-
     display: flex;
     flex-direction: column;
 }
@@ -447,12 +477,9 @@ h2 {
     background-color: #ffcb05; /*yellow*/
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-    height: 100.0%;
-
-
 }
 
-#summarySection, #difficultTexts {
+#summarySection {
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa; /*blue*/
@@ -461,36 +488,82 @@ h2 {
     margin: 0 auto;
 }
 
-/*
-#summarySectionBody {
-
+#difficultTexts {
     font-family: sans-serif;
-    font-weight: 200;
-    font-size: 16px;
     text-align: left;
-    width: 48%;
+    color: #0d57aa; /*blue*/
     height: 100%;
-    background-color: white;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    color: #0d57aa;
-    height: 100%;
-} */
+    width: 99%;
+}
+
+#difficultTextsBodyHeading {
+    /*width: 68%;
+    float: left;
+    display: inline-block;*/
+    width: 100%;
+}
 
 #difficultTextsBody {
+    /*grid-area: grid3;*/
     font-family: sans-serif;
     font-weight: 200;
     text-align: left;
-    width: 100%;
-    background-color: white;
-    /*border-radius: var(--main-radius);*/
-    padding: var(--main-padding);
     color: #0d57aa;
-    height: 78%;
-    min-width: 100px;
-    /*position: relative;*/
-    margin: auto;
-    /*margin-top: 5%;*/
+    background-color: green; /*white;*/
+    /*border-radius: var(--main-radius);*/
+    /*padding: var(--main-padding);*/
+    /*width: 68%;
+    margin-left: 0.2vw;*/
+    /*float: left;
+    display: inline-block;*/
+}
+
+
+#difficultTextSummaryHeading {
+    /*grid-area: grid2;*/
+    /*display: inline-block;
+    margin-left: 0.5vw;*/
+}
+
+#difficultTextSummary {
+    /*grid-area: grid4;*/
+    font-family: sans-serif;
+    font-weight: 200;
+    text-align: left;
+    color: #0d57aa;
+    background-color: white;
+
+    /*height: 79%;
+    display: inline-block;
+    margin-left: 0.5vw;*/
+
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divDifficultTextsButtons1 {
+    /*grid-area: grid5;*/
+    /*padding-top: 0.5vh;
+    margin-left: 0.1vw;*/
+
+}
+
+.grid-container {
+    display: grid;
+}
+
+#difficultTextsGrid {
+    /*display: grid;*/
+    grid-template-columns: 75% 25%;
+    grid-template-rows: 5% 83.5% 10%;
+    /*grid-template-areas:
+        "grid1 grid2"
+        "grid3 grid4"
+        "grid5 grid5;*/
+    grid-gap: 1.25%;
+    height: 95.5%;
+    width: 100%;
+    padding-left: 0.1vw;
 }
 
 #summarySectionBody {
@@ -503,8 +576,37 @@ h2 {
     min-width: 100px;
     position: relative;
     margin: 0 auto;
-    margin-top: 0.1vh;
+    /*margin-top: 0.525vh;*/
     /*position: relative;*/
+    align: center;
+}
+
+#difficultTextSummaryTable {
+    font-size: 0.65vw;
+    font-family: sans-serif;
+    font-weight: 600;
+    color: #808080; /*grey*/
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: normal;
+    overflow-wrap: break-word;
+    margin-top: 0.65vh;
+}
+
+difficultTextSummaryTable td {
+    padding-right: 3.0vw;
+    padding-left: 80.25vw;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#difficultTextMessage {
+    font-size: 0.65vw;
+    font-family: sans-serif;
+    color: #808080; /*grey*/
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding: 0.65vw;
 }
 
 #summarySectionTable {
@@ -515,7 +617,7 @@ h2 {
     padding-left: 0.5vw;
     padding-top : 0.5vw;
     padding-bottom : 0px;
-    font-size: 0.75vw;
+    font-size: 0.65vw;
     font-family: sans-serif;
     font-weight: 200;
     color: #808080; /*grey*/
@@ -526,8 +628,8 @@ h2 {
 }
 
 #summarySectionTable td {
-    padding-right: 45px;
-    padding-left: 8px;
+    padding-right: 3.0vw;
+    padding-left: 0.25vw;
 }
 
 /*#summarySectionTable2 {
@@ -541,21 +643,23 @@ h2 {
     margin-left: 2%;
 }
 
-#divDifficultTextsButtons {
-    margin: auto;
-    margin-top: 0.5%;
-    width: 100%;
-}
 
-#exportRecordsButton, #generateDifficultTextsButton {
+
+#generateDifficultTextsButton, #labelAllButton {
     /*position: absolute;
     bottom: 0;*/
     /*margin-bottom: 2.5%;*/
-
-    width: 100%;
     display: flex;
     justify-content: center;
     font-size: 0.75vw;
+    width: 100%;
+}
+
+#exportRecordsButton {
+    display: flex;
+    justify-content: center;
+    font-size: 0.75vw;
+    width: 100%;
 }
 
 #divBodyRight {
@@ -581,7 +685,6 @@ body {
     height: 95%;
     background-color: #c2c4c6;
 }
-
 
 
 .container {

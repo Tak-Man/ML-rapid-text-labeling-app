@@ -110,7 +110,7 @@
                     <input name="selected_text" type="hidden" value="{{ selected_text }}">
                     <input name="page_number" type="hidden" value="{{ page_number }}">
 
-                    <div id="labelMessage"><p>{{ info_message }}</p></div>
+                    <div id="labelMessage"><p>Info : {{ info_message }}</p></div>
                 </form>
             </div>
             <div id="labelAddCategory"></div>
@@ -190,7 +190,8 @@
                                                                  selected_text_id=text_group_record_1['id'],
                                                                  selected_text=text_group_record_1['text'],
                                                                  label_selected=label_selected,
-                                                                 page_number=page_number) }}">
+                                                                 page_number=page_number,
+                                                                 app_section='similar_texts') }}">
                                                 {{ text_group_record_1['id'] }}
                                             </a>
                                         </td>
@@ -287,7 +288,8 @@
                                                                  selected_text_id=text_group_record_2['id'],
                                                                  selected_text=text_group_record_2['text'],
                                                                  label_selected=label_selected,
-                                                                 page_number=page_number) }}">
+                                                                 page_number=page_number,
+                                                                 app_section='recommended_texts') }}">
                                                 {{ text_group_record_2['id'] }}
                                             </a>
 
@@ -334,35 +336,45 @@
         <div id="gridBottomLeft">
             <div id="allTexts"><h2>All Texts</h2></div>
             <div id="divSearchTexts">
-                <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
-                    <input type="text" id="searchAllTexts" name="search_term" placeholder="Search for texts..">
-                    <input id="searchAllTextsButton" type="submit" value="Submit">
-                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
-                    <input name="page_number" type="hidden" value="{{ page_number }}">
-                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
-                </form>
-                <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
-                    <b id="searchTextsMessage">{{ search_message }}</b>
-                    <input id="clearSearchButton" type="submit" value="Clear">
-                    <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
-                    <input name="page_number" type="hidden" value="{{ page_number }}">
-                    <input name="label_selected" type="hidden" value="{{ label_selected }}">
-                </form>
+                <div id="divSearchInput">
+                    <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
+                        <label id="labelSearchAllTextsInclude" for="searchAllTextsInclude">Include: </label>
+                        <input type="text" id="searchAllTextsInclude" name="include_search_term" placeholder="Search for texts..">
+                        <label id="labelSearchAllTextsExclude" for="searchAllTextsExclude">Exclude: </label>
+                        <input type="text" id="searchAllTextsExclude" name="exclude_search_term" placeholder="Search for texts..">
+                        <input id="searchAllTextsButton" type="submit" value="Submit">
+                        <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                        <input name="page_number" type="hidden" value="{{ page_number }}">
+                        <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    </form>
+                </div>
+                <br>
+                <div id="divSearchTextMessage">
+                    <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
+                        <b id="searchTextsMessage">{{ search_message }}</b>
+                        <input id="clearSearchButton" type="submit" value="Clear">
+                        <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                        <input name="page_number" type="hidden" value="{{ page_number }}">
+                        <input name="label_selected" type="hidden" value="{{ label_selected }}">
+                    </form>
+                </div>
             </div>
-
-
             <div id="allTextTableNextButtons">
                 <a href="{{ url_for('go_to_page',
                                      page_number=0,
-                                     label_selected=label_selected) }}" method="POST">first
+                                     label_selected=label_selected,
+                                     app_section='all_texts',
+                                     selection='first_page') }}" method="POST">first
                     <input name="page_number" type="hidden" value=0>
                 </a>
                 {% if page_number > 0 %}
                     <a href="{{ url_for('go_to_page',
                                          page_number=page_number - 1,
-                                         label_selected=label_selected) }}" method="POST">&laquo;
+                                         label_selected=label_selected,
+                                         app_section='all_texts',
+                                         selection='previous_page') }}" method="POST">&laquo;
                         <input name="page_number" type="hidden" value={{ page_number - 1}}>
                     </a>
                 {% else %}
@@ -374,7 +386,9 @@
                 {% if page_number < (total_pages - 1) %}
                     <a href="{{ url_for('go_to_page',
                                          page_number=page_number + 1,
-                                         label_selected=label_selected) }}" method="POST">&raquo;
+                                         label_selected=label_selected,
+                                         app_section='all_texts',
+                                         selection='next_page') }}" method="POST">&raquo;
                         <input name="page_number" type="hidden" value={{ page_number + 1}}>
                     </a>
                 {% else %}
@@ -382,7 +396,9 @@
                 {% endif %}
                 <a  href="{{ url_for('go_to_page',
                                      page_number=total_pages - 1,
-                                     label_selected=label_selected) }}" method="POST">last
+                                     label_selected=label_selected,
+                                     app_section='all_texts',
+                                     selection='last_page') }}" method="POST">last
                     <input name="page_number" type="hidden" value={{ total_pages - 1 }}>
                 </a>
             </div>
@@ -409,7 +425,8 @@
                                                     page_number=page_number,
                                                     texts_list=texts_list,
                                                     texts_group_1=texts_group_1,
-                                                    texts_group_2=[]) }}">
+                                                    texts_group_2=[],
+                                                    app_section='all_texts') }}">
                                     <input name="page_number" type="hidden" value="{{ page_number }}">
                                     {{ text_record['id'] }}
                                 </a>
@@ -421,58 +438,22 @@
 
                         {% endfor %}
                     {% else %}
-
                         <tr>
                             <td>
                                 <a methods="POST"
                                    href="{{ url_for('text_labeling',
-                                                    selected_text_id='12547885616465',
-                                                    selected_text='The quick brown fox jumped over the lazy dog.') }}">
-                                    12547885616465
-                                </a>
-
-                            </td>
-                            <td>"The quick brown fox jumped over the lazy dog."</td>
-                            <td>"-"</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <a methods="POST"
-                                   href="{{ url_for('text_labeling',
-                                                    selected_text_id='0047885616465',
-                                                    selected_text='It was the best of times, it was the worst of times,
-                                                                   it was the age of wisdom,
-                                                                   it was the age of foolishness, it was the epoch of belief,
-                                                                   it was the epoch of
-                                                                   incredulity, it was the season of light,
-                                                                   it was the season of darkness, it was the
-                                                                   spring of hope, it was the winter of despair.')  }}">
-                                    0047885616465
+                                                    selected_text_id='00000000000000000',
+                                                    selected_text='No results do display. If you are
+                                                    searching for texts, try fewer search terms')  }}">
+                                    00000000000000000
                                 </a>
 
                             </td>
 
-                            <td>"It was the best of times, it was the worst of times, it was the age of wisdom,
-                                it was the age of foolishness, it was the epoch of belief, it was the epoch of
-                                incredulity, it was the season of light, it was the season of darkness, it was the
-                                spring of hope, it was the winter of despair."</td>
-                            <td>"-"</td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <a methods="POST"
-                                   href="{{ url_for('text_labeling',
-                                                    selected_text_id='00000000616465',
-                                                    selected_text='Call me Ishmael. Some years ago--never mind how long
-                                                                    precisely--having little or no
-                                                                    money in my purse, and nothing particular
-                                                                    to interest me on shore') }}">
-                                    00000000616465
-                                </a>
-                            </td>
-                            <td>"Call me Ishmael. Some years ago--never mind how long precisely--having little or no
-                                money in my purse, and nothing particular to interest me on shore"</td>
-                            <td>"-"</td>
+                            <td>No results do display. If you are searching for texts, try fewer search terms.
+                                Search results are case-insensitive.
+                                Also, no spelling correction is done on search terms.</td>
+                            <td>-</td>
                         </tr>
                     {% endif %}
                     </tbody>
@@ -480,70 +461,155 @@
 
                 </table>
             </div>
+            <form id="formSearchTextsButton" action="{{ url_for('grouped_search_texts') }}" method="POST">
+                <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                <input name="page_number" type="hidden" value="{{ page_number }}">
+                <input name="search_results_length" type="hidden" value="{{ search_results_length }}">
+                <input id="selected_label_search_texts"
+                       name="selected_label_search_texts"
+                       type="hidden"
+                       value="{{ label_selected }}">
+                {% if label_selected is defined %}
+                {% if search_results_length > 0 %}
+                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}' ({{ search_results_length }} texts)">
+                {% else %}
+                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}'">
+                {% endif %}
+                {% else %}
+                <input id="labelSearchTextsButton" type="submit" value="Label Group">
+                {% endif %}
+            </form>
         </div>
         <div id="gridBottomRight1">
             <div id="difficultTexts"><h2>Difficult Texts</h2>
-                <p class="subHeading">
-<!--                    These texts were difficult to assign to a label.-->
-                    Try labeling some of these texts to improve recommendations
-                </p>
-                <div id="difficultTextsBody">
-                    <div id="divDifficultTextsTable">
-                            {% if texts_group_3 is defined and texts_group_3|length > 0 %}
-                            <table id="difficultTextsTable" class="fixed_headers">
-                                <thead>
-                                    <tr>
-                                        <th>Text ID</th>
-                                        <th>Text</th>
-                                        {% for class in y_classes %}
-                                        <th>{{ class }}</th>
-                                        {% endfor %}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for text_group_record_3 in texts_group_3 %}
-                                    <tr>
-                                        <td>
-                                            <a methods="POST"
-                                               href="{{ url_for('text_labeling',
-                                                                 selected_text_id=text_group_record_3['id'],
-                                                                 selected_text=text_group_record_3['text'],
-                                                                 label_selected=label_selected,
-                                                                 page_number=page_number) }}">
-                                                {{ text_group_record_3['id'] }}
-                                            </a>
+                <div id="difficultTextsGrid" class="grid-container">
+                    <div id="difficultTextsBodyHeading" class="grid-item">
+                        <p class="subHeading">
+                            Try labeling some of these texts to improve recommendations
+                        </p>
+                    </div>
+                    <div id="difficultTextSummaryHeading" class="grid-item">
+                        <p class="subHeading">
+                            Summary
+                        </p>
+                    </div>
+                    <div id="difficultTextsBody" class="grid-item">
+                        <div id="divDifficultTextsTable">
+                                {% if texts_group_3 is defined and texts_group_3|length > 0 %}
+                                <table id="difficultTextsTable" class="fixed_headers">
+                                    <thead>
+                                        <tr>
+                                            <th>Text ID</th>
+                                            <th>Text</th>
+                                            {% for class in y_classes %}
+                                            <th>{{ class }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for text_group_record_3 in texts_group_3 %}
+                                        <tr>
+                                            <td>
+                                                <a methods="POST"
+                                                   href="{{ url_for('text_labeling',
+                                                                     selected_text_id=text_group_record_3['id'],
+                                                                     selected_text=text_group_record_3['text'],
+                                                                     label_selected=label_selected,
+                                                                     page_number=page_number,
+                                                                     app_section='difficult_texts') }}">
+                                                    {{ text_group_record_3['id'] }}
+                                                </a>
 
-                                        </td>
-                                        <td>{{ text_group_record_3['text'] }}</td>
-                                        {% for class in y_classes %}
-                                        <td>{{ text_group_record_3[class] }}</td>
+                                            </td>
+                                            <td>{{ text_group_record_3['text'] }}</td>
+                                            {% for class in y_classes %}
+                                            <td>{{ text_group_record_3[class] }}</td>
+                                            {% endfor %}
+                                        </tr>
                                         {% endfor %}
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                             </table></br>
-                            {% else %}
-                            <div id="group3Message"></br>
-                                <p>
-                                    No difficult texts generated yet.
-                                </p>
+                                    </tbody>
+                                 </table></br>
+                                {% else %}
+                                <div id="group3Message"></br>
+                                    <p>
+                                        No difficult texts generated yet.
+                                    </p>
+                                </div>
+                                {% endif %}
                             </div>
+                    </div>
+                    <div id="difficultTextSummary" class="grid-item">
+                        {% if recommendations_summary is defined and recommendations_summary|length > 0 %}
+                        <table id="difficultTextSummaryTable">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% if overall_quality_score is defined %}
+                                <tr>
+                                    <td><b>Overall Quality Score</b></td>
+                                    <td>{{ overall_quality_score }}</td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
                             {% endif %}
+<!--                                <tr>-->
+<!--                                    <td><b><u>Label</u></b></td>-->
+<!--                                    <td><b><u>Avg. Confidence</u></b></td>-->
+<!--                                </tr>-->
+<!--                            {% for recommendations_summary_item in recommendations_summary %}-->
+<!--                                <tr>-->
+<!--                                    <td><b>{{ recommendations_summary_item["label"] }}</b></td>-->
+<!--                                    <td>{{ recommendations_summary_item["avg_confidence"] }}</td>-->
+<!--                                </tr>-->
+<!--                            </tbody>-->
+
+<!--                            {% endfor %}-->
+
+                        </table>
+                        <div id="difficultTextMessage">
+                            Make sure that at least 1,000 examples for each label are assigned.
+                            Then, try to get an ‘Overall Quality Score’ close to 100%.<br>
+                            The ‘Overall Quality Score’ can be improved by examining the ‘Difficult Texts’.
+                            Texts that are difficult to separate into one label appear at the top of the
+                            ‘Difficult Texts’ table. If a text has a similar value for all labels, then the
+                            system cannot easily make a recommendation (a high percentage under one label
+                            indicates more confidence in the recommendation).
                         </div>
-                </div>
-                <div id="divDifficultTextsButtons">
-                    <form id="formDifficultTextsButtons" action="{{ url_for('generate_difficult_texts') }}" method="POST">
-                        <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
-                        <input name="page_number" type="hidden" value="{{ page_number }}">
-                        <input id="selected_label" name="selected_label" type="hidden"
-                                       value="{{ label_selected }}">
-                        <input id="generateDifficultTextsButton"
-                               type="submit"
-                               name="generate_difficult_texts_button" value="Generate Difficult Texts List">
-                    </form>
+                        {% endif %}
+                    </div>
+                    <div id="divDifficultTextsButtons1" class="grid-item">
+                        <form id="formDifficultTextsButtons" action="{{ url_for('generate_difficult_texts') }}" method="POST">
+                            <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                            <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                            <input name="page_number" type="hidden" value="{{ page_number }}">
+                            <input id="selected_label" name="selected_label" type="hidden"
+                                           value="{{ label_selected }}">
+                            <input id="generateDifficultTextsButton"
+                                   type="submit"
+                                   name="generate_difficult_texts_button" value="Generate Difficult Texts List">
+                        </form>
+                    </div>
+                    <div id="divDifficultTextsButtons2" class="grid-item">
+                        <form id="formLabelAll" action="{{ url_for('label_all') }}" method="POST">
+                            <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
+                            <input name="selected_text" type="hidden" value="{{ selected_text }}">
+                            <input name="page_number" type="hidden" value="{{ page_number }}">
+                            <input name="selected_label" type="hidden" value="{{ label_selected }}">
+                            <input id="labelAllButton"
+                                   type="submit"
+                                   name="label_all_texts_button" value="Label ALL Texts">
+                        </form>
+                    </div>
                 </div>
             </div>
+
         </div>
         <div id="gridBottomRight2">
             <div id="summarySection"><h2>Summary</h2>
@@ -625,6 +691,7 @@
                                 <td>0.0%</td>
                             </tr>
                             {% endif %}
+
                     </table>
                     </div>
                     <div id="divSummarySectionButtons">
@@ -633,7 +700,6 @@
                             <input id="exportRecordsButton" type="submit" name="export_records_button" value="Export Records">
                         </form>
                     </div>
-
                 </div>
             </div>
         </div>
