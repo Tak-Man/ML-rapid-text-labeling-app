@@ -308,7 +308,9 @@ def get_all_similarities_one_at_a_time(sparse_vectorized_corpus, corpus_text_ids
 def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled,
                    y_classes=["earthquake", "fire", "flood", "hurricane"],
                    verbose=False,
-                   classifier_list=[]):
+                   classifier_list=[],
+                   random_state=2584,
+                   n_jobs=-1):
     texts_list_labeled_df = pd.DataFrame.from_dict(texts_list_labeled)
 
     if verbose:
@@ -323,7 +325,7 @@ def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled
 
     if len(classifier_list) == 0:
         # clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, random_state=2584))
-        clf = SGDClassifier(loss="modified_huber", max_iter=1000, tol=1e-3, random_state=2584)
+        clf = SGDClassifier(loss="modified_huber", max_iter=1000, tol=1e-3, random_state=random_state, n_jobs=n_jobs)
     elif len(classifier_list) == 1:
         clf = classifier_list[0]
 

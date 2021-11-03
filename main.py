@@ -25,8 +25,6 @@ consolidated_disaster_tweet_data_df = utils.get_disaster_tweet_demo_data(number_
                                                                          random_state=config.RND_STATE)
 
 CORPUS_TEXT_IDS = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
-# print("type(vectorized_corpus) :", type(VECTORIZED_CORPUS))
-# print("vectorized_corpus.shape :", VECTORIZED_CORPUS.shape)
 
 
 def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
@@ -56,7 +54,7 @@ def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
     texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
     total_pages = len(texts_list_list)
 
-    return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus
+    return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer
 
 
 end_time = datetime.now()
@@ -73,7 +71,6 @@ def index():
 
 @app.route("/dataset_selected", methods=["GET"])
 def dataset_selected():
-    print("request.method :", request.method)
     dataset_name = request.args.get("dataset_name", None)
 
     if dataset_name == "Disaster Tweets Dataset":
@@ -82,15 +79,16 @@ def dataset_selected():
         config.SHUFFLE_BY.clear()
         config.SHUFFLE_BY.append("random")  # kmeans random
 
-        texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus = \
+        texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer = \
             load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by=config.SHUFFLE_BY[0],
                            table_limit=config.TABLE_LIMIT, texts_limit=config.TEXTS_LIMIT,
                            max_features=config.MAX_FEATURES,
                            y_classes=config.Y_CLASSES[0], rnd_state=config.RND_STATE)
 
         for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
-                                   config.TOTAL_PAGES, config.VECTORIZED_CORPUS],
-                                  [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus]):
+                                   config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST],
+                                  [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
+                                   vectorizer]):
             master.clear()
             master.append(update)
 
@@ -116,11 +114,8 @@ def dataset_selected():
 
 @app.route("/begin_labeling", methods=["POST"])
 def begin_labeling():
-    print("request.method :", request.method)
     dataset_name = request.args.get("dataset_name", None)
-    print("dataset_name :", dataset_name)
     selected_config = request.form.get("selected_config", None)
-    print("selected_config :", selected_config)
 
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
@@ -201,16 +196,12 @@ def text_labeling():
     selected_text = request.args.get("selected_text", None)
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
-    # print("selected_text_id :", selected_text_id)
-    # print("selected_text :", selected_text)
-    print("label_selected :", label_selected)
 
     click_record, guid = utils.generate_click_record(click_location=app_section,
                                                      click_type="text_id_selected",
                                                      click_object="link",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     # Group 1 ************************************************************************************
     similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -224,11 +215,11 @@ def text_labeling():
                                 exclude_already_labeled=config.GROUP_1_EXCLUDE_ALREADY_LABELED,
                                 verbose=config.SIMILAR_TEXT_VERBOSE,
                                 similar_texts=config.TEXTS_GROUP_1)
-    # print("len(TEXTS_GROUP_1) :", len(TEXTS_GROUP_1))
+
     # **********************************************************************************************
 
     # Group 2 ************************************************************************************
-    print("label_selected :", label_selected)
+
     if len(config.CLASSIFIER_LIST) > 0 and (label_selected is not None and label_selected != "" and label_selected != "None"):
         utils.get_top_predictions(selected_class=label_selected,
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
@@ -280,7 +271,6 @@ def go_to_page():
                                                      click_object="link",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     return render_template("text_labeling_1.html",
                            selected_text_id="None",
@@ -320,13 +310,11 @@ def single_text():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=new_label)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
     value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=new_id)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     if new_label is None or new_label == "" or new_id == "None":
         if new_label == "":
@@ -378,7 +366,6 @@ def single_text():
                                number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
 
         # Group 2 **************************************************************************************
-        # print("len(CLASSIFIER_LIST) :", len(CLASSIFIER_LIST))
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
                              texts_list_labeled=[new_obj],
@@ -386,7 +373,6 @@ def single_text():
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST)
 
-        # print("new_label :", new_label)
         if len(config.CLASSIFIER_LIST) > 0 and \
                 (new_label is not None and new_label != "" and new_label != "None"):
             utils.get_top_predictions(selected_class=new_label,
@@ -403,7 +389,6 @@ def single_text():
 
         # **********************************************************************************************
 
-        # print(f">> Testing - new_label-'{new_label}'")
         return render_template("text_labeling_1.html",
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
@@ -442,11 +427,9 @@ def grouped_1_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_group1)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     if (selected_label_group1 == "None") or (selected_label_group1 is None) or (selected_label_group1 == "") or \
             (len(config.TEXTS_GROUP_1) == 0):
@@ -483,7 +466,6 @@ def grouped_1_texts():
             obj["label"] = selected_label_group1
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
-        print("config.VALUE_LOG :", config.VALUE_LOG)
 
         utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
                                       sub_list_limit=config.TABLE_LIMIT,
@@ -498,7 +480,6 @@ def grouped_1_texts():
                                number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
 
         # Group 2 **************************************************************************************
-        # print("len(CLASSIFIER_LIST) :", len(CLASSIFIER_LIST))
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
                              texts_list_labeled=texts_group_1_updated,
@@ -560,11 +541,9 @@ def grouped_2_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_group2)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     info_message = ""
     if (selected_label_group2 is None) or (selected_label_group2 == "None") or (selected_label_group2 == "") or \
@@ -602,7 +581,6 @@ def grouped_2_texts():
             obj["label"] = selected_label_group2
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
-        print("config.VALUE_LOG :", config.VALUE_LOG)
 
         utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
                                       sub_list_limit=config.TABLE_LIMIT,
@@ -617,7 +595,6 @@ def grouped_2_texts():
                                number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
 
         # Group 2 **************************************************************************************
-        print("len(CLASSIFIER_LIST) :", len(config.CLASSIFIER_LIST))
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
                              texts_list_labeled=texts_group_2_updated,
@@ -666,22 +643,16 @@ def grouped_2_texts():
 
 @app.route("/label_all", methods=["POST"])
 def label_all():
-    print("config.CONFIRM_LABEL_ALL_TEXTS_COUNTS :", config.CONFIRM_LABEL_ALL_TEXTS_COUNTS)
-
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
     new_text = request.form["selected_text"]
-
     selected_label = request.form["selected_label"]
-    print("selected_label :", selected_label)
-    print()
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     if config.NUMBER_UNLABELED_TEXTS[0] == 0:
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
@@ -709,7 +680,6 @@ def label_all():
 
     if len(config.CLASSIFIER_LIST) > 0:
         if config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] == 0:
-            print("config.NUMBER_UNLABELED_TEXTS[0] :", config.NUMBER_UNLABELED_TEXTS[0])
             info_message = \
                 f"Are you sure that you want to auto-label the " \
                 f"remaining {config.NUMBER_UNLABELED_TEXTS[0]:,} texts?"
@@ -717,8 +687,6 @@ def label_all():
             temp_count = config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0]
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
-
-            print("config.CONFIRM_LABEL_ALL_TEXTS_COUNTS :", config.CONFIRM_LABEL_ALL_TEXTS_COUNTS)
 
             return render_template("text_labeling_1.html",
                                    selected_text_id=new_id,
@@ -750,8 +718,6 @@ def label_all():
             temp_count = config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0]
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
-
-            print("config.CONFIRM_LABEL_ALL_TEXTS_COUNTS :", config.CONFIRM_LABEL_ALL_TEXTS_COUNTS)
 
             return render_template("text_labeling_1.html",
                                    selected_text_id=new_id,
@@ -791,7 +757,6 @@ def label_all():
             for labeled_text_id in labeled_text_ids:
                 value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
                 utils.add_log_record(value_record, log=config.VALUE_LOG)
-            print("config.VALUE_LOG :", config.VALUE_LOG)
 
             utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
                                    first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -877,7 +842,6 @@ def export_records():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     download_files = []
 
@@ -896,6 +860,10 @@ def export_records():
     if len(config.CLASSIFIER_LIST) > 0:
         filename = "trained-classifier.sav"
         pickle.dump(config.CLASSIFIER_LIST[0], open("./output/" + filename, "wb"))
+        download_files.append("./output/" + filename)
+
+        filename = "fitted-vectorizer.sav"
+        pickle.dump(config.VECTORIZER_LIST[0], open("./output/" + filename, "wb"))
         download_files.append("./output/" + filename)
 
         filename = "labels.txt"
@@ -939,11 +907,9 @@ def label_selected():
                                                      click_object="radio_button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=label_selected)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     # Group 1 ************************************************************************************
     if selected_text_id == "None":
@@ -960,7 +926,6 @@ def label_selected():
                                     exclude_already_labeled=config.GROUP_1_EXCLUDE_ALREADY_LABELED,
                                     verbose=config.SIMILAR_TEXT_VERBOSE,
                                     similar_texts=config.TEXTS_GROUP_1)
-        # print("len(TEXTS_GROUP_1) :", len(TEXTS_GROUP_1))
     # **********************************************************************************************
 
     # Group 2 ************************************************************************************
@@ -1017,7 +982,6 @@ def generate_difficult_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     # Group 3 ************************************************************************************
     if len(config.CLASSIFIER_LIST) > 0:
@@ -1065,15 +1029,11 @@ def set_group_1_record_limit():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
 
-    print(f">> in 'set_group_1_record_limit' > request.method-{request.method}")
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
     selected_text = request.form.get("selected_text", None)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group1_table_limit", None))
-
-    print(f"selected_text-{selected_text}")
-    print(f"selected_text_id-{selected_text_id}, table_limit-{table_limit}")
 
     info_message = f"Set 'Similar Texts' display limit to {table_limit}"
     config.GROUP_1_KEEP_TOP.clear()
@@ -1084,10 +1044,8 @@ def set_group_1_record_limit():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
     value_record = utils.generate_value_record(guid=guid, value_type="table_limit", value=table_limit)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     # Group 1 ************************************************************************************
     if selected_text_id == "None":
@@ -1109,8 +1067,6 @@ def set_group_1_record_limit():
 
         end_test_time = datetime.now()
         duration = end_test_time - start_test_time
-        print(f">> In 'set_group_1_record_limit' > duration > 'similarities_series', 'get_top_similar_texts' > {duration}")
-
     # **********************************************************************************************
 
     return render_template("text_labeling_1.html",
@@ -1140,15 +1096,11 @@ def set_group_2_record_limit():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
 
-    print(f">> in 'set_group_2_record_limit' > request.method-{request.method}")
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
     selected_text = request.form.get("selected_text", None)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group2_table_limit", None))
-
-    print(f"selected_text-{selected_text}")
-    print(f"selected_text_id-{selected_text_id}, table_limit-{table_limit}")
 
     info_message = f"Set 'Similar Texts' display limit to {table_limit}"
     config.PREDICTIONS_NUMBER.clear()
@@ -1159,10 +1111,8 @@ def set_group_2_record_limit():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
     value_record = utils.generate_value_record(guid=guid, value_type="table_limit", value=table_limit)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     # Group 2 ************************************************************************************
     if len(config.CLASSIFIER_LIST) > 0:
@@ -1218,12 +1168,10 @@ def search_all_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
     value_record_1 = utils.generate_value_record(guid=guid, value_type="include_search_term", value=include_search_term)
     utils.add_log_record(value_record_1, log=config.VALUE_LOG)
     value_record_2 = utils.generate_value_record(guid=guid, value_type="exclude_search_term", value=exclude_search_term)
     utils.add_log_record(value_record_2, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     if len(include_search_term) > 0 or len(exclude_search_term) > 0:
         search_results = utils.search_all_texts(all_text=config.TEXTS_LIST_FULL[0],
@@ -1234,7 +1182,6 @@ def search_all_texts():
                                                 exclude_behavior="conjunction",
                                                 all_upper=True)
         search_results_length = len(search_results)
-        print("search_results_length :", search_results_length)
 
         if search_results_length > 0:
             config.SEARCH_RESULT_LENGTH.clear()
@@ -1242,8 +1189,6 @@ def search_all_texts():
 
             config.TEXTS_LIST.clear()
             config.TEXTS_LIST.append(search_results)
-            print("search_results :")
-            print(search_results[:5])
 
             search_results_list = \
                 [search_results[i:i + config.TABLE_LIMIT] for i in range(0, len(search_results), config.TABLE_LIMIT)]
@@ -1255,9 +1200,6 @@ def search_all_texts():
 
             config.TOTAL_PAGES.clear()
             config.TOTAL_PAGES.append(search_results_total_pages)
-
-            print("TOTAL_PAGES[0] :", config.TOTAL_PAGES[0])
-            print("TOTAL_PAGES_FULL[0] :", config.TOTAL_PAGES_FULL[0])
 
             info_message = f"Showing results Include-'{include_search_term}', Exclude-'{exclude_search_term}'"
             config.SEARCH_MESSAGE.clear()
@@ -1363,11 +1305,9 @@ def grouped_search_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_search_texts)
     utils.add_log_record(value_record, log=config.VALUE_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
 
     if (selected_label_search_texts == "None") or (selected_label_search_texts is None) \
             or (selected_label_search_texts == ""):
@@ -1396,12 +1336,11 @@ def grouped_search_texts():
 
     else:
         texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
-        print("texts_group_updated :", texts_group_updated[:3])
+
         for obj in texts_group_updated:
             obj["label"] = selected_label_search_texts
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
-        print("config.VALUE_LOG :", config.VALUE_LOG)
 
         utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
                                       sub_list_limit=config.TABLE_LIMIT,
@@ -1416,7 +1355,6 @@ def grouped_search_texts():
                                number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
 
         # Group 2 **************************************************************************************
-        # print("len(CLASSIFIER_LIST) :", len(CLASSIFIER_LIST))
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
                              texts_list_labeled=texts_group_updated,
@@ -1485,8 +1423,6 @@ def clear_search_all_texts():
     config.TOTAL_PAGES.clear()
     config.TOTAL_PAGES.append(config.TOTAL_PAGES_FULL[0])
 
-    print("TOTAL_PAGES[0] :", config.TOTAL_PAGES[0])
-
     config.SEARCH_RESULT_LENGTH.clear()
     config.SEARCH_RESULT_LENGTH.append(0)
 
@@ -1495,7 +1431,6 @@ def clear_search_all_texts():
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
 
     return render_template("text_labeling_1.html",
                            selected_text_id=selected_text_id,
