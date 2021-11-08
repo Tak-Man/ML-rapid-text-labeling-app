@@ -1,4 +1,4 @@
-,name,number,percentage
-0,Total Texts,"53,531",100.00%
-1,Total Unlabeled,"53,511",99.96%
-2,Total Labeled,20,0.04%
+name,number,percentage
+Total Texts,"53,531",100.00%
+Total Unlabeled,0,0.00%
+Total Labeled,"53,531",100.00%

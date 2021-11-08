@@ -164,7 +164,6 @@ def search_all_texts(all_text, include_search_term, exclude_search_term,
 
     if include_search_term and len(include_search_term) > 0:
         include_search_terms = include_search_term.split()
-        print(f"include_search_terms - '{include_search_terms}'")
         if all_upper:
             if include_behavior == "disjunction":
                 filtered_all_text_df = filtered_all_text_df[filtered_all_text_df["text"].astype(str).str.upper().apply(
@@ -182,7 +181,6 @@ def search_all_texts(all_text, include_search_term, exclude_search_term,
 
     if exclude_search_term and len(exclude_search_term) > 0:
         exclude_search_terms = exclude_search_term.split()
-        print(f"exclude_search_terms - '{exclude_search_terms}'")
         if all_upper:
             if exclude_behavior == "disjunction":
                 filtered_all_text_df = filtered_all_text_df[filtered_all_text_df["text"].astype(str).str.upper().apply(
@@ -224,11 +222,25 @@ def update_texts_list(texts_list, sub_list_limit, old_obj_lst=[], new_obj_lst=[]
     return updated_texts_list, updated_texts_list_list
 
 
-def update_texts_list_by_id(texts_list, sub_list_limit, updated_obj_lst=[], texts_list_list=[], update_in_place=True):
+def update_texts_list_by_id(texts_list, sub_list_limit, updated_obj_lst=[], texts_list_list=[],
+                            labels_got_overridden_flag=[],
+                            update_in_place=True):
     updated_texts_list_df = pd.DataFrame.from_dict(texts_list) # .copy()
 
     updated_obj_df = pd.DataFrame.from_dict(updated_obj_lst)
     update_ids = updated_obj_df["id"].values
+
+    labels_to_be_updated = \
+        list(set(updated_texts_list_df[updated_texts_list_df["id"].isin(update_ids)]["label"].values))
+    if len(labels_to_be_updated) > 1 or (len(labels_to_be_updated) == 1 and "-" not in labels_to_be_updated):
+        # "-" indicates an unlabeled text. So, if the labels_to_be_updated have anything other than "-"
+        # this indicates that already assigned labeled are going to be overridden.
+        overridden = True
+    else:
+        overridden = False
+    labels_got_overridden_flag.clear()
+    labels_got_overridden_flag.extend([overridden])
+
     if update_in_place:
         update_labels = list(set(updated_obj_df["label"].values))
         if len(update_labels) == 1:
@@ -248,7 +260,7 @@ def update_texts_list_by_id(texts_list, sub_list_limit, updated_obj_lst=[], text
         [updated_texts_list[i:i + sub_list_limit] for i in range(0, len(updated_texts_list), sub_list_limit)]
     texts_list_list.clear()
     texts_list_list.extend(updated_texts_list_list)
-    return updated_texts_list, updated_texts_list_list
+    return updated_texts_list, updated_texts_list_list, overridden
 
 
 def cosine_similarities(mat):
@@ -305,12 +317,14 @@ def get_all_similarities_one_at_a_time(sparse_vectorized_corpus, corpus_text_ids
     return similarities_series
 
 
-def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled,
+def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list, texts_list_labeled,
                    y_classes=["earthquake", "fire", "flood", "hurricane"],
                    verbose=False,
                    classifier_list=[],
                    random_state=2584,
-                   n_jobs=-1):
+                   n_jobs=-1,
+                   labels_got_overridden_flag=False,
+                   full_fit_if_labels_got_overridden=False):
     texts_list_labeled_df = pd.DataFrame.from_dict(texts_list_labeled)
 
     if verbose:
@@ -320,7 +334,6 @@ def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled
     ids = texts_list_labeled_df["id"].values
     y_train = texts_list_labeled_df["label"].values
     indices = [corpus_text_ids.index(x) for x in ids]
-
     X_train = sparse_vectorized_corpus[indices, :]
 
     if len(classifier_list) == 0:
@@ -329,7 +342,30 @@ def fit_classifier(sparse_vectorized_corpus, corpus_text_ids, texts_list_labeled
     elif len(classifier_list) == 1:
         clf = classifier_list[0]
 
-    clf.partial_fit(X_train, y_train, classes=y_classes)
+    if labels_got_overridden_flag:
+        if full_fit_if_labels_got_overridden:
+            all_texts_list_labeled_df = pd.DataFrame.from_dict(texts_list)
+            all_texts_list_labeled_df = all_texts_list_labeled_df[~all_texts_list_labeled_df["label"].isin(["-"])]
+
+            y_classes_labeled = list(set(all_texts_list_labeled_df["label"].values))
+            all_classes_present = all(label in y_classes_labeled for label in y_classes)
+            clf = SGDClassifier(loss="modified_huber", max_iter=1000, tol=1e-3, random_state=random_state,
+                                n_jobs=n_jobs)
+
+            ids_all = all_texts_list_labeled_df["id"].values
+            y_train_all = all_texts_list_labeled_df["label"].values
+            indices_all = [corpus_text_ids.index(x) for x in ids_all]
+            X_train_all = sparse_vectorized_corpus[indices_all, :]
+            print("all_classes_present :", all_classes_present)
+            if all_classes_present:
+                print("Classifier fitted on all labels.")
+                clf.fit(X_train_all, y_train_all)
+            else:
+                clf.partial_fit(X_train_all, y_train_all, classes=y_classes)
+        else:
+            clf.partial_fit(X_train, y_train, classes=y_classes)
+    else:
+        clf.partial_fit(X_train, y_train, classes=y_classes)
 
     classifier_list.clear()
     classifier_list.append(clf)
@@ -499,7 +535,7 @@ def label_all(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, text
     predictions_df = predictions_df[["id", "text", "label"]]
     update_objects = predictions_df.to_dict("records")
 
-    updated_texts_list, updated_texts_list_list =  \
+    updated_texts_list, updated_texts_list_list, overridden =  \
         update_texts_list_by_id(texts_list=texts_list,
                                 sub_list_limit=sub_list_limit,
                                 updated_obj_lst=update_objects,

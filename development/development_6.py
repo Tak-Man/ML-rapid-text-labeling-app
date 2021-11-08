@@ -13,8 +13,7 @@ if __name__ == "__main__":
     consolidated_disaster_tweet_data_df = \
         utils.get_disaster_tweet_demo_data(source_file="../data/consolidated_disaster_tweet_data.tsv",
                                            filter_data_types=["dev"],
-                                           random_state=2584
-                                           )
+                                           random_state=2584)
     print("consolidated_disaster_tweet_data_df :")
     print(consolidated_disaster_tweet_data_df.head())
     print()
@@ -42,7 +41,11 @@ if __name__ == "__main__":
                                              corpus_text_ids=corpus_text_ids,
                                              texts_list_labeled=texts_list_labeled,
                                              y_classes=y_classes,
-                                             classifier_list=[])
+                                             verbose=False,
+                                             classifier_list=[],
+                                             random_state=2584,
+                                             n_jobs=-1,
+                                             partial_fit=False)
 
     predictions_all, predictions_summary, overall_quality_score = \
         utils.get_all_predictions(fitted_classifier=fitted_classifier,

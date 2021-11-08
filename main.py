@@ -32,8 +32,9 @@ def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
                    y_classes=["Earthquake", "Fire", "Flood", "Hurricane"], rnd_state=258):
     if dataset == "Disaster Tweets Dataset":
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
+        # https://stackoverflow.com/questions/69326639/sklearn-warnings-in-version-1-0
         vectorized_corpus = \
-            vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"])
+            vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"].values)
         print("vectorized_corpus.shape :", vectorized_corpus.shape)
 
         if shuffle_by == "kmeans":
@@ -63,6 +64,12 @@ end_time = datetime.now()
 print("*"*20, "Process ended @", end_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
 duration = end_time - start_time
 print("*"*20, "Process duration -", duration, "*"*20)
+
+
+@app.route("/go_home")
+def go_home():
+    return render_template("start.html",
+                           dataset_list=config.DATASETS_AVAILABLE)
 
 
 @app.route("/")
@@ -118,6 +125,10 @@ def dataset_selected():
 def begin_labeling():
     dataset_name = request.args.get("dataset_name", None)
     selected_config = request.form.get("selected_config", None)
+
+    date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+    config.DATE_TIME.clear()
+    config.DATE_TIME.append(date_time)
 
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
@@ -359,6 +370,7 @@ def single_text():
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=[new_obj],
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
         utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
@@ -370,10 +382,15 @@ def single_text():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
+                             texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=[new_obj],
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
-                             classifier_list=config.CLASSIFIER_LIST)
+                             classifier_list=config.CLASSIFIER_LIST,
+                             random_state=config.RND_STATE,
+                             n_jobs=-1,
+                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
+                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
 
         if len(config.CLASSIFIER_LIST) > 0 and \
                 (new_label is not None and new_label != "" and new_label != "None"):
@@ -473,6 +490,7 @@ def grouped_1_texts():
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_1_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
         utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
@@ -484,10 +502,15 @@ def grouped_1_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
+                             texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_1_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
-                             classifier_list=config.CLASSIFIER_LIST)
+                             classifier_list=config.CLASSIFIER_LIST,
+                             random_state=config.RND_STATE,
+                             n_jobs=-1,
+                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
+                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
 
         if len(config.CLASSIFIER_LIST) > 0 and \
                 (selected_label_group1 is not None and
@@ -588,6 +611,7 @@ def grouped_2_texts():
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_2_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
         utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
@@ -599,10 +623,15 @@ def grouped_2_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
+                             texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_2_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
-                             classifier_list=config.CLASSIFIER_LIST)
+                             classifier_list=config.CLASSIFIER_LIST,
+                             random_state=config.RND_STATE,
+                             n_jobs=-1,
+                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
+                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
 
         if len(selected_label_group2) > 0 and \
                 (selected_label_group2 is not None and
@@ -860,18 +889,23 @@ def export_records():
     download_files.append("./output/labeled_texts.csv")
 
     if len(config.CLASSIFIER_LIST) > 0:
-        filename = "trained-classifier.sav"
+        filename = "trained-classifier.pkl"
         pickle.dump(config.CLASSIFIER_LIST[0], open("./output/" + filename, "wb"))
         download_files.append("./output/" + filename)
 
-        filename = "fitted-vectorizer.sav"
+        filename = "fitted-vectorizer.pkl"
         pickle.dump(config.VECTORIZER_LIST[0], open("./output/" + filename, "wb"))
         download_files.append("./output/" + filename)
 
-        filename = "labels.txt"
-        with open("./output/" + filename, "w") as f:
-            for label in config.Y_CLASSES[0]:
-                f.write(str(label) + "\n")
+        filename = "labels_list.pkl"
+        pickle.dump(config.Y_CLASSES[0], open("./output/" + filename, "wb"))
+        download_files.append("./output/" + filename)
+
+        # filename = "labels.txt"
+        # with open("./output/" + filename, "w") as f:
+        #     for label in config.Y_CLASSES[0]:
+        #         f.write(str(label) + "\n")
+        # download_files.append("./output/" + filename)
 
     if len(config.TOTAL_SUMMARY) > 0:
         filename = "total-summary.csv"
@@ -886,12 +920,12 @@ def export_records():
         download_files.append("./output/" + filename)
 
     filename = "rapid-labeling-results.zip"
-    file_path = "./output/download/rapid-labeling-results.zip"
+    file_path = "./output/download/rapid-labeling-results-" + config.DATE_TIME[0] + ".zip"
     zip_file = zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED)
     for file in download_files:
         zip_file.write(file)
     zip_file.close()
-    return send_file(file_path, mimetype = 'zip', attachment_filename=filename, as_attachment=True)
+    return send_file(file_path, mimetype='zip', attachment_filename=filename, as_attachment=True)
 
 
 @app.route('/label_selected', methods=['GET', 'POST'])
@@ -987,20 +1021,40 @@ def generate_difficult_texts():
 
     # Group 3 ************************************************************************************
     if len(config.CLASSIFIER_LIST) > 0:
-        utils.get_all_predictions(fitted_classifier=config.CLASSIFIER_LIST[0],
-                                  sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                  corpus_text_ids=CORPUS_TEXT_IDS,
-                                  texts_list=config.TEXTS_LIST[0],
-                                  top=config.GROUP_3_KEEP_TOP,
-                                  y_classes=config.Y_CLASSES[0],
-                                  verbose=config.PREDICTIONS_VERBOSE,
-                                  round_to=1,
-                                  format_as_percentage=True,
-                                  similar_texts=config.TEXTS_GROUP_3,
-                                  predictions_report=config.RECOMMENDATIONS_SUMMARY,
-                                  overall_quality_score=config.OVERALL_QUALITY_SCORE)
-        info_message = label_selected
+        label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
+        y_classes_labeled = label_summary_df["name"].values
+        all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
+        if all_classes_present:
+            if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
+                texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
+                utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                     corpus_text_ids=CORPUS_TEXT_IDS,
+                                     texts_list=config.TEXTS_LIST_FULL[0],
+                                     texts_list_labeled=texts_group_updated,
+                                     y_classes=config.Y_CLASSES[0],
+                                     verbose=config.FIT_CLASSIFIER_VERBOSE,
+                                     classifier_list=config.CLASSIFIER_LIST,
+                                     random_state=config.RND_STATE,
+                                     n_jobs=-1,
+                                     labels_got_overridden_flag=True,
+                                     full_fit_if_labels_got_overridden=True)
 
+            utils.get_all_predictions(fitted_classifier=config.CLASSIFIER_LIST[0],
+                                      sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                      corpus_text_ids=CORPUS_TEXT_IDS,
+                                      texts_list=config.TEXTS_LIST[0],
+                                      top=config.GROUP_3_KEEP_TOP,
+                                      y_classes=config.Y_CLASSES[0],
+                                      verbose=config.PREDICTIONS_VERBOSE,
+                                      round_to=1,
+                                      format_as_percentage=True,
+                                      similar_texts=config.TEXTS_GROUP_3,
+                                      predictions_report=config.RECOMMENDATIONS_SUMMARY,
+                                      overall_quality_score=config.OVERALL_QUALITY_SCORE)
+            info_message = label_selected
+        else:
+            info_message = """Examples of all labels are not present. 
+                              Label more texts then try generating the difficult text list."""
     # **********************************************************************************************
     else:
         info_message = "Label more texts then try generating the difficult text list."
@@ -1348,6 +1402,7 @@ def grouped_search_texts():
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
         utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
@@ -1359,10 +1414,15 @@ def grouped_search_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=CORPUS_TEXT_IDS,
+                             texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
-                             classifier_list=config.CLASSIFIER_LIST)
+                             classifier_list=config.CLASSIFIER_LIST,
+                             random_state=config.RND_STATE,
+                             n_jobs=-1,
+                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
+                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
 
         if len(config.CLASSIFIER_LIST) > 0 and \
                 (selected_label_search_texts is not None and

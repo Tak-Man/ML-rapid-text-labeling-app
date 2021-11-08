@@ -47,15 +47,30 @@
             }
         }
     </script>
+    <style>
+    </style>
 </head>
 <body>
     <div class="container">
         <div id="divHeader">
             <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
         </div>
-        <div id="divBodyLeft"></div>
+        <div id="divBodyLeft">
+            <span title="Return to the home page where the source dataset can be selected">
+                <a href="{{ url_for('go_home') }}">
+                    <img id="homeIcon" src="{{ url_for('static', filename='home_icon_yellow.png') }}">
+                </a>
+            </span>
+            <br>
+            <span title="Save your work so that you can continue later">
+                <a href="{{ url_for('export_records') }}">
+                    <img id="saveIcon" src="{{ url_for('static', filename='save_icon_yellow.png') }}">
+                </a>
+            </span>
+
+        </div>
         <div id="gridTop0">
-            <h2>Label</h2>
+            <h2>Select a Label</h2>
             <div id="labelRadioSelection">
                 <form action="{{ url_for('label_selected') }}" method="POST">
                     <br/>
@@ -116,12 +131,12 @@
             <div id="labelAddCategory"></div>
         </div>
         <div id="gridTop1">
-            <h2>Current Text</h2>
+            <h2>Label Single Text</h2>
             <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
 <!--            <form id="currentText" action="{{ url_for('single_text') }}" method="POST"></form>-->
             <div id="currentText">
                 <div id="currentTextBody"><br/><p>{{ selected_text }}</p></div>
-                <div id="divLabelButtonSingle">
+                <div id="divLabelButtonSingle" title="This single text will be assigned the label selected">
                     <form id="formLabelButtonSingle" action="{{ url_for('single_text') }}" method="POST">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                         <input name="selected_text" type="hidden" value="{{ selected_text }}">
@@ -129,18 +144,18 @@
                         <input id="selected_label_single" name="selected_label_single" type="hidden"
                                value="{{ label_selected }}">
                         {% if label_selected is defined %}
-                        <input id="labelButtonSingle" type="submit" value="Label Single Text '{{ label_selected }}'">
+                        <input id="labelButtonSingle" type="submit" value="Label Single Text '{{ label_selected }}'" class="appButton">
                         {% else %}
-                        <input id="labelButtonSingle" type="submit" value="Label Single Text">
+                        <input id="labelButtonSingle" type="submit" value="Label Single Text" class="appButton">
                         {% endif %}
                     </form>
                 </div>
             </div>
         </div>
         <div id="gridTop2">
-            <h2>Similar Texts</h2>
+            <h2>Label Similar Texts</h2>
             <p class="subHeading">Based on the similarity to the entire corpus.</p>
-            <div id="similarTexts1Buttons">
+            <div id="similarTexts1Buttons" title="Set the maximum number of records that this table will display">
                 <form id="formSimilarTexts1Buttons"
                       action="{{ url_for('set_group_1_record_limit') }}"
                       method="POST">
@@ -154,10 +169,10 @@
                             {% if group1_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
                       <option value=100
                               {% if group1_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
-                      <option value=1000
-                              {% if group1_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
-                      <option value=10000
-                              {% if group1_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                      <option value=250
+                              {% if group1_table_limit_value==250 %} selected="selected" {% endif %}>250</option>
+                      <option value=500
+                              {% if group1_table_limit_value==500 %} selected="selected" {% endif %}>500</option>
                     </select>
                     records
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
@@ -165,7 +180,7 @@
                     <input name="page_number" type="hidden" value="{{ page_number }}">
                     <input name="table_limit" type="hidden" value=10>
                     <input name="label_selected" type="hidden" value="{{ label_selected }}">
-                    <input id="buttonSimilarTexts1Buttons" type="submit" value="Submit" class="submitButton">
+                    <input id="buttonSimilarTexts1Buttons" type="submit" value="Submit" class="submitButton appButton">
                 </form>
             </div>
             <div id="similarTexts1">
@@ -209,7 +224,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div id="divGroup1Button">
+                        <div id="divGroup1Button" title="This group of texts will be assigned the label selected">
                             <form id="formRecommendedTextBody1" action="{{ url_for('grouped_1_texts') }}" method="POST">
                                 <input name="texts_group_1" type="hidden" value="{{ texts_group_1 }}">
                                 <input name="texts_list" type="hidden" value="{{ texts_list }}">
@@ -220,12 +235,12 @@
                                        value="{{ label_selected }}">
                                 {% if label_selected is defined %}
                                 {% if texts_group_1 is defined and texts_group_1|length > 0 %}
-                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_1|length }} texts)">
+                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_1|length }} texts)" class="appButton">
                                 {% else %}
-                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}'">
+                                <input id="group1Button" type="submit" value="Label Group '{{ label_selected }}'" class="appButton">
                                 {% endif %}
                                 {% else %}
-                                <input id="group1Button" type="submit" value="Label Group">
+                                <input id="group1Button" type="submit" value="Label Group" class="appButton">
                                 {% endif %}
                             </form>
 
@@ -236,9 +251,9 @@
             </div>
         </div>
         <div id="gridTop3">
-            <h2>Recommended Texts</h2>
+            <h2>Label Recommended Texts</h2>
             <p class="subHeading">Based on the labels assigned. Generally, the more labels, the better the recommendations</p>
-            <div id="similarTexts2Buttons">
+            <div id="similarTexts2Buttons" title="Set the maximum number of records that this table will display">
                 <form id="formSimilarTexts2Buttons"
                       action="{{ url_for('set_group_2_record_limit') }}"
                       method="POST">
@@ -252,10 +267,10 @@
                             {% if group2_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
                       <option value=100
                               {% if group2_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
-                      <option value=1000
-                              {% if group2_table_limit_value==1000 %} selected="selected" {% endif %}>1000</option>
-                      <option value=10000
-                              {% if group2_table_limit_value==10000 %} selected="selected" {% endif %}>10000</option>
+                      <option value=250
+                              {% if group2_table_limit_value==250 %} selected="selected" {% endif %}>250</option>
+                      <option value=500
+                              {% if group2_table_limit_value==500 %} selected="selected" {% endif %}>500</option>
                     </select>
                     records
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
@@ -263,7 +278,8 @@
                     <input name="page_number" type="hidden" value="{{ page_number }}">
                     <input name="table_limit" type="hidden" value=10>
                     <input name="label_selected" type="hidden" value="{{ label_selected }}">
-                    <input id="buttonSimilarTexts2Buttons" type="submit" value="Submit" class="submitButton">
+                    <input id="buttonSimilarTexts2Buttons" type="submit" value="Submit" class="submitButton appButton">
+
                 </form>
             </div>
             <div id="similarTexts2">
@@ -308,7 +324,7 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div id="divGroup2Button">
+                        <div id="divGroup2Button" title="This group of texts will be assigned the label selected">
                             <form id="group2ButtonForm" action="{{ url_for('grouped_2_texts') }}" method="POST">
                                 <input name="texts_group_2" type="hidden" value="{{ texts_group_2 }}">
                                 <input name="texts_list" type="hidden" value="{{ texts_list }}">
@@ -319,12 +335,12 @@
                                        value="{{ label_selected }}">
                                 {% if label_selected is defined %}
                                 {% if texts_group_2 is defined and texts_group_2|length > 0 %}
-                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_2|length }} texts)">
+                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}' ({{ texts_group_2|length }} texts)" class="appButton">
                                 {% else %}
-                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}'">
+                                <input id="group2Button" type="submit" value="Label Group '{{ label_selected }}'" class="appButton">
                                 {% endif %}
                                 {% else %}
-                                <input id="group2Button" type="submit" value="Label Group">
+                                <input id="group2Button" type="submit" value="Label Group" class="appButton">
                                 {% endif %}
                             </form>
                         </div>
@@ -334,15 +350,15 @@
             </div>
         </div>
         <div id="gridBottomLeft">
-            <div id="allTexts"><h2>All Texts</h2></div>
+            <div id="allTexts"><h2>Search All Texts</h2></div>
             <div id="divSearchTexts">
-                <div id="divSearchInput">
+                <div id="divSearchInput" title="Type in search terms to form a group that you wish to label">
                     <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
                         <label id="labelSearchAllTextsInclude" for="searchAllTextsInclude">Include: </label>
-                        <input type="text" id="searchAllTextsInclude" name="include_search_term" placeholder="Search for texts..">
+                        <input type="text" id="searchAllTextsInclude" name="include_search_term" placeholder="Include texts...">
                         <label id="labelSearchAllTextsExclude" for="searchAllTextsExclude">Exclude: </label>
-                        <input type="text" id="searchAllTextsExclude" name="exclude_search_term" placeholder="Search for texts..">
-                        <input id="searchAllTextsButton" type="submit" value="Submit">
+                        <input type="text" id="searchAllTextsExclude" name="exclude_search_term" placeholder="Exclude texts...">
+                        <input id="searchAllTextsButton" type="submit" value="Submit" class="appButton">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                         <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
@@ -353,7 +369,7 @@
                 <div id="divSearchTextMessage">
                     <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
                         <b id="searchTextsMessage">{{ search_message }}</b>
-                        <input id="clearSearchButton" type="submit" value="Clear">
+                        <input id="clearSearchButton" type="submit" value="Clear" class="appButton">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                         <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
@@ -361,7 +377,7 @@
                     </form>
                 </div>
             </div>
-            <div id="allTextTableNextButtons">
+            <div id="allTextTableNextButtons" title="Use these links to navigate through the texts">
                 <a href="{{ url_for('go_to_page',
                                      page_number=0,
                                      label_selected=label_selected,
@@ -472,12 +488,12 @@
                        value="{{ label_selected }}">
                 {% if label_selected is defined %}
                 {% if search_results_length > 0 %}
-                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}' ({{ search_results_length }} texts)">
+                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}' ({{ search_results_length }} texts)" class="appButton">
                 {% else %}
-                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}'">
+                <input id="labelSearchTextsButton" type="submit" value="Label Group '{{ label_selected }}'" class="appButton">
                 {% endif %}
                 {% else %}
-                <input id="labelSearchTextsButton" type="submit" value="Label Group">
+                <input id="labelSearchTextsButton" type="submit" value="Label Group" class="appButton">
                 {% endif %}
             </form>
         </div>
@@ -584,7 +600,8 @@
                         </div>
                         {% endif %}
                     </div>
-                    <div id="divDifficultTextsButtons1" class="grid-item">
+                    <div id="divDifficultTextsButtons1" class="grid-item"
+                         title="'Difficult Texts' are the texts that the system finds hard to recommend. The most difficult texts will appear at the top of this list.">
                         <form id="formDifficultTextsButtons" action="{{ url_for('generate_difficult_texts') }}" method="POST">
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                             <input name="selected_text" type="hidden" value="{{ selected_text }}">
@@ -593,10 +610,12 @@
                                            value="{{ label_selected }}">
                             <input id="generateDifficultTextsButton"
                                    type="submit"
+                                   class="appButton"
                                    name="generate_difficult_texts_button" value="Generate Difficult Texts List">
                         </form>
                     </div>
-                    <div id="divDifficultTextsButtons2" class="grid-item">
+                    <div id="divDifficultTextsButtons2" class="grid-item"
+                         title="The unlabeled texts will be automatically labeled">
                         <form id="formLabelAll" action="{{ url_for('label_all') }}" method="POST">
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                             <input name="selected_text" type="hidden" value="{{ selected_text }}">
@@ -604,6 +623,7 @@
                             <input name="selected_label" type="hidden" value="{{ label_selected }}">
                             <input id="labelAllButton"
                                    type="submit"
+                                   class="appButton"
                                    name="label_all_texts_button" value="Label ALL Texts">
                         </form>
                     </div>
@@ -694,13 +714,16 @@
 
                     </table>
                     </div>
-                    <div id="divSummarySectionButtons">
-                        <form id="summarySectionButtons" action="{{ url_for('export_records') }}" method="POST">
-                            <input name="dummy_name" type="hidden" value="dummy_value">
-                            <input id="exportRecordsButton" type="submit" name="export_records_button" value="Export Records">
-                        </form>
-                    </div>
                 </div>
+                <div id="divSummarySectionButtons">
+                    <form id="summarySectionButtons" action="{{ url_for('export_records') }}" method="POST">
+                        <input name="dummy_name" type="hidden" value="dummy_value">
+                        <input id="exportRecordsButton" type="submit" name="export_records_button"
+                               class="appButton"
+                               value="Export Records">
+                    </form>
+                </div>
+
             </div>
         </div>
         <div id="divBodyRight"></div>

@@ -1,4 +1,6 @@
-,name,number,percentage
-0,-,"53,511",99.96%
-1,Earthquake,10,0.02%
-2,Hurricane,10,0.02%
+name,number,percentage
+Earthquake,369,0.69%
+Hurricane,"7,193",13.44%
+Fire,"4,079",7.62%
+Other,"13,605",25.42%
+Flood,"28,285",52.84%
