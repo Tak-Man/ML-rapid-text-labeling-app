@@ -14,9 +14,11 @@ dependencies:
   - wheel=0.37.0=pyhd3eb1b0_1
   - wincertstore=0.2=py38haa95532_2
   - pip:
+    - cachelib==0.4.1
     - click==8.0.3
     - colorama==0.4.4
     - flask==2.0.2
+    - flask-session==0.4.0
     - itsdangerous==2.0.1
     - jinja2==3.0.2
     - joblib==1.1.0

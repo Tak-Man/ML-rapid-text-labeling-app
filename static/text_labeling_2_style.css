@@ -3,225 +3,66 @@
     --main-padding: 0.15vw;
 }
 
+a {
+  color: #0d57aa;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    height: 98%;
+    width: 98%;
+    background-color: #f2f2f1; /*white; /*#c2c4c6; grey*/
+}
+
 h1 {
-    margin-top: 0.1vw;
-    margin-bottom: 0.1vw;
+    margin: 0.5vw;
     font-size: 1.5vw;
+
+    font-family: sans-serif;
+    font-weight: 600;
+}
+
+
+h2 {
+    padding-left: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-weight: 750;
+    font-size: 1.25vw;
+    white-space: normal;
+    overflow-wrap: break-word;
+    color: black;
 }
 
 div {
     white-space: nowrap;
-    overflow: hidden;
 }
 
-#divHeader {
-    background-color: #D3D3D3; /*#00274c;*/
-    grid-area: divHeader;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    color: #ffffff;
-}
-
-#divBodyLeft {
-    background-color: #D3D3D3; /*#333333;*/
-    grid-area: divBodyLeft;
-    border-radius: var(--main-radius);
-    /*padding: var(--main-padding);*/
-}
-
-#gridTop1 {
-    background-color: #D3D3D3; /*#ffcb05;*/
-    grid-area: gridTop1;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
-    position: relative;
-}
-
-#currentText {
-    width: 98%;
-    height: 82%;
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa;
-    /*border-radius: var(--main-radius);*/
-    vertical-align: middle;
-    /*position: relative;*/
-    /*margin: auto;*/
-    margin-top: 8.5vh;
-
-    position: absolute;
-}
-
-#summarySectionBody, #difficultTextsBody {
-    /*margin-top: 24px;*/
-    align: center;
-    height: 100%;
-    /*border-radius: var(--main-radius);*/
-}
-
-#currentTextBody {
-    /*border-radius: var(--main-radius);*/
-    padding: var(--main-padding);
-    background-color: white;
-    height: 85%;
-    /*padding-right: 1.5vw;*/
-
-    white-space: normal;
-    overflow-wrap: break-word;
-
-
-}
-
-#currentTextBody, #group1Message, #group2Message, #group3Message {
-    width: 97%;
-    margin: 2px;
-    padding-left: 0.6vw;
-    font-family: sans-serif;
-    font-weight: 200;
-    font-size: 0.85vw;
-    text-align: left;
-    color: #808080;
-}
-
-#divLabelButtonSingle {
-    width: 100%;
-    margin-top: 5.5vh;
-}
-
-#labelButtonSingle {
-    width: 100%;
-    display: flex;
-    justify-content: center;
+.subHeading {
+    font-weight: 550;
     font-size: 0.75vw;
-}
-
-#gridTop0 {
-    background-color: #D3D3D3; /*#ffcb05;*/
-    grid-area: gridTop0;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
-    position: relative;
-}
-
-#labelRadioSelection {
-    align: center;
-    width: 90%;
-    height: 70%;
-    background-color: white;
-    font-family: sans-serif;
-    font-weight: 600;
-    font-size: 0.90vw;
-    text-align: left;
-    color: #808080;
-    /*border-radius: var(--main-radius);*/
-    padding: var(--main-padding);
-    margin: auto;
-    margin-top: 8.5vh;
-
-    position: absolute;
-}
-
-
-#labelMessage {
-    white-space: normal;
-    overflow-wrap: break-word;
-}
-
-#gridBottomLeft {
-    background-color: #D3D3D3; /* #ffcb05;*/
-    grid-area: gridBottomLeft;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-
-    display: flex;
-    flex-direction: column;
-}
-
-#allTexts {
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa;
-}
-
-#allTextsTable {
-    background-color: white;
-    font-family: sans-serif;
-    font-weight: 200;
-    font-size: 0.65vw;
-    text-align: left;
-
-    margin: auto;
-
-}
-
-#allTextTableNextButtons {
-    display: inline-block;
-    padding-right: 0.1vw;
-    padding-left: 0.1vw;
+    padding-left: 0.60vw;
     margin-top: 1px;
-    margin-bottom: 1px;
-    font-size: 0.65vw;
-    float: right;
-}
-
-#divSearchTexts {
-    padding-bottom: 0.1vh;
-    display: inline-block;
-}
-
-#searchAllTexts {
-    background-image: url('/css/searchicon.png');
-    background-repeat: no-repeat;
-    width: 30%;
-    float: left;
-    padding-left: 0.65vw;
-}
-
-#searchAllTextsButton {
-    padding:left: 15.0vw;
-    float: left;
-    display: inline-block;
-    font-size: 0.65vw;
-    font-family: sans-serif;
-}
-
-#searchTextsMessage {
-    font-size: 0.80vw;
-    font-family: sans-serif;
-    font-weight: 400;
-    text-align: right;
-    padding-left: 1.65vw;
+    margin-bottom: 0.5vh;
     color: #0d57aa;
-    display: inline-block;
 }
 
-#clearSearchButton {
-    display: inline-block;
-    font-size: 0.65vw;
-    font-family: sans-serif;
+.appButton {
+    background-color: #ffcb05;
+    color: black;
+    border: 1px solid;
 }
 
-#similarTexts1Buttons, #similarTexts2Buttons {
-    display: inline-block;
-    padding-right: 0.65vw;
-    padding-left: 0.65vw;
-    margin-top: 1.5%;
-    /*margin-bottom: 1px;*/
-    font-size: 0.65vw;
-    color: #0d57aa; /*alt_blue*/
-    min-height: 1.95vh;
+.appButton:hover {
+    background-color: #0d57aa;
+    color: white;
+    transform: scale(1.025);
+    border: 1px solid;
+    border-color: #959ea7;
+    font-weight: 500;
 }
 
 .submitButton {
@@ -236,388 +77,587 @@ div {
     font-size: 0.65vw;
 }
 
-allTextTableNextButtons:hover {
-    background-color: #ddd;
-    color: black;
-    margin: auto;
-}
-
-#divAllTextsTable {
+#divHeader {
+    background-color: #00274c;
+    grid-area: divHeader;
     border-radius: var(--main-radius);
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: 87%;
-    width: 99%;
-    min-width: 100px;
-    margin: auto;
-    margin-top: 0.1vh;
-    white-space: normal;
-    overflow-wrap: break-word;
-}
-
-#allTextsTable th {
-    position: sticky;
-    top: 2px;
-    background: #999999;
-    color: #000000;
-}
-
-#allTextsTable tr {
-    background: #ffffff;
-    color: #808080;
-}
-
-#allTextsTable tr:hover {
-    background: #999999;
     color: #ffffff;
 }
-#allTextsTable tr.alt:hover {
-    background: #999999;
-    color: #808080;
-}
 
-
-#gridTop2 {
-    background-color: #D3D3D3; /*#ffcb05;*/
-    grid-area: gridTop2;
+#divLeft {
+    background-color: #333333;
+    grid-area: divLeft;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
-    /*position: relative;*/
 }
 
-.subHeading {
-    font-weight: 100;
-    font-size: 0.75vw;
-    padding-left: 0.60vw;
-    margin-top: 1px;
-    margin-bottom: 0.5vh;
+#homeIcon, #saveIcon {
+    width: 1.5vw;
+    height: 1.5vw;
+    padding-top: 0.5vw;
+
 }
 
-#gridTop3 {
-    background-color: #D3D3D3; /*#ffcb05;*/
-    grid-area: gridTop3;
+#homeIcon:hover, #saveIcon:hover, #homeIcon:focus, #saveIcon:focus {
+    transform: scale(1.1);
+}
+
+
+#divLabel {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divLabel;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: black;
+}
+
+#divSpare {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divSpare;
+    border-radius: var(--main-radius);
+    font-family: sans-serif;
+    text-align: left;
+    color: black;
+}
+
+#divSelectText {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divSelectText;
+    border-radius: var(--main-radius);
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
 }
 
-h2 {
-    padding-left: 10px;
-    margin-top: 2px;
-    margin-bottom: 2px;
-    font-weight: 750;
-    font-size: 1.25vw;
+
+#divSummary {
+    background-color: #ffcb05; /* #c2c4c6; medium grey #959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divSummary;
+    border-radius: var(--main-radius);
 }
 
-#similarTexts1, #similarTexts2 {
+
+
+#divLabeling {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divLabeling;
+    border-radius: var(--main-radius);
     font-family: sans-serif;
     text-align: left;
-    width: 100%;
-    height: 100%;
-    /*border-radius: var(--main-radius);*/
-    /*padding: var(--main-padding);*/
     color: #0d57aa;
-    /*margin: auto;*/
-    margin-top: 0.15vh;
-    /*vertical-align: middle;*/
-
-
 }
 
-#recommendedText1, #recommendedText2 {
-    /*border-radius: var(--main-radius);*/
-    width: 99%;
-    height: 100%;
-    /*vertical-align: middle;*/
-    display: flex;
-}
-
-/*
-#recommendedText1RadioSelection {
-    background-color: white;
+#divDifficultText {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divDifficultText;
+    border-radius: var(--main-radius);
     font-family: sans-serif;
-    font-weight: 200;
-    font-size: 16px;
     text-align: left;
-    color: #808080;
+    color: #0d57aa;
 }
-*/
 
+#difficultTextHeading p, #difficultTextHeading b {
+    padding-left: 0.5vw;
+}
 
-#divGroup1Table, #divGroup2Table, #divDifficultTextsTable {
-    background-color: white;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-width: 100px;
-    min-height: 90%;
-    max-height: 90%;
-    height: 90%
-    margin-top: 0.25vh;
+#difficultTextHeading p {
+    margin-top: 0.5vw;
+}
+
+#difficultTextReturnToLabeling, #labelingSummaryReturnToLabeling {
+    text-decoration: underline;
+}
+
+#divLabelingSummary {
+    background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
+    grid-area: divLabelingSummary;
+    border-radius: var(--main-radius);
+    font-family: sans-serif;
+    text-align: left;
+    color: #0d57aa;
+}
+
+#labelingSummaryHeading p, #labelingSummaryHeading b {
+    padding-left: 0.5vw;
+}
+
+#labelingSummaryHeading p {
+    margin-top: 0.5vw;
+}
+
+#difficultTextsSummaryBody {
+    min-height: 60%;
+    height: 60%;
+    width: 98%;
     white-space: normal;
     overflow-wrap: break-word;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+#divDifficultTextSummaryTable {
+    font-family: sans-serif;
+    font-weight: 200;
+    text-align: left;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#difficultTextSummaryTable {
+    font-size: 0.65vw;
+    font-family: sans-serif;
+    font-weight: 600;
+    color: #808080; /*grey*/
+    padding-left: 0.65vw;
+}
+
+#difficultTextMessage {
+    font-size: 0.65vw;
+    font-family: sans-serif;
+    color: #808080; /*grey*/
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding: 0.65vw;
+}
+
+#summarySectionBody {
+    font-family: sans-serif;
+    font-weight: 200;
+    text-align: left;
+    color: #0d57aa;
+    margin-top: 0.5vh;
+    margin-left: 0.65vw;
+    background-color: white;
+    width: 45%;
+    height: 100%;
+    float: left;
+    border: 1px solid;
+    border-color: #959ea7;
+    border-radius: var(--main-radius);
 }
 
 #divSummarySectionTable {
-    background-color: white;
     overflow-y: auto;
     overflow-x: hidden;
-    min-width: 100px;
-    min-height: 79%;
-    max-height: 79%;
-    height: 79%
-    margin-top: 0.25vh;
     white-space: normal;
     overflow-wrap: break-word;
 }
 
-#group1Table, #group2Table, #difficultTextsTable {
-    background-color: white;
-    font-family: sans-serif;
-    font-weight: 200;
+#summarySectionTable {
+    padding-right: 0.5vw;
+    padding-left: 0.5vw;
+    /*padding-top : 0.5vw;*/
+    padding-bottom : 0px;
     font-size: 0.65vw;
-    text-align: left;
-    color: #808080;
-}
-
-#group1Table th, #group2Table th, #difficultTextsTable th {
-    position: sticky;
-    top: 2px;
-    background: #999999;
-    color: #000000;
-}
-
-#divLabelButtonSingle {
-    margin-top: 0.5vh;
-}
-
-#divGroup1Button, #divGroup2Button {
-    width: 100%;
-    margin-top: 0.5vh;
-
-}
-
-#group1Button, #group2Button, #generateDifficultTextsButton {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    font-size: 0.75vw;
-}
-
- #difficultTextsBody {
-    height: 100%;
-    vertical-align: middle;
+    font-family: sans-serif;
+    font-weight: 200;
+    color: #808080; /*grey*/
     margin: 0 auto;
 }
 
-#recommendedTextBody1, #recommendedTextBody2 {
-
-    margin: 0 auto;
-    margin-left: 0.25vh;
-    width: 100%;
-}
-
-#gridBottomRight1 {
-    grid-area: gridBottomRight1;
-
-    display: flex;
-    /*flex-direction: column;*/
-
-    /*position: absolute;*/
-}
-
-#gridBottomRight2 {
-    grid-area: gridBottomRight2;
-
-    display: flex;
-    flex-direction: column;
-}
-
-#gridBottomRight1, #gridBottomRight2 {
-    background-color: #D3D3D3; /*#ffcb05; /*yellow*/
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    height: 100.0%;
-
-
-}
-
-#summarySection, #difficultTexts {
-    font-family: sans-serif;
-    text-align: left;
-    color: #0d57aa; /*blue*/
-    height: 100%;
-    width: 99%;
-    margin: 0 auto;
-}
-
-/*
-#summarySectionBody {
-
-    font-family: sans-serif;
-    font-weight: 200;
-    font-size: 16px;
-    text-align: left;
-    width: 48%;
-    height: 100%;
-    background-color: white;
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
-    color: #0d57aa;
-    height: 100%;
-} */
-
-#difficultTextsBody {
+#difficultTextSummaryBody {
     font-family: sans-serif;
     font-weight: 200;
     text-align: left;
-    width: 100%;
-    background-color: white;
-    /*border-radius: var(--main-radius);*/
-    padding: var(--main-padding);
-    color: #0d57aa;
-    height: 78%;
-    min-width: 100px;
-    /*position: relative;*/
-    margin: auto;
-    /*margin-top: 5%;*/
-}
-
-#summarySectionBody {
-    font-family: sans-serif;
-    font-weight: 200;
-    text-align: left;
-    width: 98%;
+    width: 52%;
     color: #0d57aa;
     height: 100%;
     min-width: 100px;
     position: relative;
     margin: 0 auto;
-    margin-top: 0.1vh;
-    /*position: relative;*/
-}
-
-#summarySectionTable {
-    border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    margin-top: 0.5vh;
+    align: center;
     background-color: white;
-    padding-right: 0.5vw;
-    padding-left: 0.5vw;
-    padding-top : 0.5vw;
-    padding-bottom : 0px;
-    font-size: 0.75vw;
-    font-family: sans-serif;
-    font-weight: 200;
-    color: #808080; /*grey*/
-    height: 95%;
-    max-height: 95%;
-    min-height: 95%;
-    margin: 0 auto;
+    border: 1px solid;
+    border-color: #959ea7;
+    border-radius: var(--main-radius);
+    float: right;
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #summarySectionTable td {
-    padding-right: 45px;
-    padding-left: 8px;
+    padding-right: 3.0vw;
+    padding-left: 0.25vw;
 }
 
-/*#summarySectionTable2 {
+#labelingSummaryButtons {
+    display: block;
+}
 
-}*/
-
-#divSummarySectionButtons {
-    margin: auto;
-    margin-top: 0.5vh;
+#summarySectionButtons, #formLabelAll {
     width: 100%
-    margin-left: 2%;
+
 }
 
-#divDifficultTextsButtons {
-    margin: auto;
-    margin-top: 0.5%;
-    width: 100%;
+#exportRecordsButton, #labelAllButton {
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 0.85vw;
+    width: 24%;
+    margin-left: 0.75vw;
+    margin-top: 0.75vh;
+    float: right;
 }
 
-#exportRecordsButton, #generateDifficultTextsButton {
-    /*position: absolute;
-    bottom: 0;*/
-    /*margin-bottom: 2.5%;*/
-
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    font-size: 0.75vw;
+#labelAllButton {
+    margin-right: 1.25vw;
 }
 
-#divBodyRight {
-    background-color: #D3D3D3; /*#333333;*/
-    grid-area: divBodyRight;
+#divRight1 {
+    background-color: #333333;
+    grid-area: divRight1;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
+    font-family: sans-serif;
+    text-align: left;
+    color: white;
+}
+
+#divRight2 {
+    background-color: #333333;
+    grid-area: divRight2;
+    border-radius: var(--main-radius);
+    font-family: sans-serif;
+    text-align: left;
+    color: white;
 }
 
 #divFooter {
-    background-color: #D3D3D3; /*#00274c;*/
+    background-color: #00274c;
     grid-area: divFooter;
     border-radius: var(--main-radius);
-    padding: var(--main-padding);
     font-size: 0.55vw;
+    color: white;
 }
-
-html {
-    height: 100%;
-}
-
-body {
-    height: 95%;
-    background-color: #c2c4c6;
-}
-
-
 
 .container {
   display: grid;
   height: 100%;
-  grid-template-columns: 2% 8% 20% 6% 28% 14% 20% 2%;
-  grid-template-rows: auto 45% 45% auto;
+  grid-template-columns: 2% 10% 36% 32% 18% 2%;
+  grid-template-rows: 5% 5% 40% 5% 40% 50% 45% 5%;
   grid-template-areas:
-    "divHeader divHeader divHeader divHeader divHeader divHeader divHeader divHeader"
-    "divBodyLeft gridTop0 gridTop1 gridTop2 gridTop2 gridTop3 gridTop3 divBodyRight"
-    "divBodyLeft gridBottomLeft gridBottomLeft gridBottomLeft gridBottomRight1 gridBottomRight1 gridBottomRight2 divBodyRight"
-    "divFooter divFooter divFooter divFooter divFooter divFooter divFooter divFooter";
+    "divHeader divHeader divHeader divHeader divHeader divHeader"
+    "divLeft divLabel divSelectText divSummary divSummary divRight1"
+    "divLeft divLabel divSelectText divLabeling divLabeling divRight1"
+    "divLeft divSpare divSelectText divLabeling divLabeling divRight2"
+    "divLeft divSpare divSelectText divLabeling divLabeling divRight2"
+    "divLeft divDifficultText divDifficultText divLabeling divLabeling divRight2"
+    "divLeft divLabelingSummary divLabelingSummary divLabeling divLabeling divRight2"
+    "divFooter divFooter divFooter divFooter divFooter divFooter";
   grid-gap: 0.3rem;
   font-family: sans-serif;
   font-weight: 800;
   font-size: 0.75vw;
   color: #808080;
   text-align: center;
-  style: "padding-left: 20px";
+}
+
+#labelRadioSelection {
+    background-color: white;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    white-space: normal;
+    overflow-wrap: break-word;
+    width: 90%;
+    height: 82%;
+    margin: auto;
+    padding-left: 0.25vw;
+    color: #808080;
+}
+
+#labelMessage, #difficultTextBodyMessage, #labelSummaryBodyMessage {
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding-left: 0.25vw;
+}
+
+#difficultTextBodyMessage, #labelSummaryBodyMessage {
+    padding-left: 0.75vw;
+    font-weight: 550;
+    font-size: 0.75vw;
+    color: #0d57aa;
+}
+
+#bodySelectText {
+    background-color: white;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    white-space: normal;
+    overflow-wrap: break-word;
+    width: 97%;
+    height: 91%;
+    margin: auto;
+}
+
+#allTextTableNextButtons {
+    padding-right: 0.75vw;
+    font-size: 0.65vw;
+    float: right;
+}
+
+#divAllTextsTable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 99%;
+    width: 99%;
+    font-size: 0.65vw;
+    font-weight: 200;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#divDifficultTextsTable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 99%;
+    width: 99%;
+    font-size: 0.65vw;
+    font-weight: 200;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#similarTextsTable, #recommendedTextsTable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 99%;
+    width: 99%;
+    font-size: 0.65vw;
+    font-weight: 200;
+    margin: auto;
+    margin-top: 0.1vh;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+#allTextsTable th, #similarTextsTable th, #difficultTextsTable th {
+    position: sticky;
+    top: 2px;
+    background: #999999;
+    color: #000000;
+}
+
+#allTextsTable tr, #similarTextsTable tr, #difficultTextsTable tr {
+    background: #ffffff;
+    color: #808080;
+}
+
+#allTextsTable tr:hover, #similarTextsTable tr:hover, #difficultTextsTable tr:hover {
+    background: #999999;
+    color: #ffffff;
+}
+#allTextsTable tr.alt:hover, #similarTextsTable tr.alt:hover, #difficultTextsTable tr.alt:hover {
+    background: #999999;
+    color: #808080;
+}
+
+#summaryHeadline {
+    color: #0d57aa;
+    font-size: 1.25vw;
+    font-weight: 600;
+    text-align: left;
+    padding-left: 0.75vw;
+    padding-top: 0.5vw;
+    text-decoration: underline;
+}
+
+.accordion {
+    /*background-color: #eee;*/
+    background-color: #f2f2f1;
+    border-radius: var(--main-radius);
+    color: #444;
+    cursor: pointer;
+    padding: 0.25vw;
+    padding-left: 0.75vw;
+    width: 98%;
+    border: none;
+    text-align: left;
+    outline: 2px solid #c2c4c6;
+    font-size: 0.95vw;
+    font-weight: 400;
+    transition: 0.5s;
+    margin-left: 0.5vw;
+}
+
+.active, .accordion:hover {
+    background-color: #00274c;
+    color: white;
+}
+
+.accordion:after {
+    content: '\002B';
+    color: #777;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+}
+
+.active:after {
+    content: "\2212";
+}
+
+.panel {
+    background-color: #f2f2f1;
+    /*background-color: #eee;*/
+    /*background-color: #c2c4c6;*/
+    border-radius: var(--main-radius);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.0s ease-out;
+    width: 98%;
+    margin: auto;
+}
+
+.panel p {
+    margin-left: 0.75vw;
+    margin-top: 0.5vh;
+}
+
+#currentTextBody {
+    background-color: white;
+    width: 95%;
+    padding: 0.5vw;
+    min-height: 12vh;
+    max-height: 12vh;
+    height: 12vh;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+    white-space: normal;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: auto;
 
 }
 
+#divLabelButtonSingle, #divSearchTextsButton, #divSimilarTextsButton, #divRecommendedTextsButton, #divDifficultTextsButton {
+    margin-top: 0.5vh;
+    margin-bottom: 1.25vh;
+}
 
-@media only screen and (max-width: 550px) {
-    .container{
-        grid-template-columns: 5fr;
-        grid-template-rowss: 0.1fr 0.1fr 1fr 1fr 1fr 1fr 0.1fr 0.1fr;
-        grid-template-areas:
-            "divHeader"
-            "divBodyLeft"
-            "gridTopLeft"
-            "gridTopRight"
-            "gridBottomLeft"
-            "gridBottomRight"
-            "divBodyRight"
-            "divFooter";
-        grid-gap: 0.2rem;
-    }
+#similarTextsButtons, #recommendedTextsButtons {
+    margin-top: 1.25vh;
+    margin-bottom: 0.5vh;
+    margin-left: 1.35vw;
+}
+
+#labelButtonSingle, #labelSearchTextsButton {
+    width: 95%;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 0.85vw;
+    margin: auto;
+    margin-left: 1.25vw;
+}
+
+#similarTextsButton, #recommendedTextsButton {
+    width: 95%;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 0.85vw;
+    margin: auto;
+    margin-left: 1.25vw;
+}
+
+#generateDifficultTextsButton {
+    width: 96.5%;
+    font-family: sans-serif;
+    font-weight: 300;
+    font-size: 0.85vw;
+    margin: auto;
+    margin-left: 0.75vw;
+}
+
+#divSearchTexts {
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    background-color: white;
+    width: 95%;
+    padding: 0.5vw;
+    min-height: 8vh;
+    max-height: 8vh;
+    height: 8vh;
+    margin: auto;
+}
+
+#divSimilarTextsBody {
+    background-color: white;
+    width: 95%;
+    /*min-height: 25vh;*/
+    max-height: 25vh;
+    height: 25vh;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+    white-space: normal;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: auto;
+}
+
+#recommendedTextsBody {
+    background-color: white;
+    width: 95%;
+    /*min-height: 25vh;A*/
+    max-height: 25vh;
+    height: 25vh;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+    white-space: normal;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: auto;
+}
+
+#difficultTextHeading {
+
+}
+
+#difficultTextsBody {
+    background-color: white;
+    width: 98%;
+    /*padding: 0.25vw;*/
+    /*min-height: 25vh;*/
+    max-height: 28vh;
+    height: 28vh;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #959ea7;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+    white-space: normal;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: auto;
 }

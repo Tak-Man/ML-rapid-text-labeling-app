@@ -3,13 +3,17 @@
     --main-padding: 0.15vw;
 }
 
+a {
+  color: #0d57aa;
+}
+
 html {
     height: 100%;
 }
 
 body {
     height: 100%;
-    background-color: #c2c4c6;
+    background-color: #f2f2f1;
 }
 
 h1 {
@@ -30,6 +34,20 @@ div {
     white-space: nowrap;
     overflow: hidden;
     text-align: left;
+}
+
+.appButton {
+    background-color: #ffcb05;
+    color: black;
+    border: 1px solid;
+}
+
+.appButton:hover {
+    background-color: #0d57aa;
+    color: white;
+    transform: scale(1.025);
+    border: 1px solid;
+    border-color: #333333;
 }
 
 #divHeader {
@@ -55,23 +73,23 @@ div {
 }
 
 #gridTopLeft {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridTopLeft;
     border-radius: var(--main-radius);
 }
 
 #gridMiddleLeft {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue**/
+    background-color: #c2c4c6;
     grid-area: gridMiddleLeft;
     border-radius: var(--main-radius);
     height: 100%;
 }
 
 #gridBottomLeft {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue**/
+    background-color: #c2c4c6;
     grid-area: gridBottomLeft;
     border-radius: var(--main-radius);
     height: 100%;
@@ -79,6 +97,7 @@ div {
 
 #divRadioConfiguration {
     display: flex;
+    color: #0d57aa;
 }
 
 #config1 {
@@ -86,11 +105,14 @@ div {
 }
 
 #config2 {
+
 }
 
 #divBottomLeftBody {
     overflow-y: auto;
     background-color: white;
+    border: 1px solid;
+    border-color: #333333;
     border-radius: var(--main-radius);
     height: 65%;
     width: 96.5%;
@@ -100,51 +122,51 @@ div {
 }
 
 #gridFootLeft {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridFootLeft;
     border-radius: var(--main-radius);
     height: 100%;
 }
 
 #gridTopMiddle {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridTopMiddle;
     border-radius: var(--main-radius);
 }
 
 #gridMiddleMiddle {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridMiddleMiddle;
     border-radius: var(--main-radius);
 }
 
 #gridBottomMiddle {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridBottomMiddle;
     border-radius: var(--main-radius);
 }
 
 #gridFootMiddle {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridFootMiddle;
     border-radius: var(--main-radius);
 }
 
 #gridTopRight {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridTopRight;
     border-radius: var(--main-radius);
 }
 
 #gridBottomRight {
-    color: #0d57aa; /*blue*/
-    background-color: #ffcb05;
+    color: black; /* #0d57aa; /*blue*/
+    background-color: #c2c4c6;
     grid-area: gridBottomRight;
     border-radius: var(--main-radius);
 }
@@ -189,6 +211,7 @@ div {
     padding-left: 0.60vw;
     margin-top: 1px;
     margin-bottom: 0.5vh;
+    color: #0d57aa;
 }
 
 #divBodyLeftTable1 {

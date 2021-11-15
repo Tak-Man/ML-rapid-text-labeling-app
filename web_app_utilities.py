@@ -589,7 +589,8 @@ def get_top_similar_texts(all_texts_json, similarities_series, top=5, exclude_al
     return top_texts
 
 
-def generate_summary(text_lists, first_labeling_flag, total_summary=[], label_summary=[], number_unlabeled_texts=[]):
+def generate_summary(text_lists, first_labeling_flag, total_summary=[], label_summary=[], number_unlabeled_texts=[],
+                     label_summary_string=[]):
     labels = [text_obj["label"] for text_obj in text_lists]
     label_counter = Counter(labels)
     total_texts = len(text_lists)
@@ -623,7 +624,12 @@ def generate_summary(text_lists, first_labeling_flag, total_summary=[], label_su
     number_unlabeled_texts.clear()
     number_unlabeled_texts.append(number_unlabeled)
 
-    return total_summary, label_summary, first_labeling_flag, number_unlabeled_texts
+    summary_headline = \
+        "Total Labeled : {:,} / {:,} {:.1%}".format(number_labeled, total_texts, number_labeled / total_texts)
+    label_summary_string.clear()
+    label_summary_string.append(summary_headline)
+
+    return total_summary, label_summary, first_labeling_flag, number_unlabeled_texts, label_summary_string
 
 
 def generate_click_record(click_location, click_type, click_object, guid=None):
@@ -650,6 +656,32 @@ def generate_value_record(guid, value_type, value):
 def add_log_record(record, log=[]):
     log.extend(record)
     return None
+
+
+def update_panel_flags(update_flag, panel_flags):
+    for key, value in update_flag.items():
+        panel_flags[key] = value
+
+    print("panel_flags :", panel_flags)
+    return panel_flags
+
+
+def evaluate_panel_flags(update_flag, panel_flags):
+    panel_heights_dict = {0: 0.30, 1: 0.25, 2: 0.54, 3: 0.55}
+    current_screen_space = 0.0
+    for key, value in panel_flags.items():
+        current_screen_space += panel_heights_dict[key] * value
+
+    print("current_screen_space :", current_screen_space)
+    for key, value in update_flag.items():
+        if key == 2 and panel_flags[3] == 1:
+            panel_flags[3] = 0
+            panel_flags[key] = 1
+        elif key == 3 and panel_flags[2] == 1:
+            panel_flags[key] = 1
+            panel_flags[2] = 0
+
+    return panel_flags
 
 
 if __name__ == "__main__":

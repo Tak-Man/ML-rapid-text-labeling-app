@@ -3,6 +3,10 @@
     --main-padding: 0.15vw;
 }
 
+a {
+  color: #0d57aa;
+}
+
 h1 {
     margin-top: 0.1vw;
     margin-bottom: 0.1vw;
@@ -11,7 +15,6 @@ h1 {
 
 div {
     white-space: nowrap;
-    overflow: hidden;
 }
 
 #divHeader {
@@ -91,20 +94,23 @@ div {
     padding: var(--main-padding);
     background-color: white;
     height: 85%;
-    /*padding-right: 1.5vw;*/
-
     white-space: normal;
     overflow-wrap: break-word;
-
     border: 1px solid;
     border-color: #333333;
     border-radius: var(--main-radius);
-    /*box-shadow: 0.1vw 0.2vw #888888;*/
+    width: 95%;
+    padding-left: 0.6vw;
+    font-family: sans-serif;
+    font-weight: 200;
+    font-size: 0.85vw;
+    text-align: left;
+    color: #808080;
+    margin: auto;
 }
 
-#currentTextBody, #group1Message, #group2Message, #group3Message {
+#group1Message, #group2Message, #group3Message {
     width: 97%;
-    /*margin: 2px;*/
     padding-left: 0.6vw;
     font-family: sans-serif;
     font-weight: 200;
@@ -288,7 +294,7 @@ div {
 .appButton:hover {
     background-color: #0d57aa;
     color: white;
-    transform: scale(1.1);
+    transform: scale(1.025);
     border: 1px solid;
     border-color: #333333;
 }
@@ -358,10 +364,6 @@ allTextTableNextButtons:hover {
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
-    /*position: relative;*/
 }
 
 .subHeading {
@@ -381,9 +383,6 @@ allTextTableNextButtons:hover {
     font-family: sans-serif;
     text-align: left;
     color: #0d57aa;
-    display: flex;
-    flex-direction: column;
-
 }
 
 h2 {
@@ -402,23 +401,15 @@ h2 {
     text-align: left;
     width: 100%;
     height: 100%;
-    /*border-radius: var(--main-radius);*/
-    /*padding: var(--main-padding);*/
     color: #0d57aa;
-    /*margin: auto;*/
     margin-top: 0.15vh;
-    /*vertical-align: middle;*/
-
+    margin: auto;
 
 }
 
 #recommendedText1, #recommendedText2 {
-    /*border-radius: var(--main-radius);*/
     width: 100%;
     height: 100%;
-    /*vertical-align: middle;*/
-    display: flex;
-    padding-left: 0.05vw;
 }
 
 /*
@@ -435,20 +426,14 @@ h2 {
     /*width: 60%;*/
 }
 
-#divGroup1Table, #divGroup2Table {
-    background-color: white;
-    overflow-y: auto;
-    overflow-x: auto;
-    min-width: 100px;
-    min-height: 91%;
-    max-height: 91%;
-    height: 91%
-    margin-top: 0.5vh;
+#divGroup1Table {
     white-space: normal;
     overflow-wrap: break-word;
-    border: 1px solid;
-    border-color: #333333;
-    border-radius: var(--main-radius);
+}
+
+#divGroup2Table {
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 #divDifficultTextsTable {
@@ -468,10 +453,6 @@ h2 {
     background-color: white;
     overflow-y: auto;
     overflow-x: hidden;
-    min-width: 100px;
-    min-height: 79.25%;
-    max-height: 79.25%;
-    height: 79.25%
     white-space: normal;
     overflow-wrap: break-word;
     margin-top: 0.5vh;
@@ -515,7 +496,16 @@ h2 {
 #recommendedTextBody1, #recommendedTextBody2 {
     margin: 0 auto;
     margin-left: 0.25vh;
-    width: 100%;
+    width: 99%;
+    height: 71.5%;
+    min-height: 71.5%;
+    max-height: 71.5%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #333333;
+    background-color: white;
 }
 
 #gridBottomRight1 {
@@ -542,7 +532,7 @@ h2 {
     text-align: left;
     color: #0d57aa; /*blue*/
     height: 100%;
-    width: 99%;
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -555,26 +545,14 @@ h2 {
 }
 
 #difficultTextsBodyHeading {
-    /*width: 68%;
-    float: left;
-    display: inline-block;*/
     width: 100%;
 }
 
 #difficultTextsBody {
-    /*grid-area: grid3;*/
     font-family: sans-serif;
     font-weight: 200;
     text-align: left;
     color: #0d57aa;
-    /*background-color: green; */ /*white;*/
-    /*border-radius: var(--main-radius);*/
-    /*padding: var(--main-padding);*/
-    /*width: 68%;
-    margin-left: 0.2vw;*/
-    /*float: left;
-    display: inline-block;*/
-
     border: 1px solid;
     border-color: #333333;
     border-radius: var(--main-radius);
@@ -582,35 +560,25 @@ h2 {
 
 
 #difficultTextSummaryHeading {
-    /*grid-area: grid2;*/
-    /*display: inline-block;
-    margin-left: 0.5vw;*/
+
 }
 
 #difficultTextSummary {
-    /*grid-area: grid4;*/
     font-family: sans-serif;
     font-weight: 200;
     text-align: left;
     color: #0d57aa;
     background-color: white;
-
-    /*height: 79%;
-    display: inline-block;
-    margin-left: 0.5vw;*/
-
     white-space: normal;
     overflow-wrap: break-word;
-
     border: 1px solid;
     border-color: #333333;
     border-radius: var(--main-radius);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 #divDifficultTextsButtons1 {
-    /*grid-area: grid5;*/
-    /*padding-top: 0.5vh;
-    margin-left: 0.1vw;*/
 
 }
 
@@ -621,13 +589,13 @@ h2 {
 #difficultTextsGrid {
     /*display: grid;*/
     grid-template-columns: 75% 25%;
-    grid-template-rows: 5% 83.5% 10%;
+    grid-template-rows: 5% 85% 10%;
     /*grid-template-areas:
         "grid1 grid2"
         "grid3 grid4"
         "grid5 grid5;*/
-    grid-gap: 1.25%;
-    height: 95.5%;
+    grid-gap: 0.5%;
+    height: 94.75%;
     width: 100%;
     padding-left: 0.1vw;
 }
@@ -642,7 +610,7 @@ h2 {
     min-width: 100px;
     position: relative;
     margin: 0 auto;
-    margin-top: 0.85vh;
+    margin-top: 0.5vh;
     /*position: relative;*/
     align: center;
     background-color: white;
@@ -664,7 +632,7 @@ h2 {
     margin-top: 0.65vh;
 }
 
-difficultTextSummaryTable td {
+#difficultTextSummaryTable td {
     padding-right: 3.0vw;
     padding-left: 80.25vw;
     white-space: normal;

@@ -1,24 +1,26 @@
-from flask import Flask, render_template, request, jsonify, flash, make_response, redirect, g, send_file
+from flask import Flask, render_template, request, jsonify, flash, make_response, redirect, g, send_file, session
+from flask_session import Session
 import web_app_utilities as utils
 import configuration as config
 from sklearn.feature_extraction.text import TfidfVectorizer
 import copy
-# from flask.ext.session import Session
 import pandas as pd
 from datetime import datetime
 from sklearn.cluster import KMeans
 import zipfile
 import pickle
+import json
 
 
 start_time = datetime.now()
 print("*"*20, "Process started @", start_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
 
 app = Flask(__name__)
+# Session(app)
 app.secret_key = "super secret key"
 app.config.from_object(__name__)
-# Session(app)
 
+app.jinja_env.add_extension('jinja2.ext.do')
 
 consolidated_disaster_tweet_data_df = utils.get_disaster_tweet_demo_data(number_samples=None,
                                                                          filter_data_types=["train"],
@@ -35,7 +37,6 @@ def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
         # https://stackoverflow.com/questions/69326639/sklearn-warnings-in-version-1-0
         vectorized_corpus = \
             vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"].values)
-        print("vectorized_corpus.shape :", vectorized_corpus.shape)
 
         if shuffle_by == "kmeans":
             kmeans = KMeans(n_clusters=len(y_classes), random_state=config.RND_STATE).fit(vectorized_corpus)
@@ -78,7 +79,7 @@ def index():
                            dataset_list=config.DATASETS_AVAILABLE)
 
 
-@app.route("/dataset_selected", methods=["GET"])
+@app.route("/dataset_selected", methods=["GET", "POST"])
 def dataset_selected():
     dataset_name = request.args.get("dataset_name", None)
 
@@ -119,12 +120,13 @@ def dataset_selected():
     # elif dataset_name == "":
 
 
-
-
 @app.route("/begin_labeling", methods=["POST"])
 def begin_labeling():
+    print("config.INITIALIZE_FLAGS[0] :", config.INITIALIZE_FLAGS[0])
+
     dataset_name = request.args.get("dataset_name", None)
     selected_config = request.form.get("selected_config", None)
+    print("selected_config :", selected_config)
 
     date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     config.DATE_TIME.clear()
@@ -142,7 +144,8 @@ def begin_labeling():
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                               label_summary_string=config.LABEL_SUMMARY_STRING)
         config.SEARCH_MESSAGE.clear()
         config.SEARCH_MESSAGE.append("Displaying all texts")
 
@@ -152,10 +155,14 @@ def begin_labeling():
             html_config_template = "text_labeling_2.html"
         else:
             html_config_template = "text_labeling_1.html"
+        print("html_config_template :", html_config_template)
 
-        return render_template(html_config_template,
+        config.HTML_CONFIG_TEMPLATE.clear()
+        config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None",
-                               selected_text="Select a text below to begin labeling.",
+                               selected_text="Select a text to begin labeling.",
                                info_message="No label selected",
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
@@ -171,7 +178,9 @@ def begin_labeling():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 # @app.route("/")
 # def index():
@@ -180,9 +189,10 @@ def begin_labeling():
 #     utils.generate_summary(text_lists=TEXTS_LIST[0],
 #                            first_labeling_flag=FIRST_LABELING_FLAG,
 #                            total_summary=TOTAL_SUMMARY,
-#                            label_summary=LABEL_SUMMARY)
+#                            label_summary=LABEL_SUMMARY,
+#                                label_summary_string=config.LABEL_SUMMARY_STRING)
 #
-#     return render_template("text_labeling_1.html",
+#     return render_template(config.HTML_CONFIG_TEMPLATE[0],
 #                            selected_text_id="None",
 #                            selected_text="Select a text below to begin labeling.",
 #                            info_message="",
@@ -199,7 +209,7 @@ def begin_labeling():
 #                            label_summary=LABEL_SUMMARY)
 
 
-@app.route("/text_labeling_1.html", methods=["GET", "POST"])
+@app.route("/text_labeling", methods=["GET", "POST"])
 def text_labeling():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
@@ -209,6 +219,8 @@ def text_labeling():
     selected_text = request.args.get("selected_text", None)
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
+    initialize_flags = request.args.get("initialize_flags", None)
+    # print("initialize_flags :", initialize_flags)
 
     click_record, guid = utils.generate_click_record(click_location=app_section,
                                                      click_type="text_id_selected",
@@ -247,7 +259,7 @@ def text_labeling():
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -266,7 +278,9 @@ def text_labeling():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/go_to_page", methods=["GET", "POST"])
@@ -285,9 +299,9 @@ def go_to_page():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id="None",
-                           selected_text="Select a text below to begin labeling.",
+                           selected_text="Select a text to begin labeling.",
                            label_selected=label_selected,
                            info_message="",
                            search_message=config.SEARCH_MESSAGE[0],
@@ -304,7 +318,9 @@ def go_to_page():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/single_text", methods=["POST"])
@@ -337,7 +353,7 @@ def single_text():
         if new_id == "None":
             info_message += "\n" + f"Select a 'Text ID'."
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -355,7 +371,8 @@ def single_text():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
     else:
         # old_obj = {"id": new_id, "text": new_text, "label": "-"}
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
@@ -377,7 +394,8 @@ def single_text():
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                               label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -408,7 +426,7 @@ def single_text():
 
         # **********************************************************************************************
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=new_label,
@@ -427,7 +445,9 @@ def single_text():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/grouped_1_texts", methods=["POST"])
@@ -458,7 +478,7 @@ def grouped_1_texts():
         if len(config.TEXTS_GROUP_1) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -476,7 +496,9 @@ def grouped_1_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
     else:
         texts_group_1_updated = copy.deepcopy(config.TEXTS_GROUP_1)
@@ -497,7 +519,8 @@ def grouped_1_texts():
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                               label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -529,7 +552,7 @@ def grouped_1_texts():
                                       similar_texts=config.TEXTS_GROUP_2)
         # **********************************************************************************************
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group1,
@@ -548,7 +571,9 @@ def grouped_1_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/grouped_2_texts", methods=["POST"])
@@ -579,7 +604,7 @@ def grouped_2_texts():
         if len(config.TEXTS_GROUP_2) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label_group2,
@@ -598,7 +623,9 @@ def grouped_2_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
     else:
         texts_group_2_updated = copy.deepcopy(config.TEXTS_GROUP_2)
@@ -618,7 +645,8 @@ def grouped_2_texts():
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                               label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -650,7 +678,7 @@ def grouped_2_texts():
                                       similar_texts=config.TEXTS_GROUP_2)
         # **********************************************************************************************
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group2,
@@ -669,7 +697,9 @@ def grouped_2_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/label_all", methods=["POST"])
@@ -685,10 +715,16 @@ def label_all():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
+    if config.HTML_CONFIG_TEMPLATE[0] in ["text_labeling_2.html"]:
+        scroll_to_id = "labelAllButton"
+    else:
+        scroll_to_id = None
+
     if config.NUMBER_UNLABELED_TEXTS[0] == 0:
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
                        "auto-labeling, then work through the 'Difficult Texts' to improve the quality."
-        return render_template("text_labeling_1.html",
+        label_summary_message = info_message
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label,
@@ -707,19 +743,24 @@ def label_all():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               scroll_to_id=scroll_to_id,
+                               label_summary_message=label_summary_message)
 
     if len(config.CLASSIFIER_LIST) > 0:
         if config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] == 0:
             info_message = \
                 f"Are you sure that you want to auto-label the " \
                 f"remaining {config.NUMBER_UNLABELED_TEXTS[0]:,} texts?"
+            label_summary_message = info_message
 
             temp_count = config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0]
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
 
-            return render_template("text_labeling_1.html",
+            return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
@@ -738,19 +779,24 @@ def label_all():
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                                   label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                                   initialize_flags=config.INITIALIZE_FLAGS[0],
+                                   scroll_to_id=scroll_to_id,
+                                   label_summary_message=label_summary_message)
 
         elif config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] == 1:
             info_message = \
                 f"Click 'Label All Texts' again to confirm your choice. The remaining unlabeled texts will be " \
                 f"labeled using machine-learning. Inspect the 'Difficult Texts' to see how well the " \
                 f"machine-learning model is trained and if you are satisfied then proceed."
+            label_summary_message = info_message
 
             temp_count = config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0]
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
 
-            return render_template("text_labeling_1.html",
+            return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
@@ -769,7 +815,11 @@ def label_all():
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                                   label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                                   initialize_flags=config.INITIALIZE_FLAGS[0],
+                                   scroll_to_id=scroll_to_id,
+                                   label_summary_message=label_summary_message)
 
         elif config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] > 1:
             info_message = \
@@ -793,9 +843,11 @@ def label_all():
                                    first_labeling_flag=config.FIRST_LABELING_FLAG,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
-                                   number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                                   number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                                   label_summary_string=config.LABEL_SUMMARY_STRING)
 
-            return render_template("text_labeling_1.html",
+            label_summary_message = info_message
+            return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id="None", # new_id,
                                    selected_text="Select a text below to label.", # new_text,
                                    label_selected=selected_label,
@@ -814,11 +866,15 @@ def label_all():
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                                   label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                                   initialize_flags=config.INITIALIZE_FLAGS[0],
+                                   scroll_to_id=scroll_to_id,
+                                   label_summary_message=label_summary_message)
     # **********************************************************************************************
     else:
         info_message = "Label more texts before trying again."
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=new_id,
                            selected_text=new_text,
                            label_selected=selected_label,
@@ -837,7 +893,10 @@ def label_all():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           scroll_to_id=scroll_to_id)
 
 
 @app.route("/text/<id>", methods=["GET", "PUT", "DELETE"])
@@ -919,13 +978,21 @@ def export_records():
         label_summary_df.to_csv("./output/" + filename, index=False)
         download_files.append("./output/" + filename)
 
-    filename = "rapid-labeling-results.zip"
+    filename = "rapid-labeling-results-" + config.DATE_TIME[0] + ".zip"
     file_path = "./output/download/rapid-labeling-results-" + config.DATE_TIME[0] + ".zip"
     zip_file = zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED)
     for file in download_files:
         zip_file.write(file)
     zip_file.close()
-    return send_file(file_path, mimetype='zip', attachment_filename=filename, as_attachment=True)
+    return send_file(file_path, mimetype='zip', download_name=filename, as_attachment=True)
+
+
+@app.route('/update_panels', methods=['GET', 'POST'])
+def update_panels():
+    panel_flag = eval(request.args.get("panel_flag", None))
+    utils.update_panel_flags(update_flag=panel_flag, panel_flags=config.INITIALIZE_FLAGS[0])
+
+    return panel_flag
 
 
 @app.route('/label_selected', methods=['GET', 'POST'])
@@ -981,7 +1048,7 @@ def label_selected():
 
     info_message = f"'{label_selected}' selected"
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1000,7 +1067,9 @@ def label_selected():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route('/generate_difficult_texts', methods=['POST'])
@@ -1023,6 +1092,8 @@ def generate_difficult_texts():
     if len(config.CLASSIFIER_LIST) > 0:
         label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
         y_classes_labeled = label_summary_df["name"].values
+        print("y_classes_labeled :", y_classes_labeled)
+        print("config.Y_CLASSES[0] :", config.Y_CLASSES[0])
         all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
         if all_classes_present:
             if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
@@ -1051,14 +1122,22 @@ def generate_difficult_texts():
                                       similar_texts=config.TEXTS_GROUP_3,
                                       predictions_report=config.RECOMMENDATIONS_SUMMARY,
                                       overall_quality_score=config.OVERALL_QUALITY_SCORE)
-            info_message = label_selected
+            info_message = "The difficult texts list has been generated."
         else:
             info_message = """Examples of all labels are not present. 
                               Label more texts then try generating the difficult text list."""
     # **********************************************************************************************
     else:
         info_message = "Label more texts then try generating the difficult text list."
-    return render_template("text_labeling_1.html",
+
+    if config.HTML_CONFIG_TEMPLATE[0] in ["text_labeling_2.html"]:
+        scroll_to_id = "labelAllButton"
+        difficult_texts_message = info_message
+    else:
+        scroll_to_id = None
+        difficult_texts_message = None
+
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=id,
                            selected_text=text,
                            label_selected=label_selected,
@@ -1077,7 +1156,11 @@ def generate_difficult_texts():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           scroll_to_id=scroll_to_id,
+                           difficult_texts_message=difficult_texts_message)
 
 
 @app.route("/set_group_1_record_limit", methods=["POST"])
@@ -1125,7 +1208,7 @@ def set_group_1_record_limit():
         duration = end_test_time - start_test_time
     # **********************************************************************************************
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1144,7 +1227,9 @@ def set_group_1_record_limit():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/set_group_2_record_limit", methods=["POST"])
@@ -1185,7 +1270,7 @@ def set_group_2_record_limit():
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1204,7 +1289,9 @@ def set_group_2_record_limit():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/search_all_texts", methods=["POST"])
@@ -1261,7 +1348,7 @@ def search_all_texts():
             config.SEARCH_MESSAGE.clear()
             config.SEARCH_MESSAGE.append(info_message)
 
-            return render_template("text_labeling_1.html",
+            return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
@@ -1280,7 +1367,9 @@ def search_all_texts():
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                                   label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                                   initialize_flags=config.INITIALIZE_FLAGS[0])
         else:
             info_message = f"No search results for Include-'{include_search_term}', Exclude-'{exclude_search_term}'"
             config.SEARCH_MESSAGE.clear()
@@ -1297,7 +1386,7 @@ def search_all_texts():
 
             page_number = -1
 
-            return render_template("text_labeling_1.html",
+            return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
@@ -1316,13 +1405,15 @@ def search_all_texts():
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                                   overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                                   label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                                   initialize_flags=config.INITIALIZE_FLAGS[0])
     else:
         info_message = "No search term entered"
         config.SEARCH_MESSAGE.clear()
         config.SEARCH_MESSAGE.append(info_message)
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=selected_text_id,
                                selected_text=selected_text,
                                label_selected=label_selected,
@@ -1341,7 +1432,9 @@ def search_all_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/grouped_search_texts", methods=["POST"])
@@ -1370,7 +1463,7 @@ def grouped_search_texts():
         if selected_label_search_texts == "":
             info_message += f"Select a 'Label'."
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -1388,7 +1481,9 @@ def grouped_search_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
     else:
         texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
@@ -1409,7 +1504,8 @@ def grouped_search_texts():
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS)
+                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                               label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -1441,7 +1537,7 @@ def grouped_search_texts():
                                       similar_texts=config.TEXTS_GROUP_2)
         # **********************************************************************************************
 
-        return render_template("text_labeling_1.html",
+        return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_search_texts,
@@ -1460,7 +1556,9 @@ def grouped_search_texts():
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                               initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/clear_search_all_texts", methods=["POST"])
@@ -1494,7 +1592,7 @@ def clear_search_all_texts():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
-    return render_template("text_labeling_1.html",
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1513,7 +1611,9 @@ def clear_search_all_texts():
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0])
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 if __name__ == "__main__":

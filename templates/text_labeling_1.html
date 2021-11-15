@@ -117,8 +117,6 @@
 <!--                    {{ id_str | safe }}-->
                     {% endfor %}
 
-
-
                     {% endif %}
                     <br/>
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
@@ -224,7 +222,8 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div id="divGroup1Button" title="This group of texts will be assigned the label selected">
+                    </div>
+                    <div id="divGroup1Button" title="This group of texts will be assigned the label selected">
                             <form id="formRecommendedTextBody1" action="{{ url_for('grouped_1_texts') }}" method="POST">
                                 <input name="texts_group_1" type="hidden" value="{{ texts_group_1 }}">
                                 <input name="texts_list" type="hidden" value="{{ texts_list }}">
@@ -246,7 +245,6 @@
 
 
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -324,7 +322,8 @@
                             </div>
                             {% endif %}
                         </div>
-                        <div id="divGroup2Button" title="This group of texts will be assigned the label selected">
+                    </div>
+                    <div id="divGroup2Button" title="This group of texts will be assigned the label selected">
                             <form id="group2ButtonForm" action="{{ url_for('grouped_2_texts') }}" method="POST">
                                 <input name="texts_group_2" type="hidden" value="{{ texts_group_2 }}">
                                 <input name="texts_list" type="hidden" value="{{ texts_list }}">
@@ -344,8 +343,6 @@
                                 {% endif %}
                             </form>
                         </div>
-
-                    </div>
                 </div>
             </div>
         </div>
@@ -498,7 +495,7 @@
             </form>
         </div>
         <div id="gridBottomRight1">
-            <div id="difficultTexts"><h2>Difficult Texts</h2>
+            <div id="difficultTexts"><h2>Examine Difficult Texts</h2>
                 <div id="difficultTextsGrid" class="grid-container">
                     <div id="difficultTextsBodyHeading" class="grid-item">
                         <p class="subHeading">
@@ -629,11 +626,10 @@
                     </div>
                 </div>
             </div>
-
         </div>
         <div id="gridBottomRight2">
             <div id="summarySection"><h2>Summary</h2>
-                <p class="subHeading">-</p>
+                <p class="subHeading">{{ label_summary_string }}</p>
                 <div id="summarySectionBody">
                     <div id="divSummarySectionTable">
                         <table id="summarySectionTable">

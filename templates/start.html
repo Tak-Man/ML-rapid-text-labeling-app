@@ -14,7 +14,7 @@
         </div>
         <div id="divBodyLeft"></div>
         <div id="gridTopLeft">
-            <h2>Select an existing dataset</h2>
+            <h2>Select an Existing Dataset</h2>
             <p class="subHeading">The available datasets are shown below</p>
             <div id="bodyLeft1">
                 <div id="divBodyLeftTable1">
@@ -154,22 +154,22 @@
             </div>
         </div>
         <div id="gridFootLeft">
-            <h2>Configuration</h2>
-
+            <h2>Select a Layout</h2>
             <div id="divBodyLeftButtons">
                 <form id="bodyLeftButtons"
                       action="{{ url_for('begin_labeling', dataset_name=dataset_name) }}"
                       method="POST">
-                    <p class="subHeading">Select an interface configuration</p>
+                    <p class="subHeading">Select an interface layout</p>
                     <input name="dataset_name" type="hidden" value="{{ dataset_name }}">
                     <div id="divRadioConfiguration">
                         <input type="radio" id="config1" name="selected_config" value="config1">
-                        <label for="config1">Configuration 1</label>
+                        <label for="config1" title="A user interface where all the options for text labeling are displayed all at once.">Layout 1</label>
                         <input type="radio" id="config2" name="selected_config" value="config2">
-                        <label for="config2">Configuration 2</label>
+                        <label for="config2" title="A streamlined interface where components are displayed according to the user's selections.">Layout 2</label>
                     </div>
                     <div id="divBodyLeft2InfoMessage">If this dataset is suitable click 'Select Dataset'</div>
-                    <input id="loadDataSetButton" type="submit" name="load_dataset" value="Select Dataset">
+                    <input id="loadDataSetButton" type="submit" name="load_dataset" value="Select Dataset"
+                           class="appButton">
                 </form>
                 <p class="subHeading">{{ config1_message }}</p>
             </div>
