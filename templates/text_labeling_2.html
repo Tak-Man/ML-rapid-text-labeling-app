@@ -695,7 +695,6 @@
             xhttp.open("POST", '{{ url_for('update_panels', panel_flag={0: 1}) }}', true);
           }
           xhttp.send();
-          document.getElementById("divSpare").innerHTML = '<pre>' + JSON.stringify(initializeFlags, null, 4) + '</pre>';
         });
     </script>
     <script>
@@ -712,7 +711,6 @@
             xhttp.open("POST", '{{ url_for('update_panels', panel_flag={1: 1}) }}', true);
           }
           xhttp.send();
-          document.getElementById("divSpare").innerHTML = '<pre>' + JSON.stringify(initializeFlags, null, 4) + '</pre>';
           });
     </script>
     <script>
@@ -729,7 +727,6 @@
             xhttp.open("POST", '{{ url_for('update_panels', panel_flag={2: 1}) }}', true);
           }
           xhttp.send();
-          document.getElementById("divSpare").innerHTML = '<pre>' + JSON.stringify(initializeFlags, null, 4) + '</pre>';
           });
     </script>
     <script>
@@ -746,30 +743,9 @@
             xhttp.open("POST", '{{ url_for('update_panels', panel_flag={3: 1}) }}', true);
           }
           xhttp.send();
-          document.getElementById("divSpare").innerHTML = '<pre>' + JSON.stringify(initializeFlags, null, 4) + '</pre>';
           });
     </script>
-<!--    <script>-->
-<!--          acc[3].addEventListener("click", function() {-->
-<!--          this.classList.toggle("active");-->
-<!--          var panel = this.nextElementSibling;-->
-<!--          if (panel.style.maxHeight) {-->
-<!--            {% do session.pop("accordion3", None) %}-->
-<!--            {% do session.update({"accordion3": 0}) %}-->
-<!--            panel.style.maxHeight = null;-->
-<!--          } else {-->
-<!--            {% do session.pop("accordion3", None) %}-->
-<!--            {% do session.update({"accordion3": 1}) %}-->
-<!--            panel.style.maxHeight = panel.scrollHeight + "px";-->
-<!--          }-->
-<!--          });-->
-<!--    </script>-->
     <script>
-<!--        var initializeFlags = {{ initialize_flags|safe }};-->
-<!--        var acc = document.getElementsByClassName("accordion");-->
-<!--        var i;-->
-        document.getElementById("divFooter").innerHTML = initializeFlags;
-
         for (i = 0; i < acc.length; i++) {
             var panel = acc[i].nextElementSibling;
             if (!panel.style.maxHeight) {
