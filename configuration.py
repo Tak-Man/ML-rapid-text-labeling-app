@@ -9,10 +9,14 @@ DATASETS_AVAILABLE = [{"name": "Disaster Tweets Dataset",
                                         crisis informatics so far.
                                       """,
                        "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"},
+
                       {"name": "Dummy Dataset 1", "description": "This is a placeholder for a demo dataset",
                        "url": "dummy_url_1"},
+
                       {"name": "Dummy Dataset 2", "description": "This is a placeholder for the another dataset",
                        "url": "dummy_url_2"}]
+
+SAVES_DIR = "./output/saves"
 
 TEXTS_LIMIT = 100000
 TABLE_LIMIT = 50
@@ -29,13 +33,17 @@ GROUP_3_KEEP_TOP = 50
 FIRST_LABELING_FLAG = True
 FULL_FIT_IF_LABELS_GOT_OVERRIDDEN = False
 FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS = False
-
+INITIALIZE_FLAGS = [{0: 0, 1: 1, 2: 0, 3: 0}]
 GROUP_1_KEEP_TOP = [10]
 PREDICTIONS_NUMBER = [50]
+SEARCH_RESULT_LENGTH = [0]
+OVERALL_QUALITY_SCORE = ["-"]
+CONFIRM_LABEL_ALL_TEXTS_COUNTS = [0]
+LABELS_GOT_OVERRIDDEN_FLAG = [False]
+
 TOTAL_SUMMARY = []
 LABEL_SUMMARY = []
 RECOMMENDATIONS_SUMMARY = []
-OVERALL_QUALITY_SCORE = ["-"]
 TEXTS_LIST_LABELED = []
 TEXTS_GROUP_1 = []
 TEXTS_GROUP_2 = []
@@ -43,7 +51,6 @@ TEXTS_GROUP_3 = []
 CLASSIFIER_LIST = []
 VECTORIZER_LIST = []
 SEARCH_MESSAGE = []
-SEARCH_RESULT_LENGTH = [0]
 TEXTS_LIST = []
 TEXTS_LIST_FULL = []
 TEXTS_LIST_LIST = []
@@ -54,13 +61,11 @@ TOTAL_PAGES = []
 VECTORIZED_CORPUS = []
 Y_CLASSES = []
 SHUFFLE_BY = []
-CONFIRM_LABEL_ALL_TEXTS_COUNTS = [0]
 NUMBER_UNLABELED_TEXTS = []
 CLICK_LOG = []
 VALUE_LOG = []
-LABELS_GOT_OVERRIDDEN_FLAG = [False]
 DATE_TIME = []
 HTML_CONFIG_TEMPLATE = []
 LABEL_SUMMARY_STRING = []
-INITIALIZE_FLAGS = [{0: 0, 1: 1, 2: 0, 3: 0}]
+
 
