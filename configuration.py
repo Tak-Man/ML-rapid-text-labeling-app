@@ -1,4 +1,20 @@
-DATASETS_AVAILABLE = [{"name": "Disaster Tweets Dataset",
+import pickle
+import os
+
+
+def has_save_data(source_dir="./output"):
+    try:
+        dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
+        dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
+        date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
+        y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
+        total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
+        return dataset_name, dataset_url, date_time, y_classes, total_summary
+    except:
+        return None, None, None, None, None
+
+
+FIXED_DATASETS = [{"name": "Disaster Tweets Dataset",
                        "description": """
                                         The HumAID Twitter dataset consists of several thousands of manually annotated 
                                         tweets that has been collected during 19 major natural disaster events 
@@ -10,13 +26,15 @@ DATASETS_AVAILABLE = [{"name": "Disaster Tweets Dataset",
                                       """,
                        "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"},
 
-                      {"name": "Dummy Dataset 1", "description": "This is a placeholder for a demo dataset",
-                       "url": "dummy_url_1"},
+                      {"name": "Disaster Tweets Dataset with 'Other'",
+                       "description": """
+                                        The same dataset as the 'Disaster Tweets Dataset' but the label 'Other'
+                                        is included to account for texts that do not neatly fall under the labels
+                                        'Earthquake', 'Hurricane', 'Fire', 'Flood'.
+                                       """,
+                       "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"}]
 
-                      {"name": "Dummy Dataset 2", "description": "This is a placeholder for the another dataset",
-                       "url": "dummy_url_2"}]
-
-SAVES_DIR = "./output/saves"
+SAVES_DIR = "./output/"
 
 TEXTS_LIMIT = 100000
 TABLE_LIMIT = 50
@@ -33,7 +51,7 @@ GROUP_3_KEEP_TOP = 50
 FIRST_LABELING_FLAG = True
 FULL_FIT_IF_LABELS_GOT_OVERRIDDEN = False
 FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS = False
-INITIALIZE_FLAGS = [{0: 0, 1: 1, 2: 0, 3: 0}]
+INITIALIZE_FLAGS = [{0: 1, 1: 0, 2: 0, 3: 0}]
 GROUP_1_KEEP_TOP = [10]
 PREDICTIONS_NUMBER = [50]
 SEARCH_RESULT_LENGTH = [0]
@@ -41,6 +59,9 @@ OVERALL_QUALITY_SCORE = ["-"]
 CONFIRM_LABEL_ALL_TEXTS_COUNTS = [0]
 LABELS_GOT_OVERRIDDEN_FLAG = [False]
 
+DATASETS_AVAILABLE = []
+DATASET_NAME = []
+DATASET_URL = []
 TOTAL_SUMMARY = []
 LABEL_SUMMARY = []
 RECOMMENDATIONS_SUMMARY = []

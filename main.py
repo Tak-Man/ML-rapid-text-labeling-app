@@ -69,12 +69,48 @@ print("*"*20, "Process duration -", duration, "*"*20)
 
 @app.route("/go_home")
 def go_home():
+    dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output")
+    print("dataset_name :", dataset_name)
+    print("date_time :", date_time)
+    print("y_classes :", y_classes)
+    print("total_summary :", total_summary)
+    if dataset_name:
+        temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
+                     "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
+                                    " of " + total_summary[0]["number"] + " texts labeled.",
+                     "url": dataset_url[0]}
+        temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
+        temp_datasets_available.append(temp_dict)
+        config.DATASETS_AVAILABLE.clear()
+        config.DATASETS_AVAILABLE.extend(temp_datasets_available)
+
+    else:
+        config.DATASETS_AVAILABLE = config.FIXED_DATASETS
     return render_template("start.html",
-                           dataset_list=config.DATASETS_AVAILABLE)
+                            dataset_list=config.DATASETS_AVAILABLE)
 
 
 @app.route("/")
 def index():
+    dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output")
+    print("dataset_name :", dataset_name)
+    print("date_time :", date_time)
+    print("y_classes :", y_classes)
+    print("total_summary :", total_summary)
+    if dataset_name:
+        temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
+                     "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
+                                    " of " + total_summary[0]["number"] + " texts labeled.",
+                     "url": dataset_url[0]}
+        print("len(config.FIXED_DATASETS) : ",  len(config.FIXED_DATASETS))
+        temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
+        temp_datasets_available.append(temp_dict)
+        print("len(temp_datasets_available) :", len(temp_datasets_available))
+        config.DATASETS_AVAILABLE.clear()
+        config.DATASETS_AVAILABLE.extend(temp_datasets_available)
+        print("len(config.DATASETS_AVAILABLE) :", len(config.DATASETS_AVAILABLE))
+    else:
+        config.DATASETS_AVAILABLE = config.FIXED_DATASETS
     return render_template("start.html",
                            dataset_list=config.DATASETS_AVAILABLE)
 
@@ -82,10 +118,20 @@ def index():
 @app.route("/dataset_selected", methods=["GET", "POST"])
 def dataset_selected():
     dataset_name = request.args.get("dataset_name", None)
+    config.DATASET_NAME.clear()
+    config.DATASET_NAME.append(dataset_name)
 
-    if dataset_name == "Disaster Tweets Dataset":
+    dataset_url = request.args.get("dataset_url", None)
+    config.DATASET_URL.clear()
+    config.DATASET_URL.append(dataset_url)
+
+    if dataset_name in ["Disaster Tweets Dataset", "Disaster Tweets Dataset with 'Other'"]:
         config.Y_CLASSES.clear()
-        config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane", "Other"])
+        if dataset_name == "Disaster Tweets Dataset with 'Other'":
+            config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane", "Other"])
+        else:
+            config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane"])
+
         config.SHUFFLE_BY.clear()
         config.SHUFFLE_BY.append("random")  # kmeans random
 
@@ -111,22 +157,30 @@ def dataset_selected():
         config.TOTAL_PAGES_FULL.clear()
         config.TOTAL_PAGES_FULL.append(total_pages)
 
+        config.CLASSIFIER_LIST.clear()
+
         return render_template("start.html",
                                dataset_list=config.DATASETS_AVAILABLE,
                                texts_list=config.TEXTS_LIST_LIST[0][0],
                                dataset_name=dataset_name,
                                dataset_labels=config.Y_CLASSES[0])
 
-    # elif dataset_name == "":
+    else:
+        load_status = utils.load_save_state(source_dir="./output")
+        if load_status == 1:
+            return render_template("start.html",
+                                   dataset_list=config.DATASETS_AVAILABLE,
+                                   texts_list=config.TEXTS_LIST_LIST[0][0],
+                                   dataset_name=dataset_name,
+                                   dataset_labels=config.Y_CLASSES[0])
+        else:
+            print("Error loading dataset.")
 
 
 @app.route("/begin_labeling", methods=["POST"])
 def begin_labeling():
-    print("config.INITIALIZE_FLAGS[0] :", config.INITIALIZE_FLAGS[0])
-
     dataset_name = request.args.get("dataset_name", None)
     selected_config = request.form.get("selected_config", None)
-    print("selected_config :", selected_config)
 
     date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     config.DATE_TIME.clear()
@@ -138,49 +192,50 @@ def begin_labeling():
                                dataset_list=config.DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
-    if dataset_name == "Disaster Tweets Dataset":
-        page_number = 0
-        utils.generate_summary(text_lists=config.TEXTS_LIST[0],
-                               first_labeling_flag=config.FIRST_LABELING_FLAG,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                               label_summary_string=config.LABEL_SUMMARY_STRING)
-        config.SEARCH_MESSAGE.clear()
-        config.SEARCH_MESSAGE.append("Displaying all texts")
+    # if dataset_name in ["Disaster Tweets Dataset", "Disaster Tweets Dataset with 'Other'"]:
+    page_number = 0
+    utils.generate_summary(text_lists=config.TEXTS_LIST[0],
+                           first_labeling_flag=config.FIRST_LABELING_FLAG,
+                           total_summary=config.TOTAL_SUMMARY,
+                           label_summary=config.LABEL_SUMMARY,
+                           number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                           label_summary_string=config.LABEL_SUMMARY_STRING)
+    config.SEARCH_MESSAGE.clear()
+    config.SEARCH_MESSAGE.append("Displaying all texts")
 
-        if selected_config == "config1":
-            html_config_template = "text_labeling_1.html"
-        elif selected_config == "config2":
-            html_config_template = "text_labeling_2.html"
-        else:
-            html_config_template = "text_labeling_1.html"
-        print("html_config_template :", html_config_template)
+    if selected_config == "config1":
+        html_config_template = "text_labeling_1.html"
+    elif selected_config == "config2":
+        html_config_template = "text_labeling_2.html"
+    else:
+        html_config_template = "text_labeling_1.html"
 
-        config.HTML_CONFIG_TEMPLATE.clear()
-        config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+    print("config.Y_CLASSES :", config.Y_CLASSES)
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
-                               selected_text_id="None",
-                               selected_text="Select a text to begin labeling.",
-                               info_message="No label selected",
-                               search_message=config.SEARCH_MESSAGE[0],
-                               search_results_length=config.SEARCH_RESULT_LENGTH[0],
-                               page_number=0,
-                               y_classes=config.Y_CLASSES[0],
-                               total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
-                               texts_group_1=[],
-                               group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
-                               texts_group_2=[],
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
-                               texts_group_3=[],
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+    config.HTML_CONFIG_TEMPLATE.clear()
+    config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+                           selected_text_id="None",
+                           selected_text="Select a text to begin labeling.",
+                           info_message="No label selected",
+                           search_message=config.SEARCH_MESSAGE[0],
+                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           page_number=0,
+                           y_classes=config.Y_CLASSES[0],
+                           total_pages=config.TOTAL_PAGES[0],
+                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_group_1=[],
+                           group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                           texts_group_2=[],
+                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           texts_group_3=[],
+                           total_summary=config.TOTAL_SUMMARY,
+                           label_summary=config.LABEL_SUMMARY,
+                           recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 # @app.route("/")
 # def index():
@@ -935,9 +990,60 @@ def export_records():
 
     download_files = []
 
+    save_state = {}
+    save_state["DATASET_NAME"] = config.DATASET_NAME
+    save_state["DATASET_URL"] = config.DATASET_URL
+    save_state["TOTAL_SUMMARY"] = config.TOTAL_SUMMARY
+    save_state["LABEL_SUMMARY"] = config.LABEL_SUMMARY
+    save_state["RECOMMENDATIONS_SUMMARY"] = config.RECOMMENDATIONS_SUMMARY
+    save_state["TEXTS_LIST_LABELED"] = config.TEXTS_LIST_LABELED
+    save_state["TEXTS_GROUP_1"] = config.TEXTS_GROUP_1
+    save_state["TEXTS_GROUP_2"] = config.TEXTS_GROUP_2
+    save_state["TEXTS_GROUP_3"] = config.TEXTS_GROUP_3
+    # save_state["CLASSIFIER_LIST"] = config.CLASSIFIER_LIST
+    # save_state["VECTORIZER_LIST"] = config.VECTORIZER_LIST
+    save_state["SEARCH_MESSAGE"] = config.SEARCH_MESSAGE
+    save_state["TEXTS_LIST"] = config.TEXTS_LIST
+    save_state["TEXTS_LIST_FULL"] = config.TEXTS_LIST_FULL
+    save_state["TEXTS_LIST_LIST"] = config.TEXTS_LIST_LIST
+    save_state["TEXTS_LIST_LIST_FULL"] = config.TEXTS_LIST_LIST_FULL
+    save_state["TOTAL_PAGES_FULL"] = config.TOTAL_PAGES_FULL
+    save_state["ADJ_TEXT_IDS"] = config.ADJ_TEXT_IDS
+    save_state["TOTAL_PAGES"] = config.TOTAL_PAGES
+    # save_state["VECTORIZED_CORPUS"] = config.VECTORIZED_CORPUS
+    save_state["Y_CLASSES"] = config.Y_CLASSES
+    save_state["SHUFFLE_BY"] = config.SHUFFLE_BY
+    save_state["NUMBER_UNLABELED_TEXTS"] = config.NUMBER_UNLABELED_TEXTS
+    # save_state["CLICK_LOG"] = config.CLICK_LOG
+    # save_state["VALUE_LOG"] = config.VALUE_LOG
+    # save_state["DATE_TIME"] = config.DATE_TIME
+    save_state["HTML_CONFIG_TEMPLATE"] = config.HTML_CONFIG_TEMPLATE
+    save_state["LABEL_SUMMARY_STRING"] = config.LABEL_SUMMARY_STRING
+
+    with open("./output/save_state.json", "w") as outfile:
+        json.dump(save_state, outfile)
+
+    download_files.append("./output/save_state.json")
+
+    filename = "DATE_TIME.pkl"
+    pickle.dump(config.DATE_TIME, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "DATASET_NAME.pkl"
+    pickle.dump(config.DATASET_NAME, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "CLICK_LOG.pkl"
+    pickle.dump(config.CLICK_LOG, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
     click_log_df = pd.DataFrame.from_dict(config.CLICK_LOG)
     click_log_df.to_csv("./output/click_log.csv", index=False)
     download_files.append("./output/click_log.csv")
+
+    filename = "VALUE_LOG.pkl"
+    pickle.dump(config.VALUE_LOG, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
 
     value_log_df = pd.DataFrame.from_dict(config.VALUE_LOG)
     value_log_df.to_csv("./output/value_log.csv", index=False)
@@ -946,6 +1052,30 @@ def export_records():
     texts_df = pd.DataFrame.from_dict(config.TEXTS_LIST_FULL[0])
     texts_df.to_csv("./output/labeled_texts.csv", index=False)
     download_files.append("./output/labeled_texts.csv")
+
+    filename = "VECTORIZED_CORPUS.pkl"
+    pickle.dump(config.VECTORIZED_CORPUS, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "Y_CLASSES.pkl"
+    pickle.dump(config.Y_CLASSES[0], open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "CLASSIFIER_LIST.pkl"
+    pickle.dump(config.CLASSIFIER_LIST, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "VECTORIZER_LIST.pkl"
+    pickle.dump(config.VECTORIZER_LIST, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "TOTAL_SUMMARY.pkl"
+    pickle.dump(config.TOTAL_SUMMARY, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
+
+    filename = "DATASET_URL.pkl"
+    pickle.dump(config.DATASET_URL, open("./output/" + filename, "wb"))
+    download_files.append("./output/" + filename)
 
     if len(config.CLASSIFIER_LIST) > 0:
         filename = "trained-classifier.pkl"
@@ -956,21 +1086,17 @@ def export_records():
         pickle.dump(config.VECTORIZER_LIST[0], open("./output/" + filename, "wb"))
         download_files.append("./output/" + filename)
 
-        filename = "labels_list.pkl"
-        pickle.dump(config.Y_CLASSES[0], open("./output/" + filename, "wb"))
-        download_files.append("./output/" + filename)
-
-        # filename = "labels.txt"
-        # with open("./output/" + filename, "w") as f:
-        #     for label in config.Y_CLASSES[0]:
-        #         f.write(str(label) + "\n")
-        # download_files.append("./output/" + filename)
-
     if len(config.TOTAL_SUMMARY) > 0:
+
         filename = "total-summary.csv"
         total_summary_df = pd.DataFrame.from_dict(config.TOTAL_SUMMARY)
         total_summary_df.to_csv("./output/" + filename, index=False)
         download_files.append("./output/" + filename)
+
+        # pickle.dump(config.TOTAL_SUMMARY, open("./output/" + "TOTAL_SUMMARY", "wb"))
+    # filename = "LABEL_SUMMARY.pkl"
+    # pickle.dump(config.LABEL_SUMMARY, open("./output/" + filename, "wb"))
+    # download_files.append("./output/" + filename)
 
     if len(config.LABEL_SUMMARY) > 0:
         filename = "label-summary.csv"
@@ -1092,8 +1218,7 @@ def generate_difficult_texts():
     if len(config.CLASSIFIER_LIST) > 0:
         label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
         y_classes_labeled = label_summary_df["name"].values
-        print("y_classes_labeled :", y_classes_labeled)
-        print("config.Y_CLASSES[0] :", config.Y_CLASSES[0])
+
         all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
         if all_classes_present:
             if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:

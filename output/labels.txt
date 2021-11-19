@@ -1,5 +1,0 @@
-Earthquake
-Fire
-Flood
-Hurricane
-Other

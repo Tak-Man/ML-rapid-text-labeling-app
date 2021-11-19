@@ -32,7 +32,8 @@
                             <tr>
                                 <td>
                                     <a href="{{ url_for('dataset_selected',
-                                                         dataset_name=dataset_record['name']) }}">
+                                                         dataset_name=dataset_record['name'],
+                                                         dataset_url=dataset_record['url']) }}">
                                         <input name="dataset_name" type="hidden" value="{{ dataset_record['name'] }}">
                                         {{ dataset_record['name'] }}
                                     </a>

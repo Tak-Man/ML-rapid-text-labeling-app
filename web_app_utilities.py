@@ -13,6 +13,10 @@ import itertools
 import re
 from scipy.stats import entropy
 import uuid
+import configuration as config
+import pickle
+import json
+import os
 
 
 pd.options.display.max_columns = 50
@@ -24,6 +28,51 @@ pd.set_option('display.max_rows', None)
 RND_SEED = 45822
 random.seed(RND_SEED)
 np.random.seed(RND_SEED)
+
+
+def load_save_state(source_dir="./output"):
+    try:
+        save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
+
+        config.DATE_TIME = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
+        config.CLICK_LOG = pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb"))
+        config.VALUE_LOG = pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb"))
+        config.VECTORIZED_CORPUS = pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb"))
+        config.VECTORIZER_LIST = pickle.load(open(os.path.join(source_dir, "VECTORIZER_LIST.pkl"), "rb"))
+        config.CLASSIFIER_LIST = pickle.load(open(os.path.join(source_dir, "CLASSIFIER_LIST.pkl"), "rb"))
+
+        config.DATASET_NAME = save_state_json["DATASET_NAME"]
+        # config.TOTAL_SUMMARY = save_state_json["TOTAL_SUMMARY"]
+        # config.LABEL_SUMMARY = save_state_json["LABEL_SUMMARY"]
+        config.RECOMMENDATIONS_SUMMARY = save_state_json["RECOMMENDATIONS_SUMMARY"]
+        config.TEXTS_LIST_LABELED = save_state_json["TEXTS_LIST_LABELED"]
+        config.TEXTS_GROUP_1 = save_state_json["TEXTS_GROUP_1"]
+        config.TEXTS_GROUP_2 = save_state_json["TEXTS_GROUP_2"]
+        config.TEXTS_GROUP_3 = save_state_json["TEXTS_GROUP_3"]
+        config.SEARCH_MESSAGE = save_state_json["SEARCH_MESSAGE"]
+        config.TEXTS_LIST = save_state_json["TEXTS_LIST"]
+        config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
+        config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
+        config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
+        config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
+        config.ADJ_TEXT_IDS = save_state_json["ADJ_TEXT_IDS"]
+        config.TOTAL_PAGES = save_state_json["TOTAL_PAGES"]
+        config.Y_CLASSES = save_state_json["Y_CLASSES"]
+        config.SHUFFLE_BY = save_state_json["SHUFFLE_BY"]
+        # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
+        config.HTML_CONFIG_TEMPLATE = save_state_json["HTML_CONFIG_TEMPLATE"]
+        # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
+
+        generate_summary(text_lists=config.TEXTS_LIST[0],
+                         first_labeling_flag=config.FIRST_LABELING_FLAG,
+                         total_summary=config.TOTAL_SUMMARY,
+                         label_summary=config.LABEL_SUMMARY,
+                         number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                         label_summary_string=config.LABEL_SUMMARY_STRING)
+
+        return 1
+    except:
+        return 0
 
 
 def get_disaster_tweet_demo_data(number_samples=None,
@@ -661,216 +710,62 @@ def add_log_record(record, log=[]):
 def update_panel_flags(update_flag, panel_flags):
     for key, value in update_flag.items():
         panel_flags[key] = value
-
-    print("panel_flags :", panel_flags)
     return panel_flags
 
 
-def evaluate_panel_flags(update_flag, panel_flags):
-    panel_heights_dict = {0: 0.30, 1: 0.25, 2: 0.54, 3: 0.55}
-    current_screen_space = 0.0
-    for key, value in panel_flags.items():
-        current_screen_space += panel_heights_dict[key] * value
-
-    print("current_screen_space :", current_screen_space)
-    for key, value in update_flag.items():
-        if key == 2 and panel_flags[3] == 1:
-            panel_flags[3] = 0
-            panel_flags[key] = 1
-        elif key == 3 and panel_flags[2] == 1:
-            panel_flags[key] = 1
-            panel_flags[2] = 0
-
-    return panel_flags
+# def evaluate_panel_flags(update_flag, panel_flags):
+#     panel_heights_dict = {0: 0.30, 1: 0.25, 2: 0.54, 3: 0.55}
+#     current_screen_space = 0.0
+#     for key, value in panel_flags.items():
+#         current_screen_space += panel_heights_dict[key] * value
+#
+#     print("current_screen_space :", current_screen_space)
+#     for key, value in update_flag.items():
+#         if key == 2 and panel_flags[3] == 1:
+#             panel_flags[3] = 0
+#             panel_flags[key] = 1
+#         elif key == 3 and panel_flags[2] == 1:
+#             panel_flags[key] = 1
+#             panel_flags[2] = 0
+#
+#     return panel_flags
 
 
 if __name__ == "__main__":
     start_time = datetime.now()
     print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
 
-    consolidated_disaster_tweet_data_df = get_disaster_tweet_demo_data()
-    # print("consolidated_disaster_tweet_data_df :")
-    # print(consolidated_disaster_tweet_data_df.head())
-    #
-    # all_texts_adj = convert_demo_data_into_list(consolidated_disaster_tweet_data_df, limit=50)
-    # print("all_texts_adj :")
-    # print(all_texts_adj)
-    # print()
+    dataset_name, date_time, y_classes, total_summary = has_save_data(source_dir="./output")
 
-    all_texts_json, adj_text_ids = convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=100000)
-    # print("all_texts_json :")
-    # print(all_texts_json[:5])
-    # print()
 
-    include_search_term = "hurrican earthquake"
-    exclude_search_term = None
 
-    search_results = search_all_texts(all_text=all_texts_json,
-                                      include_search_term=include_search_term,
-                                      exclude_search_term=exclude_search_term,
-                                      exclude_already_labeled=False,
-                                      behavior="conjunction", # disjunction conjunction
-                                      all_upper=False)
-    print("len(search_results) :", len(search_results))
-    print("search_results :")
-    print(search_results[:5])
-    print()
+    print("config.DATE_TIME :", config.DATE_TIME)
+    load_save_state(source_dir="./output")
 
-    # print("type(all_texts_adj) :")
-    # print(type(all_texts_adj))
-    # print()
-    # text_id = '798262465234542592'
-    # all_texts_updated = update_all_texts(all_texts=all_texts_adj, text_id=text_id, label="Earthquake")
-    # print("all_texts_updated :")
-    # print(all_texts_updated)
-    adj_consolidated_disaster_tweet_data_df = consolidated_disaster_tweet_data_df#.head(50)
-    # print("adj_consolidated_disaster_tweet_data_df.head(5)['tweet_text'] :")
-    # print(adj_consolidated_disaster_tweet_data_df.head(5)["tweet_text"])
+    print("config.DATE_TIME :", config.DATE_TIME)
+    print("config.CLICK_LOG :", config.CLICK_LOG)
+    print("config.VALUE_LOG :", config.VALUE_LOG)
+    print("config.TOTAL_SUMMARY :", config.TOTAL_SUMMARY)
+    print("config.LABEL_SUMMARY :", config.LABEL_SUMMARY)
+    print("config.RECOMMENDATIONS_SUMMARY :", config.RECOMMENDATIONS_SUMMARY)
+    print("config.TEXTS_LIST_LABELED :", config.TEXTS_LIST_LABELED)
+    print("config.TEXTS_GROUP_1 :", config.TEXTS_GROUP_1)
+    print("config.TEXTS_GROUP_2 :", config.TEXTS_GROUP_2)
+    print("config.TEXTS_GROUP_3 :", config.TEXTS_GROUP_3)
 
-    corpus_text_id = "798262465234542592"
-
-    # print("798262465234542592 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == corpus_text_id]["tweet_text"])
-    # print()
-    # print("721752219201232897 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == "798014650231046144"]["tweet_text"])
-    # print()
-    # print("800600023310286848 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == "797905553376899072"]["tweet_text"])
-    # print()
-    # print("1176515611297533952 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == "798277386928328704"]["tweet_text"])
-    # print()
-    # print("798100160148545536 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == "722068424692789248"]["tweet_text"])
-    # print()
-    # print("910579763537788928 :")
-    # print(adj_consolidated_disaster_tweet_data_df[adj_consolidated_disaster_tweet_data_df["tweet_id"] == "798027556041560064"]["tweet_text"])
-    # print()
-
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=100)
-    vectorized_corpus = \
-        vectorizer.fit_transform(adj_consolidated_disaster_tweet_data_df["tweet_text"])
-
-    print("vectorized_corpus.shape :", vectorized_corpus.shape)
-    print("type(vectorized_corpus) :", type(vectorized_corpus))
-    vectorized_corpus_df = pd.DataFrame.sparse.from_spmatrix(vectorized_corpus, columns=vectorizer.get_feature_names_out())
-    print("vectorized_corpus_df.shape :", vectorized_corpus_df.shape)
-    # print("vectorized_corpus_df.head ")
-    # print(vectorized_corpus_df.head)
-
-    temp_start_time = datetime.now()
-    corpus_text_ids = [str(x) for x in adj_consolidated_disaster_tweet_data_df["tweet_id"].values]
-    print(f">> 'corpus_text_ids' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-          f"duration {datetime.now()-temp_start_time}")
-    # print("corpus_text_ids :", corpus_text_ids)
-
-    # ********************************************************************************************************
-    temp_start_time = datetime.now()
-    similarities_alt = get_all_similarities_one_at_a_time(sparse_vectorized_corpus=vectorized_corpus,
-                                                          corpus_text_ids=corpus_text_ids,
-                                                          text_id=corpus_text_id)
-    print(f">> 'similarities_alt' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-          f"duration {datetime.now()-temp_start_time}")
-    print("type(similarities_alt) :", type(similarities_alt))
-
-    print("similarities_alt :")
-    print(similarities_alt.head(5))
-
-    top_5_texts = get_top_similar_texts(all_texts_json=all_texts_json, similarities_series=similarities_alt, top=5,
-                                        exclude_already_labeled=True, similar_texts=[])
-    print("top_5_texts :")
-    print(top_5_texts)
-    # ********************************************************************************************************
-
-    # ********************************************************************************************************
-    # temp_start_time = datetime.now()
-    # similarities_df = get_all_similarities(sparse_vectorized_corpus=vectorized_corpus,
-    #                                        corpus_text_ids=corpus_text_ids)
-    # print(f">> 'similarities_df' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-    #       f"duration {datetime.now()-temp_start_time}")
-    # print("type(similarities_df) :", type(similarities_df))
-    #
-    # # print("similarities_df :")
-    # # print(similarities_df)
-    #
-    # temp_start_time = datetime.now()
-    # similarities = get_similarities_single_record(similarities_df=similarities_df, corpus_text_id=corpus_text_id)
-    # print(f">> 'similarities' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-    #       f"duration {datetime.now()-temp_start_time}")
-    # print("type(similarities) :", type(similarities))
-    #
-    # print("similarities :")
-    # print(similarities.head(5))
-    #
-    # filter_list = list(similarities.index)
-    # # print("filter_list :", filter_list)
-    #
-    # temp_start_time = datetime.now()
-    # filtered_all_text = filter_all_texts(all_text=all_texts_json, filter_list=filter_list)
-    # print(f">> 'filtered_all_text' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-    #       f"duration {datetime.now()-temp_start_time}")
-    # # print("filtered_all_text :")
-    # # print(filtered_all_text)
-    # ********************************************************************************************************
-
-    # ********************************************************************************************************
-    temp_start_time = datetime.now()
-    ml_test_tweet_data_df = get_disaster_tweet_demo_data(number_samples=100,
-                                                         filter_data_types=["dev"],
-                                                         random_state=2584)
-    # print("ml_test_tweet_data_df :")
-    # print(ml_test_tweet_data_df.head())
-
-    print('ml_test_tweet_data_df["event_type"].value_counts() :')
-    print(ml_test_tweet_data_df["event_type"].value_counts())
-
-    texts_list_labeled, adj_text_ids_labeled = \
-        convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=50, keep_labels=True)
-    # print("texts_list_labeled :")
-    # print(texts_list_labeled[:5])
-
-    y_classes = ["earthquake", "fire", "flood", "hurricane"]
-
-    fitted_classifier = fit_classifier(sparse_vectorized_corpus=vectorized_corpus,
-                                       corpus_text_ids=corpus_text_ids,
-                                       texts_list_labeled=texts_list_labeled,
-                                       y_classes=y_classes,
-                                       classifier_list=[])
-
-    predictions = get_top_predictions(selected_class="fire",
-                                      fitted_classifier=fitted_classifier,
-                                      sparse_vectorized_corpus=vectorized_corpus,
-                                      corpus_text_ids=corpus_text_ids,
-                                      texts_list=all_texts_json,
-                                      top=5,
-                                      cutoff_proba=0.8,
-
-                                      # tweet_data_df=consolidated_disaster_tweet_data_df,
-                                      # fat_df=True,
-
-                                      y_classes=y_classes,
-                                      verbose=True,
-                                      exclude_already_labeled=True,
-                                      similar_texts=[])
-    print("predictions :")
-    print(predictions[:5])
-    print()
-
-    predictions_all = get_all_predictions(fitted_classifier=fitted_classifier,
-                                          sparse_vectorized_corpus=vectorized_corpus,
-                                          corpus_text_ids=corpus_text_ids,
-                                          texts_list=all_texts_json,
-                                          top=5,
-                                          y_classes=y_classes,
-                                          verbose=False,
-                                          similar_texts=[])
-    print("predictions_all :")
-    print(predictions_all[:5])
-    print()
-
-    # print(f">> 'similarities_alt' calculated @{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')} "
-    #       f"duration {datetime.now()-temp_start_time}")
+    # config.SEARCH_MESSAGE = save_state_json["SEARCH_MESSAGE"]
+    # config.TEXTS_LIST = save_state_json["TEXTS_LIST"]
+    # config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
+    # config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
+    # config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
+    # config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
+    # config.ADJ_TEXT_IDS = save_state_json["ADJ_TEXT_IDS"]
+    # config.TOTAL_PAGES = save_state_json["TOTAL_PAGES"]
+    # config.Y_CLASSES = save_state_json["Y_CLASSES"]
+    # config.SHUFFLE_BY = save_state_json["SHUFFLE_BY"]
+    # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
+    # config.HTML_CONFIG_TEMPLATE = save_state_json["HTML_CONFIG_TEMPLATE"]
+    # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
     # ********************************************************************************************************
     end_time = datetime.now()
     duration = end_time - start_time
