@@ -136,11 +136,49 @@ div {
     border-radius: var(--main-radius);
 }
 
+#formSelectFile {
+    margin-top: 1.5vh;
+    margin-left: 0.5vw;
+}
+
+#or {
+    margin-left: 2.0vw;
+    margin-top: 0.01vh;
+    margin-bottom: 0.01vh;
+}
+
+#fileDropZone {
+    overflow-y: auto;
+    background-color: white;
+    border: 1px dashed;
+    border-color: #333333;
+    border-radius: var(--main-radius);
+    min-height: 15vh;
+    width: 95.0%;
+    margin: auto;
+    padding-left: 0.5vw;
+    font-size: 5vh;
+    color: #f2f2f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0.01vh;
+}
+
 #gridMiddleMiddle {
     color: black; /* #0d57aa; /*blue*/
     background-color: #c2c4c6;
     grid-area: gridMiddleMiddle;
     border-radius: var(--main-radius);
+}
+
+#fileOutput {
+    height: 65%;
+    width: 95%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2hv:
 }
 
 #gridBottomMiddle {

@@ -367,7 +367,15 @@ div {
     color: #808080;
 }
 
-#labelMessage, #difficultTextBodyMessage, #labelSummaryBodyMessage {
+#labelMessage {
+    white-space: normal;
+    overflow-wrap: break-word;
+    padding-left: 0.25vw;
+    font-weight: 500;
+    color: #0d57aa;
+}
+
+#difficultTextBodyMessage, #labelSummaryBodyMessage {
     white-space: normal;
     overflow-wrap: break-word;
     padding-left: 0.25vw;

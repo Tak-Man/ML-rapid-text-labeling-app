@@ -63,7 +63,7 @@
             </span>
             <br>
             <span title="Save your work so that you can continue later">
-                <a href="{{ url_for('export_records') }}">
+                <a href="{{ url_for('save_state') }}">
                     <img id="saveIcon" src="{{ url_for('static', filename='save_icon_yellow.png') }}">
                 </a>
             </span>
@@ -562,29 +562,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            {% if overall_quality_score is defined %}
-                                <tr>
-                                    <td><b>Overall Quality Score</b></td>
-                                    <td>{{ overall_quality_score }}</td>
-                                </tr>
-                                <tr>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                            {% endif %}
-<!--                                <tr>-->
-<!--                                    <td><b><u>Label</u></b></td>-->
-<!--                                    <td><b><u>Avg. Confidence</u></b></td>-->
-<!--                                </tr>-->
-<!--                            {% for recommendations_summary_item in recommendations_summary %}-->
-<!--                                <tr>-->
-<!--                                    <td><b>{{ recommendations_summary_item["label"] }}</b></td>-->
-<!--                                    <td>{{ recommendations_summary_item["avg_confidence"] }}</td>-->
-<!--                                </tr>-->
-<!--                            </tbody>-->
-
-<!--                            {% endfor %}-->
-
+                            <tr>
+                                <td><b>Overall Quality Score</b></td>
+                                <td>{{ overall_quality_score }}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            </tbody>
                         </table>
                         <div id="difficultTextMessage">
                             Make sure that at least 1,000 examples for each label are assigned.

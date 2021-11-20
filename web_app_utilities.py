@@ -30,7 +30,7 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
-def load_save_state(source_dir="./output"):
+def load_save_state(source_dir="./output/save"):
     try:
         save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
 
@@ -497,9 +497,9 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
     predictions_df = pd.DataFrame(predictions)
     predictions_df.columns = y_classes
 
-    predictions_summary_full = predictions_df.describe()
+    # predictions_summary_full = predictions_df.describe()
+    # predictions_summary_alt = predictions_df.mean(axis=0)
 
-    predictions_summary_alt = predictions_df.mean(axis=0)
     predictions_summary = predictions_df.replace(0.0, np.NaN).mean(axis=0)
 
     predictions_df["id"] = corpus_text_ids
@@ -511,7 +511,7 @@ def get_all_predictions(fitted_classifier, sparse_vectorized_corpus, corpus_text
     keep_cols.extend(y_classes)
     predictions_df = predictions_df[keep_cols]
 
-    pred_scores = score_predictions(predictions_df[y_classes], use_entropy=True)
+    pred_scores = score_predictions(predictions_df[y_classes], use_entropy=True, num_labels=len(y_classes))
     overall_quality = np.mean(pred_scores)
     predictions_df["pred_scores"] = pred_scores
 

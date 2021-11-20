@@ -21,7 +21,7 @@
             </span>
             <br>
             <span title="Save your work so that you can continue later">
-                <a href="{{ url_for('export_records') }}">
+                <a href="{{ url_for('save_state') }}">
                     <img id="saveIcon" src="{{ url_for('static', filename='save_icon_yellow.png') }}">
                 </a>
             </span>
@@ -415,7 +415,7 @@
             <p class="subHeading">Select one or more method for labeling below</p>
             <button class="accordion">Label Single Text</button>
             <div class="panel" value="0">
-                <p class="subHeading">-----------.</p>
+                <p class="subHeading">Label texts one at a time to increase accuracy</p>
                 <div id="currentTextBody"><br/><p>{{ selected_text }}</p></div>
                 <div id="divLabelButtonSingle" title="This single text will be assigned the label selected">
                     <form id="formLabelButtonSingle" action="{{ url_for('single_text') }}" method="POST">

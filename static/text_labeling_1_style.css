@@ -170,6 +170,8 @@ div {
     overflow-wrap: break-word;
     font-weight: 600;
     font-size: 0.65vw;
+    font-weight: 500;
+    color: #0d57aa;
 }
 
 #gridBottomLeft {
@@ -627,14 +629,10 @@ h2 {
     color: #808080; /*grey*/
     overflow-y: auto;
     overflow-x: auto;
-    white-space: normal;
-    overflow-wrap: break-word;
     margin-top: 0.65vh;
 }
 
 #difficultTextSummaryTable td {
-    padding-right: 3.0vw;
-    padding-left: 80.25vw;
     white-space: normal;
     overflow-wrap: break-word;
 }

@@ -8,6 +8,39 @@
     </script>
 </head>
 <body>
+    <script>
+        function readTextFile(file)
+        {
+            var rawFile = new XMLHttpRequest();
+            rawFile.open("GET", file, false);
+            rawFile.onreadystatechange = function ()
+            {
+                if(rawFile.readyState === 4)
+                {
+                    if(rawFile.status === 200 || rawFile.status == 0)
+                    {
+                        var allText = rawFile.responseText;
+                        alert(allText);
+                    }
+                }
+            }
+            rawFile.send(null);
+        }
+    </script>
+    <script>
+        var openFile = function(event) {
+        var input = event.target;
+
+        var reader = new FileReader();
+        reader.onload = function(){
+          var text = reader.result;
+          var node = document.getElementById('output');
+          node.innerText = text;
+          console.log(reader.result.substring(0, 200));
+        };
+        reader.readAsText(input.files[0]);
+      };
+    </script>
     <div class="container">
         <div id="divHeader">
             <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
@@ -177,10 +210,24 @@
         </div>
         <div id="gridTopMiddle">
             <h2>Select a new dataset</h2>
-            <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
-            <div id="bodyMiddle1"></div>
+            <p class="subHeading">Select a single csv file</p>
+            <div id="bodyMiddle1">
+                <form id="formSelectFile">
+                    <input type="file" id="myFile" name="filename" accept=".csv, .txt" onchange='openFile(event)'>
+
+                </form>
+                <p id="or">OR</p>
+                <div id="fileDropZone">
+                    <p>Drop file here</p>
+                </div>
+
+            </div>
         </div>
-        <div id="gridMiddleMiddle"></div>
+        <div id="gridMiddleMiddle">
+            <h2>Dataset preview</h2>
+            <p class="subHeading">A preview of the selected data is shown below</p>
+            <textarea id="fileOutput"></textarea>
+        </div>
         <div id="gridBottomMiddle"></div>
         <div id="gridFootMiddle"></div>
         <div id="gridTopRight">
@@ -191,5 +238,22 @@
         <div id="divBodyRight"></div>
         <div id="divFooter">last updated 2021-10-26</div>
     </div>
+    <script>
+        var input = document.getElementById("myFile");
+        var output = document.getElementById("fileOutput");
+
+        input.addEventListener("change", function () {
+          if (this.files && this.files[0]) {
+            var myFile = this.files[0];
+            var reader = new FileReader();
+
+            reader.addEventListener('load', function (e) {
+              output.textContent = e.target.result;
+            });
+
+            reader.readAsBinaryString(myFile);
+          }
+        });
+    </script>
 </body>
 </html>
