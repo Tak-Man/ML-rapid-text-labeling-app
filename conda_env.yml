@@ -32,4 +32,5 @@ dependencies:
     - six==1.16.0
     - threadpoolctl==3.0.0
     - werkzeug==2.0.2
-prefix: C:\Users\Carlo\Anaconda3\envs\rapid_text_labeling_web_app_venv
+prefix: C:\Users\carlo\.conda\envs\rapid_text_labeling_web_app_venv
+
