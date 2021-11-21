@@ -35,7 +35,8 @@ FIXED_DATASETS = [{"name": "Disaster Tweets Dataset",
                        "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"}]
 
 SAVES_DIR = "./output/"
-
+MAX_CONTENT_PATH = 10000
+UPLOAD_FOLDER = "./output/upload/"
 TEXTS_LIMIT = 100000
 TABLE_LIMIT = 50
 MAX_FEATURES = 800
@@ -59,6 +60,9 @@ OVERALL_QUALITY_SCORE = ["-"]
 CONFIRM_LABEL_ALL_TEXTS_COUNTS = [0]
 LABELS_GOT_OVERRIDDEN_FLAG = [False]
 
+PREP_DATA_MESSAGE1 = []
+PREP_DATA_MESSAGE2 = []
+PREPARED_DATA_LIST = []
 DATASETS_AVAILABLE = []
 DATASET_NAME = []
 DATASET_URL = []

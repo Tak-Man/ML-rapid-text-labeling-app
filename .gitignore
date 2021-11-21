@@ -127,3 +127,32 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/output/upload/click_log.csv
+/output/upload/labeled_texts.csv
+/output/upload/total-summary.csv
+/output/upload/value_log.csv
+
+# Files generated during testing
+/output/click_log.csv
+/output/fitted-vectorizer.pkl
+/output/labeled_texts.csv
+/output/label-summary.csv
+/output/total-summary.csv
+/output/trained-classifier.pkl
+/output/value_log.csv
+/output/save/CLASSIFIER_LIST.pkl
+/output/save/CLICK_LOG.pkl
+/output/save/DATASET_NAME.pkl
+/output/save/DATASET_URL.pkl
+/output/save/DATE_TIME.pkl
+/output/save/save_state.json
+/output/save/TOTAL_SUMMARY.pkl
+/output/save/VALUE_LOG.pkl
+/output/save/VECTORIZED_CORPUS.pkl
+/output/save/VECTORIZER_LIST.pkl
+/output/save/Y_CLASSES.pkl
+
+/output/download/rapid-labeling-results-2021-11-20--05-45-07.zip
+/output/download/rapid-labeling-results-2021-11-20--09-51-31.zip
+/output/download/rapid-labeling-results-2021-11-20--10-10-44.zip
+/output/download/rapid-labeling-results-2021-11-20--10-30-55.zip

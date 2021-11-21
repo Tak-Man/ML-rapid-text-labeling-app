@@ -10,6 +10,8 @@ from sklearn.cluster import KMeans
 import zipfile
 import pickle
 import json
+from werkzeug.utils import secure_filename
+import os
 
 
 start_time = datetime.now()
@@ -19,6 +21,8 @@ app = Flask(__name__)
 # Session(app)
 app.secret_key = "super secret key"
 app.config.from_object(__name__)
+app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
+app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
@@ -65,6 +69,82 @@ end_time = datetime.now()
 print("*"*20, "Process ended @", end_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
 duration = end_time - start_time
 print("*"*20, "Process duration -", duration, "*"*20)
+
+
+@app.route('/label_entered', methods=['POST'])
+def label_entered():
+    label_entered = request.form["labelEntered"]
+    print("label_entered :", label_entered)
+
+    if len(config.Y_CLASSES) == 0:
+        config.Y_CLASSES.append([label_entered])
+    else:
+        config.Y_CLASSES[0].append(label_entered)
+        temp_y_classes = copy.deepcopy(config.Y_CLASSES[0])
+        temp_y_classes = list(set(temp_y_classes))
+        config.Y_CLASSES.clear()
+        config.Y_CLASSES.append(temp_y_classes)
+
+    if len(config.PREP_DATA_MESSAGE1) > 0:
+        prep_data_message1 = config.PREP_DATA_MESSAGE1[0]
+    else:
+        prep_data_message1 = None
+
+    records_limit = 100
+    entered_labels = ", ".join(config.Y_CLASSES[0])
+    return render_template("start.html",
+                           dataset_list=config.DATASETS_AVAILABLE,
+                           prep_data_message1=prep_data_message1,
+                           prep_data_message2=config.PREP_DATA_MESSAGE2[0],
+                           prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit],
+                           entered_labels=entered_labels)
+
+
+@app.route('/upload_file', methods=['POST'])
+def upload_file():
+    if request.method == "POST":
+        f = request.files["file"]
+        filename = secure_filename(f.filename)
+        f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+        text_id_col = request.form["textIdCol"]
+        text_value_col = request.form["textValueCol"]
+
+        if not text_id_col or not text_value_col:
+            prep_data_message = "Select BOTH a text ID column and the column that contains the text"
+            return render_template("start.html",
+                                   dataset_list=config.DATASETS_AVAILABLE,
+                                   prep_data_message=prep_data_message)
+        else:
+            result, dataset_df = utils.read_new_dataset(source_file_name=filename, text_id_col=text_id_col,
+                                                        text_value_col=text_value_col,
+                                                        source_dir="./output/upload")
+            if result == 1:
+                prep_data_message1 = "Data set prepared. Inspect the data set below, and if it appears correct continue."
+                config.PREP_DATA_MESSAGE1.clear()
+                config.PREP_DATA_MESSAGE1.append(prep_data_message1)
+
+                prepared_data_list = dataset_df.to_dict("records")
+                config.PREPARED_DATA_LIST.clear()
+                config.PREPARED_DATA_LIST.append(prepared_data_list)
+                records_limit = 100
+                total_records = len(config.PREPARED_DATA_LIST[0])
+
+                prep_data_message2 = "Showing {} of {} records of the prepared data".format(records_limit, total_records)
+                config.PREP_DATA_MESSAGE2.clear()
+                config.PREP_DATA_MESSAGE2.append(prep_data_message2)
+                return render_template("start.html",
+                                       dataset_list=config.DATASETS_AVAILABLE,
+                                       prep_data_message1=config.PREP_DATA_MESSAGE1[0],
+                                       prep_data_message2=config.PREP_DATA_MESSAGE2[0],
+                                       prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit])
+            else:
+                prep_data_message = """Could not prepare data. Make sure to select a columnar dataset that is comma 
+                                        separated, with texts which contain commas in quotation marks."""
+
+                return render_template("start.html",
+                                       dataset_list=config.DATASETS_AVAILABLE,
+                                       prep_data_message=prep_data_message)
 
 
 @app.route("/go_home")

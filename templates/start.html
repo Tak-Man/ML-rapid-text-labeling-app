@@ -8,39 +8,6 @@
     </script>
 </head>
 <body>
-    <script>
-        function readTextFile(file)
-        {
-            var rawFile = new XMLHttpRequest();
-            rawFile.open("GET", file, false);
-            rawFile.onreadystatechange = function ()
-            {
-                if(rawFile.readyState === 4)
-                {
-                    if(rawFile.status === 200 || rawFile.status == 0)
-                    {
-                        var allText = rawFile.responseText;
-                        alert(allText);
-                    }
-                }
-            }
-            rawFile.send(null);
-        }
-    </script>
-    <script>
-        var openFile = function(event) {
-        var input = event.target;
-
-        var reader = new FileReader();
-        reader.onload = function(){
-          var text = reader.result;
-          var node = document.getElementById('output');
-          node.innerText = text;
-          console.log(reader.result.substring(0, 200));
-        };
-        reader.readAsText(input.files[0]);
-      };
-    </script>
     <div class="container">
         <div id="divHeader">
             <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
@@ -98,7 +65,7 @@
                                 <td>No dataset data available</td>
                                 <td>No dataset data available</td>
                             </tr>
-                                                    <tr>
+                            <tr>
                                 <td>
                                     <a href="#">
                                         No dataset data available
@@ -113,9 +80,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-        <div id="gridMiddleLeft">
-            <h2>Dataset preview</h2>
+            <h2>Dataset Preview</h2>
             <p class="subHeading">A preview of the selected data is shown below</p>
             <div id="bodyLeft2">
                 <div id="divBodyLeftTable2">
@@ -174,9 +139,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-        <div id="gridBottomLeft">
-            <h2>Dataset labels</h2>
+            <h2>Dataset Labels</h2>
             <p class="subHeading">These labels have been defined to label this dataset</p>
             <div id="divBottomLeftBody">
                 <p>
@@ -186,8 +149,6 @@
                 </p>
 
             </div>
-        </div>
-        <div id="gridFootLeft">
             <h2>Select a Layout</h2>
             <div id="divBodyLeftButtons">
                 <form id="bodyLeftButtons"
@@ -209,27 +170,89 @@
             </div>
         </div>
         <div id="gridTopMiddle">
-            <h2>Select a new dataset</h2>
+            <h2>Select a New Dataset</h2>
             <p class="subHeading">Select a single csv file</p>
             <div id="bodyMiddle1">
-                <form id="formSelectFile">
-                    <input type="file" id="myFile" name="filename" accept=".csv, .txt" onchange='openFile(event)'>
+                <form id="formSelectFile" action="{{ url_for('upload_file') }}" method="POST"
+                      enctype = "multipart/form-data">
+                    <input type="file" id="myFile" name="file" accept=".csv" class="appButton">
 
+                    <h2>Raw Dataset Preview</h2>
+                    <div id="divDataPreviewTable"></div>
+
+                    <div id="divSelectCols">
+                        <div class="block">
+                            <label id="labelTextIdColDropDown" for="textIdColDropDown"
+                                   class="subHeading">Select the text ID columns name</label>
+                            <input list="textIdColList" name="textIdCol" id="textIdColDropDown">
+                            <datalist id="textIdColList">
+                                <option value="Default - Select a file">
+                            </datalist>
+                        </div>
+                        <div class="block">
+                            <label id="labelTextValueColDropDown" for="textValueColDropDown"
+                                   class="subHeading">Select the text column name</label>
+                            <input list="textValueColList" name="textValueCol" id="textValueColDropDown">
+                            <datalist id="textValueColList">
+                                <option value="Default - Select a file">
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <br>
+
+                    <input type="submit" class="appButton" id="prepDataButton" value="Prepare Data">
+                    <div id="prepDataMessage1" class="subHeading">{{ prep_data_message1 }}</div>
                 </form>
-                <p id="or">OR</p>
-                <div id="fileDropZone">
-                    <p>Drop file here</p>
+
+                <h2>Prepared Dataset Preview</h2>
+                {% if prep_data_message2 is defined %}
+                <div id="prepDataMessage2" class="subHeading">{{ prep_data_message2 }}</div>
+                {% else %}
+                <div id="prepDataMessage2" class="subHeading">No prepared data to show yet</div>
+                {% endif %}
+                <div id="divPreparedDataTable">
+                    {% if prepared_data_list %}
+                    <table id="preparedDataTable" class="startTable">
+                        <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>text</th>
+                                <th>label</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for dataset_record in prepared_data_list %}
+                            <tr>
+                                <td>{{ dataset_record['id'] }}</td>
+                                <td>{{ dataset_record['text'] }}</td>
+                                <td>{{ dataset_record['label'] }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
                 </div>
 
+                <h2>Enter Dataset Labels</h2>
+                <div id="enterLabels">
+                    <form id="formEnterLabels" action="{{ url_for('label_entered') }}" method="POST">
+                        <input id="inputLabelEntered" type="text" placeholder="Type a label" id="myLabel"
+                               name="labelEntered">
+                        <button id="enterLabelButton" type="submit" class="appButton">Enter Label</button>
+                    </form>
+                    <div id="displayEnteredLabels">{{ entered_labels }}</div>
+                </div>
+
+                <form id="formConfirmNewDataset" action="{{ url_for('begin_labeling', dataset_name=dataset_name) }}"
+                      method="POST">
+                    <div id="loadNewDataSetMessage">If this dataset is suitable click 'Select Dataset'</div>
+                    <input id="loadDataSetButton2" type="submit" name="load_dataset" value="Select Dataset"
+                           class="appButton">
+                </form>
             </div>
+
         </div>
-        <div id="gridMiddleMiddle">
-            <h2>Dataset preview</h2>
-            <p class="subHeading">A preview of the selected data is shown below</p>
-            <textarea id="fileOutput"></textarea>
-        </div>
-        <div id="gridBottomMiddle"></div>
-        <div id="gridFootMiddle"></div>
         <div id="gridTopRight">
             <h2>Watch a demo video</h2>
             <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
@@ -240,15 +263,55 @@
     </div>
     <script>
         var input = document.getElementById("myFile");
-        var output = document.getElementById("fileOutput");
+        var output = document.getElementById("divDataPreviewTable");
+        var headers = [];
+        var textIdColList = document.getElementById("textIdColList");
+        var textValueColList = document.getElementById("textValueColList");
+        var textIdColListHTML = "";
 
         input.addEventListener("change", function () {
           if (this.files && this.files[0]) {
             var myFile = this.files[0];
             var reader = new FileReader();
 
-            reader.addEventListener('load', function (e) {
-              output.textContent = e.target.result;
+            reader.addEventListener('load', function (event) {
+              var text = event.target.result;
+              var textLines = text.split(/\r?\n/);
+
+              var table = "<table class='startTable' id='dataPreviewTable'>";
+
+              for(i = 0; i < textLines.length; i++) {
+                  table += "<tr>";
+
+                  var row = textLines[i];
+                  var cells = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
+                  for(j = 0; j < cells.length; j++) {
+                      if(i == 0) {
+                        table += "<th>";
+                        textIdColListHTML += "<option value='" + String(cells[j]) + "'>";
+                      } else {
+                        table += "<td>";
+                      }
+
+                      table += cells[j];
+
+                      if(i == 0) {
+                        table += "</th>";
+                      } else {
+                        table += "</td>";
+                      }
+                  }
+
+                  table += "</tr>";
+              }
+
+              table += "</table>";
+
+              output.innerHTML = table;
+              textIdColList.innerHTML = textIdColListHTML;
+              textValueColList.innerHTML = textIdColListHTML;
+
             });
 
             reader.readAsBinaryString(myFile);

@@ -30,6 +30,17 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
+def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="./output/upload"):
+    try:
+        dataset_df = pd.read_csv(os.path.join(source_dir, source_file_name))
+        dataset_df = dataset_df[[text_id_col, text_value_col]]
+        dataset_df.rename(columns={text_id_col: "id", text_value_col: "text"})
+        dataset_df["label"] = "-"
+        return 1, dataset_df
+    except:
+        return 0, None
+
+
 def load_save_state(source_dir="./output/save"):
     try:
         save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
