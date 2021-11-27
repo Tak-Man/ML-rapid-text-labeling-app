@@ -26,17 +26,61 @@ app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
-consolidated_disaster_tweet_data_df = utils.get_disaster_tweet_demo_data(number_samples=None,
-                                                                         filter_data_types=["train"],
-                                                                         random_state=config.RND_STATE)
 
-CORPUS_TEXT_IDS = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
+def load_new_data(source_file,
+                  source_folder="./output/upload/",
+                  shuffle_by="kmeans",
+                  table_limit=50, texts_limit=1000, max_features=100,
+                  y_classes=["Label 1", "Label 2", "Label 3", "Label 4"], rnd_state=258):
+
+    data_df = utils.get_new_data(source_file=source_file,
+                                 source_folder=source_folder,
+                                 number_samples=None,
+                                 random_state=config.RND_STATE)
+    print("data_df :")
+    print(data_df.head())
+    corpus_text_ids = [str(x) for x in data_df[config.TEXT_ID_COL[0]].values]
+
+    vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
+    print("config.TEXT_VALUE_COL[0] :", config.TEXT_VALUE_COL[0])
+    vectorized_corpus = vectorizer.fit_transform(data_df[config.TEXT_VALUE_COL[0]].values)
+
+    if shuffle_by == "kmeans":
+        kmeans = KMeans(n_clusters=len(y_classes), random_state=config.RND_STATE).fit(vectorized_corpus)
+        kmeans_labels = kmeans.labels_
+        texts_list, adj_text_ids = utils.convert_new_data_into_list_json(data_df,
+                                                                         limit=texts_limit,
+                                                                         shuffle_list=kmeans_labels,
+                                                                         random_shuffle=False,
+                                                                         random_state=rnd_state,
+                                                                         id_col=config.TEXT_ID_COL[0],
+                                                                         text_col=config.TEXT_VALUE_COL[0],
+                                                                         label_col="label")
+    else:
+        texts_list, adj_text_ids = utils.convert_new_data_into_list_json(data_df,
+                                                                         limit=texts_limit,
+                                                                         shuffle_list=[],
+                                                                         random_shuffle=True,
+                                                                         random_state=rnd_state,
+                                                                         id_col=config.TEXT_ID_COL[0],
+                                                                         text_col=config.TEXT_VALUE_COL[0],
+                                                                         label_col="label")
+
+    texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
+    total_pages = len(texts_list_list)
+
+    return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids
 
 
-def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
+def load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by="kmeans",
                    table_limit=50, texts_limit=1000, max_features=100,
                    y_classes=["Earthquake", "Fire", "Flood", "Hurricane"], rnd_state=258):
-    if dataset == "Disaster Tweets Dataset":
+    if dataset_name == "Disaster Tweets Dataset":
+        consolidated_disaster_tweet_data_df = utils.get_disaster_tweet_demo_data(number_samples=None,
+                                                                                 filter_data_types=["train"],
+                                                                                 random_state=config.RND_STATE)
+        corpus_text_ids = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
+
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
         # https://stackoverflow.com/questions/69326639/sklearn-warnings-in-version-1-0
         vectorized_corpus = \
@@ -62,7 +106,53 @@ def load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by="kmeans",
     texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
     total_pages = len(texts_list_list)
 
-    return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer
+    return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids
+
+
+def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                            full_fit_if_labels_got_overridden=True, round_to=1,
+                                            format_as_percentage=True):
+    try:
+        if len(config.CLASSIFIER_LIST) > 0:
+            label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
+            y_classes_labeled = label_summary_df["name"].values
+            all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
+            if all_classes_present:
+                if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
+                    texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
+                    utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                         corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                                         texts_list=config.TEXTS_LIST_FULL[0],
+                                         texts_list_labeled=texts_group_updated,
+                                         y_classes=config.Y_CLASSES[0],
+                                         verbose=config.FIT_CLASSIFIER_VERBOSE,
+                                         classifier_list=config.CLASSIFIER_LIST,
+                                         random_state=config.RND_STATE,
+                                         n_jobs=n_jobs,
+                                         labels_got_overridden_flag=labels_got_overridden_flag,
+                                         full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden)
+
+                utils.get_all_predictions(fitted_classifier=config.CLASSIFIER_LIST[0],
+                                          sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                          corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                                          texts_list=config.TEXTS_LIST[0],
+                                          top=config.GROUP_3_KEEP_TOP,
+                                          y_classes=config.Y_CLASSES[0],
+                                          verbose=config.PREDICTIONS_VERBOSE,
+                                          round_to=round_to,
+                                          format_as_percentage=format_as_percentage,
+                                          similar_texts=config.TEXTS_GROUP_3,
+                                          predictions_report=config.RECOMMENDATIONS_SUMMARY,
+                                          overall_quality_score=config.OVERALL_QUALITY_SCORE)
+                return 1, "The difficult texts list has been generated."
+            else:
+                return 1, """Examples of all labels are not present. 
+                                  Label more texts then try generating the difficult text list."""
+        else:
+                return 1, "Label more texts then try generating the difficult text list."
+
+    except:
+        return 0, "An error occurred when trying to generate the difficult texts."
 
 
 end_time = datetime.now()
@@ -73,17 +163,24 @@ print("*"*20, "Process duration -", duration, "*"*20)
 
 @app.route('/label_entered', methods=['POST'])
 def label_entered():
-    label_entered = request.form["labelEntered"]
-    print("label_entered :", label_entered)
+    if request.form["action"] == "add":
+        label_entered = request.form["labelEntered"]
+        print("label_entered :", label_entered)
 
-    if len(config.Y_CLASSES) == 0:
-        config.Y_CLASSES.append([label_entered])
+        if len(config.Y_CLASSES) == 0:
+            config.Y_CLASSES.append([label_entered])
+        else:
+            config.Y_CLASSES[0].append(label_entered)
+            temp_y_classes = copy.deepcopy(config.Y_CLASSES[0])
+            temp_y_classes = list(set(temp_y_classes))
+            config.Y_CLASSES.clear()
+            config.Y_CLASSES.append(temp_y_classes)
+
+
+        entered_labels = ", ".join(config.Y_CLASSES[0])
     else:
-        config.Y_CLASSES[0].append(label_entered)
-        temp_y_classes = copy.deepcopy(config.Y_CLASSES[0])
-        temp_y_classes = list(set(temp_y_classes))
         config.Y_CLASSES.clear()
-        config.Y_CLASSES.append(temp_y_classes)
+        entered_labels = ""
 
     if len(config.PREP_DATA_MESSAGE1) > 0:
         prep_data_message1 = config.PREP_DATA_MESSAGE1[0]
@@ -91,7 +188,7 @@ def label_entered():
         prep_data_message1 = None
 
     records_limit = 100
-    entered_labels = ", ".join(config.Y_CLASSES[0])
+
     return render_template("start.html",
                            dataset_list=config.DATASETS_AVAILABLE,
                            prep_data_message1=prep_data_message1,
@@ -110,14 +207,23 @@ def upload_file():
         text_id_col = request.form["textIdCol"]
         text_value_col = request.form["textValueCol"]
 
+        config.TEXT_ID_COL.clear()
+        config.TEXT_ID_COL.append(text_id_col)
+
+        config.TEXT_VALUE_COL.clear()
+        config.TEXT_VALUE_COL.append(text_value_col)
+
+        config.Y_CLASSES.clear()
+
         if not text_id_col or not text_value_col:
             prep_data_message = "Select BOTH a text ID column and the column that contains the text"
             return render_template("start.html",
                                    dataset_list=config.DATASETS_AVAILABLE,
                                    prep_data_message=prep_data_message)
         else:
-            result, dataset_df = utils.read_new_dataset(source_file_name=filename, text_id_col=text_id_col,
-                                                        text_value_col=text_value_col,
+            result, dataset_df = utils.read_new_dataset(source_file_name=filename,
+                                                        text_id_col=config.TEXT_ID_COL[0],
+                                                        text_value_col=config.TEXT_VALUE_COL[0],
                                                         source_dir="./output/upload")
             if result == 1:
                 prep_data_message1 = "Data set prepared. Inspect the data set below, and if it appears correct continue."
@@ -133,6 +239,17 @@ def upload_file():
                 prep_data_message2 = "Showing {} of {} records of the prepared data".format(records_limit, total_records)
                 config.PREP_DATA_MESSAGE2.clear()
                 config.PREP_DATA_MESSAGE2.append(prep_data_message2)
+
+                config.DATASET_NAME.clear()
+                config.DATASET_NAME.append(filename)
+
+                config.DATASET_URL.clear()
+                config.DATASET_URL.append("-")
+
+                date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+                config.DATE_TIME.clear()
+                config.DATE_TIME.append(date_time)
+
                 return render_template("start.html",
                                        dataset_list=config.DATASETS_AVAILABLE,
                                        prep_data_message1=config.PREP_DATA_MESSAGE1[0],
@@ -147,8 +264,8 @@ def upload_file():
                                        prep_data_message=prep_data_message)
 
 
-@app.route("/go_home")
-def go_home():
+@app.route("/home")
+def home():
     dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output/save")
     if dataset_name:
         temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
@@ -205,16 +322,17 @@ def dataset_selected():
         config.SHUFFLE_BY.clear()
         config.SHUFFLE_BY.append("random")  # kmeans random
 
-        texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer = \
-            load_demo_data(dataset="Disaster Tweets Dataset", shuffle_by=config.SHUFFLE_BY[0],
+        texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
+            load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by=config.SHUFFLE_BY[0],
                            table_limit=config.TABLE_LIMIT, texts_limit=config.TEXTS_LIMIT,
                            max_features=config.MAX_FEATURES,
                            y_classes=config.Y_CLASSES[0], rnd_state=config.RND_STATE)
 
         for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
-                                   config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST],
+                                   config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
+                                   config.CORPUS_TEXT_IDS],
                                   [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
-                                   vectorizer]):
+                                   vectorizer, corpus_text_ids]):
             master.clear()
             master.append(update)
 
@@ -228,7 +346,11 @@ def dataset_selected():
         config.TOTAL_PAGES_FULL.append(total_pages)
 
         config.CLASSIFIER_LIST.clear()
-
+        config.TEXTS_GROUP_1.clear()
+        config.TEXTS_GROUP_2.clear()
+        config.TEXTS_GROUP_3.clear()
+        config.OVERALL_QUALITY_SCORE.clear()
+        config.OVERALL_QUALITY_SCORE.append("-")
         return render_template("start.html",
                                dataset_list=config.DATASETS_AVAILABLE,
                                texts_list=config.TEXTS_LIST_LIST[0][0],
@@ -237,6 +359,7 @@ def dataset_selected():
 
     else:
         load_status = utils.load_save_state(source_dir="./output/save/")
+        print('config.SEARCH_MESSAGE :', config.SEARCH_MESSAGE)
         if load_status == 1:
             return render_template("start.html",
                                    dataset_list=config.DATASETS_AVAILABLE,
@@ -262,7 +385,6 @@ def begin_labeling():
                                dataset_list=config.DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
-    # if dataset_name in ["Disaster Tweets Dataset", "Disaster Tweets Dataset with 'Other'"]:
     page_number = 0
     utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
                            first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -270,8 +392,8 @@ def begin_labeling():
                            label_summary=config.LABEL_SUMMARY,
                            number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
                            label_summary_string=config.LABEL_SUMMARY_STRING)
-    config.SEARCH_MESSAGE.clear()
-    config.SEARCH_MESSAGE.append("Displaying all texts")
+    # config.SEARCH_MESSAGE.clear()
+    # config.SEARCH_MESSAGE.append("Displaying all texts")
 
     if selected_config == "config1":
         html_config_template = "text_labeling_1.html"
@@ -305,31 +427,97 @@ def begin_labeling():
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
                            initialize_flags=config.INITIALIZE_FLAGS[0])
 
-# @app.route("/")
-# def index():
-#     page_number = 0
-#
-#     utils.generate_summary(text_lists=TEXTS_LIST[0],
-#                            first_labeling_flag=FIRST_LABELING_FLAG,
-#                            total_summary=TOTAL_SUMMARY,
-#                            label_summary=LABEL_SUMMARY,
-#                                label_summary_string=config.LABEL_SUMMARY_STRING)
-#
-#     return render_template(config.HTML_CONFIG_TEMPLATE[0],
-#                            selected_text_id="None",
-#                            selected_text="Select a text below to begin labeling.",
-#                            info_message="",
-#                            page_number=0,
-#                            y_classes=Y_CLASSES[0],
-#                            total_pages=TOTAL_PAGES[0],
-#                            texts_list=TEXTS_LIST_LIST[0][page_number],
-#                            texts_group_1=[],
-#                            group1_table_limit_value=GROUP_1_KEEP_TOP[0],
-#                            texts_group_2=[],
-#                            group2_table_limit_value=PREDICTIONS_NUMBER[0],
-#                            texts_group_3=[],
-#                            total_summary=TOTAL_SUMMARY,
-#                            label_summary=LABEL_SUMMARY)
+
+@app.route("/begin_labeling_new_dataset", methods=["POST"])
+def begin_labeling_new_dataset():
+    print("In 'begin_labeling_new_dataset()")
+
+    config.SHUFFLE_BY.clear()
+    config.SHUFFLE_BY.append("random")  # kmeans random
+
+    texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
+        load_new_data(config.DATASET_NAME[0],
+                      source_folder="./output/upload/",
+                      shuffle_by=config.SHUFFLE_BY[0],
+                      table_limit=config.TABLE_LIMIT,
+                      texts_limit=config.TEXTS_LIMIT,
+                      max_features=config.MAX_FEATURES,
+                      y_classes=config.Y_CLASSES[0],
+                      rnd_state=config.RND_STATE)
+
+    for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
+                               config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
+                               config.CORPUS_TEXT_IDS],
+                              [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
+                               vectorizer, corpus_text_ids]):
+        master.clear()
+        master.append(update)
+
+    config.TEXTS_LIST_FULL.clear()
+    config.TEXTS_LIST_FULL.append(texts_list)
+
+    config.TEXTS_LIST_LIST_FULL.clear()
+    config.TEXTS_LIST_LIST_FULL.append(texts_list_list)
+
+    config.TOTAL_PAGES_FULL.clear()
+    config.TOTAL_PAGES_FULL.append(total_pages)
+
+    config.CLASSIFIER_LIST.clear()
+
+    dataset_name = config.DATASET_NAME[0]
+    selected_config = request.form.get("selected_config_new_data", None)
+
+    date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+    config.DATE_TIME.clear()
+    config.DATE_TIME.append(date_time)
+
+    if not dataset_name or not selected_config:
+        config1_message = "Select a dataset AND configuration above"
+        return render_template("start.html",
+                               dataset_list=config.DATASETS_AVAILABLE,
+                               config1_message=config1_message)
+
+    page_number = 0
+    utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+                           first_labeling_flag=config.FIRST_LABELING_FLAG,
+                           total_summary=config.TOTAL_SUMMARY,
+                           label_summary=config.LABEL_SUMMARY,
+                           number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+                           label_summary_string=config.LABEL_SUMMARY_STRING)
+    config.SEARCH_MESSAGE.clear()
+    config.SEARCH_MESSAGE.append("Displaying all texts")
+
+    if selected_config == "config1":
+        html_config_template = "text_labeling_1.html"
+    elif selected_config == "config2":
+        html_config_template = "text_labeling_2.html"
+    else:
+        html_config_template = "text_labeling_1.html"
+
+    config.HTML_CONFIG_TEMPLATE.clear()
+    config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+
+    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+                           selected_text_id="None",
+                           selected_text="Select a text to begin labeling.",
+                           info_message="No label selected",
+                           search_message=config.SEARCH_MESSAGE[0],
+                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           page_number=page_number,
+                           y_classes=config.Y_CLASSES[0],
+                           total_pages=config.TOTAL_PAGES[0],
+                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_group_1=[],
+                           group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                           texts_group_2=[],
+                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           texts_group_3=[],
+                           total_summary=config.TOTAL_SUMMARY,
+                           label_summary=config.LABEL_SUMMARY,
+                           recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
+                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
+                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           initialize_flags=config.INITIALIZE_FLAGS[0])
 
 
 @app.route("/text_labeling", methods=["GET", "POST"])
@@ -353,7 +541,7 @@ def text_labeling():
 
     # Group 1 ************************************************************************************
     similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                                                   corpus_text_ids=CORPUS_TEXT_IDS,
+                                                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                                                    text_id=selected_text_id,
                                                                    keep_original=config.KEEP_ORIGINAL)
 
@@ -372,7 +560,7 @@ def text_labeling():
         utils.get_top_predictions(selected_class=label_selected,
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                  corpus_text_ids=CORPUS_TEXT_IDS,
+                                  corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=config.TEXTS_LIST_FULL[0],
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -497,14 +685,7 @@ def single_text():
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0])
     else:
-        # old_obj = {"id": new_id, "text": new_text, "label": "-"}
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
-
-        # utils.update_texts_list(texts_list=TEXTS_LIST[0],
-        #                         sub_list_limit=TABLE_LIMIT,
-        #                         old_obj_lst=[old_obj],
-        #                         new_obj_lst=[new_obj],
-        #                         texts_list_list=TEXTS_LIST_LIST)
 
         utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
                                       sub_list_limit=config.TABLE_LIMIT,
@@ -522,7 +703,7 @@ def single_text():
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                             corpus_text_ids=CORPUS_TEXT_IDS,
+                             corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=[new_obj],
                              y_classes=config.Y_CLASSES[0],
@@ -538,7 +719,7 @@ def single_text():
             utils.get_top_predictions(selected_class=new_label,
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=CORPUS_TEXT_IDS,
+                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=config.TEXTS_LIST_FULL[0],
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -547,7 +728,10 @@ def single_text():
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
 
-        # **********************************************************************************************
+        result, difficult_texts_message = \
+            generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                    full_fit_if_labels_got_overridden=True, round_to=1,
+                                                    format_as_percentage=True)
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
@@ -570,7 +754,8 @@ def single_text():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               difficult_texts_message=difficult_texts_message)
 
 
 @app.route("/grouped_1_texts", methods=["POST"])
@@ -647,7 +832,7 @@ def grouped_1_texts():
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                             corpus_text_ids=CORPUS_TEXT_IDS,
+                             corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_1_updated,
                              y_classes=config.Y_CLASSES[0],
@@ -665,7 +850,7 @@ def grouped_1_texts():
             utils.get_top_predictions(selected_class=selected_label_group1,
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=CORPUS_TEXT_IDS,
+                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=config.TEXTS_LIST_FULL[0],
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -673,7 +858,11 @@ def grouped_1_texts():
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
-        # **********************************************************************************************
+
+        result, difficult_texts_message = \
+            generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                    full_fit_if_labels_got_overridden=True, round_to=1,
+                                                    format_as_percentage=True)
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
@@ -696,7 +885,8 @@ def grouped_1_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               difficult_texts_message=difficult_texts_message)
 
 
 @app.route("/grouped_2_texts", methods=["POST"])
@@ -773,7 +963,7 @@ def grouped_2_texts():
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                             corpus_text_ids=CORPUS_TEXT_IDS,
+                             corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_2_updated,
                              y_classes=config.Y_CLASSES[0],
@@ -791,7 +981,7 @@ def grouped_2_texts():
             utils.get_top_predictions(selected_class=selected_label_group2,
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=CORPUS_TEXT_IDS,
+                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=config.TEXTS_LIST_FULL[0],
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -799,7 +989,11 @@ def grouped_2_texts():
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
-        # **********************************************************************************************
+
+        result, difficult_texts_message = \
+            generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                    full_fit_if_labels_got_overridden=True, round_to=1,
+                                                    format_as_percentage=True)
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id="None", # new_id,
@@ -822,7 +1016,8 @@ def grouped_2_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               difficult_texts_message=difficult_texts_message)
 
 
 @app.route("/label_all", methods=["POST"])
@@ -951,7 +1146,7 @@ def label_all():
             updated_texts_list, updated_texts_list_list, labeled_text_ids = \
                 utils.label_all(fitted_classifier=config.CLASSIFIER_LIST[0],
                                 sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                corpus_text_ids=CORPUS_TEXT_IDS,
+                                corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                 texts_list=config.TEXTS_LIST_FULL[0],
                                 label_only_unlabeled=True,
                                 sub_list_limit=config.TABLE_LIMIT,
@@ -1123,10 +1318,15 @@ def save_state():
     save_state["TEXTS_GROUP_2"] = config.TEXTS_GROUP_2
     save_state["TEXTS_GROUP_3"] = config.TEXTS_GROUP_3
     save_state["SEARCH_MESSAGE"] = config.SEARCH_MESSAGE
+
     save_state["TEXTS_LIST"] = config.TEXTS_LIST
     save_state["TEXTS_LIST_FULL"] = config.TEXTS_LIST_FULL
+
+    save_state["CORPUS_TEXT_IDS"] = config.CORPUS_TEXT_IDS
+    print("len(config.TEXTS_LIST_LIST_FULL[0]) :", len(config.TEXTS_LIST_LIST_FULL[0]))
     save_state["TEXTS_LIST_LIST"] = config.TEXTS_LIST_LIST
     save_state["TEXTS_LIST_LIST_FULL"] = config.TEXTS_LIST_LIST_FULL
+
     save_state["TOTAL_PAGES_FULL"] = config.TOTAL_PAGES_FULL
     save_state["ADJ_TEXT_IDS"] = config.ADJ_TEXT_IDS
     save_state["TOTAL_PAGES"] = config.TOTAL_PAGES
@@ -1200,7 +1400,7 @@ def label_selected():
         config.TEXTS_GROUP_1.clear()
     else:
         similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                                                       corpus_text_ids=CORPUS_TEXT_IDS,
+                                                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                                                        text_id=selected_text_id,
                                                                        keep_original=config.KEEP_ORIGINAL)
 
@@ -1217,7 +1417,7 @@ def label_selected():
         utils.get_top_predictions(selected_class=label_selected,
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                  corpus_text_ids=CORPUS_TEXT_IDS,
+                                  corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=config.TEXTS_LIST_FULL[0],
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -1270,48 +1470,14 @@ def generate_difficult_texts():
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
     # Group 3 ************************************************************************************
-    if len(config.CLASSIFIER_LIST) > 0:
-        label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
-        y_classes_labeled = label_summary_df["name"].values
 
-        all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
-        if all_classes_present:
-            print("config.Y_CLASSES[0] :", config.Y_CLASSES[0])
-            if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
-                texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
-                utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                     corpus_text_ids=CORPUS_TEXT_IDS,
-                                     texts_list=config.TEXTS_LIST_FULL[0],
-                                     texts_list_labeled=texts_group_updated,
-                                     y_classes=config.Y_CLASSES[0],
-                                     verbose=config.FIT_CLASSIFIER_VERBOSE,
-                                     classifier_list=config.CLASSIFIER_LIST,
-                                     random_state=config.RND_STATE,
-                                     n_jobs=-1,
-                                     labels_got_overridden_flag=True,
-                                     full_fit_if_labels_got_overridden=True)
+    result, message = generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                              full_fit_if_labels_got_overridden=True, round_to=1,
+                                                              format_as_percentage=True)
+    info_message = message
 
-            print("config.CLASSIFIER_LIST[0].classes_ :", config.CLASSIFIER_LIST[0].classes_)
-            utils.get_all_predictions(fitted_classifier=config.CLASSIFIER_LIST[0],
-                                      sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=CORPUS_TEXT_IDS,
-                                      texts_list=config.TEXTS_LIST[0],
-                                      top=config.GROUP_3_KEEP_TOP,
-                                      y_classes=config.Y_CLASSES[0],
-                                      verbose=config.PREDICTIONS_VERBOSE,
-                                      round_to=1,
-                                      format_as_percentage=True,
-                                      similar_texts=config.TEXTS_GROUP_3,
-                                      predictions_report=config.RECOMMENDATIONS_SUMMARY,
-                                      overall_quality_score=config.OVERALL_QUALITY_SCORE)
-            print("config.OVERALL_QUALITY_SCORE :", config.OVERALL_QUALITY_SCORE)
-            info_message = "The difficult texts list has been generated."
-        else:
-            info_message = """Examples of all labels are not present. 
-                              Label more texts then try generating the difficult text list."""
     # **********************************************************************************************
-    else:
-        info_message = "Label more texts then try generating the difficult text list."
+
 
     if config.HTML_CONFIG_TEMPLATE[0] in ["text_labeling_2.html"]:
         scroll_to_id = "labelAllButton"
@@ -1376,7 +1542,7 @@ def set_group_1_record_limit():
         start_test_time = datetime.now()
 
         similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                                                       corpus_text_ids=CORPUS_TEXT_IDS,
+                                                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                                                        text_id=selected_text_id,
                                                                        keep_original=config.KEEP_ORIGINAL)
 
@@ -1443,7 +1609,7 @@ def set_group_2_record_limit():
         utils.get_top_predictions(selected_class=label_selected,
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                  corpus_text_ids=CORPUS_TEXT_IDS,
+                                  corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=config.TEXTS_LIST_FULL[0],
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -1692,7 +1858,7 @@ def grouped_search_texts():
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                             corpus_text_ids=CORPUS_TEXT_IDS,
+                             corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=config.TEXTS_LIST_FULL[0],
                              texts_list_labeled=texts_group_updated,
                              y_classes=config.Y_CLASSES[0],
@@ -1710,7 +1876,7 @@ def grouped_search_texts():
             utils.get_top_predictions(selected_class=selected_label_search_texts,
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=CORPUS_TEXT_IDS,
+                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=config.TEXTS_LIST_FULL[0],
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
@@ -1718,6 +1884,11 @@ def grouped_search_texts():
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
+
+        result, difficult_texts_message = \
+            generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                    full_fit_if_labels_got_overridden=True, round_to=1,
+                                                    format_as_percentage=True)
         # **********************************************************************************************
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
@@ -1741,7 +1912,8 @@ def grouped_search_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               difficult_texts_message=difficult_texts_message)
 
 
 @app.route("/clear_search_all_texts", methods=["POST"])

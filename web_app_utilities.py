@@ -34,8 +34,11 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
     try:
         dataset_df = pd.read_csv(os.path.join(source_dir, source_file_name))
         dataset_df = dataset_df[[text_id_col, text_value_col]]
-        dataset_df.rename(columns={text_id_col: "id", text_value_col: "text"})
+        dataset_df.rename(columns={text_id_col: "id", text_value_col: "text"}, inplace=True)
         dataset_df["label"] = "-"
+        print("dataset_df :")
+        print(dataset_df.head())
+
         return 1, dataset_df
     except:
         return 0, None
@@ -60,9 +63,11 @@ def load_save_state(source_dir="./output/save"):
         config.TEXTS_GROUP_1 = save_state_json["TEXTS_GROUP_1"]
         config.TEXTS_GROUP_2 = save_state_json["TEXTS_GROUP_2"]
         config.TEXTS_GROUP_3 = save_state_json["TEXTS_GROUP_3"]
+        print("save_state_json['SEARCH_MESSAGE']: ", save_state_json["SEARCH_MESSAGE"])
         config.SEARCH_MESSAGE = save_state_json["SEARCH_MESSAGE"]
         config.TEXTS_LIST = save_state_json["TEXTS_LIST"]
         config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
+        config.CORPUS_TEXT_IDS = save_state_json["CORPUS_TEXT_IDS"]
         config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
         config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
         config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
@@ -104,38 +109,32 @@ def get_disaster_tweet_demo_data(number_samples=None,
     return data_df
 
 
-# def convert_demo_data_into_list(consolidated_disaster_tweet_data_df, limit=50):
-#     consolidated_disaster_tweet_data_df["assigned_label"] = "-"
-#     consolidated_disaster_tweet_data_df["tweet_id"] = consolidated_disaster_tweet_data_df["tweet_id"].values.astype(str)
-#     all_texts = consolidated_disaster_tweet_data_df[["tweet_id", "tweet_text", "assigned_label"]].values.tolist()
-#
-#     max_length = len(all_texts)
-#     if limit < max_length:
-#         all_texts_adj = random.sample(all_texts, limit)
-#     else:
-#         all_texts_adj = all_texts
-#
-#     return all_texts_adj
+def get_new_data(source_file, source_folder="./output/upload/", number_samples=None, random_state=1144):
+    full_source_file_name = os.path.join(source_folder, source_file)
+    data_df = pd.read_csv(full_source_file_name, sep=",")
+    if number_samples:
+        data_df = data_df.sample(number_samples, random_state=random_state)
+        data_df = data_df.reset_index(drop=True)
+    return data_df
 
 
-def convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=50, keep_labels=False,
+def convert_demo_data_into_list_json(data_df, limit=50, keep_labels=False,
                                      shuffle_list=[], random_shuffle=False, random_state=21524,
                                      new_label_col_name="assigned_label",
-                                     old_label_col_name="event_type"):
-    id_col = "tweet_id"
-    text_col = "tweet_text"
-    label_col = "assigned_label"
+                                     old_label_col_name="event_type",
+                                     id_col="tweet_id",
+                                     text_col="tweet_text",
+                                     label_col="assigned_label"):
 
     if keep_labels:
-        consolidated_disaster_tweet_data_df[new_label_col_name] = consolidated_disaster_tweet_data_df[old_label_col_name]
+        data_df[new_label_col_name] = data_df[old_label_col_name]
     else:
-        consolidated_disaster_tweet_data_df[new_label_col_name] = "-"
+        data_df[new_label_col_name] = "-"
 
-    consolidated_disaster_tweet_data_df[id_col] = consolidated_disaster_tweet_data_df[id_col].values.astype(str)
+    data_df[id_col] = data_df[id_col].values.astype(str)
 
     if len(shuffle_list) > 0:
-        sort_index = consolidated_disaster_tweet_data_df.index.values
-        # consolidated_disaster_tweet_data_df["shuffle"] = shuffle_list
+        sort_index = data_df.index.values
 
         group_dict = {}
         for group in set(shuffle_list):
@@ -154,14 +153,59 @@ def convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df, limit=
             sort_indices.extend(temp_list)
             # sort_indices = list(filter(None, sort_indices))
 
-        consolidated_disaster_tweet_data_df = consolidated_disaster_tweet_data_df.iloc[sort_indices, :]
+        data_df = data_df.iloc[sort_indices, :]
 
     if len(shuffle_list) == 0 and random_shuffle:
-        consolidated_disaster_tweet_data_df = consolidated_disaster_tweet_data_df\
-                                                .sample(frac=1, random_state=random_state)\
-                                                .reset_index(drop=True)
+        data_df = data_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
-    all_texts = consolidated_disaster_tweet_data_df[[id_col, text_col, label_col]].values.tolist()
+    all_texts = data_df[[id_col, text_col, label_col]].values.tolist()
+
+    max_length = len(all_texts)
+    if limit < max_length:
+        all_texts_adj = random.sample(all_texts, limit)
+    else:
+        all_texts_adj = all_texts
+
+    all_texts_json = [{"id": text[0], "text": text[1], "label": text[2]} for text in all_texts_adj]
+    adj_text_ids = [text[0] for text in all_texts_adj]
+    return all_texts_json, adj_text_ids
+
+
+def convert_new_data_into_list_json(data_df,
+                                    limit=50,
+                                    shuffle_list=[],
+                                    random_shuffle=False,
+                                    random_state=21524,
+                                    id_col="id",
+                                    text_col="text",
+                                    label_col="label"):
+
+    data_df[id_col] = data_df[id_col].values.astype(str)
+    data_df[label_col] = "-"
+
+    if len(shuffle_list) > 0:
+        sort_index = data_df.index.values
+
+        group_dict = {}
+        for group in set(shuffle_list):
+            group_dict[group] = []
+
+        for (group, index) in zip(shuffle_list, sort_index):
+            group_dict[group].append(index)
+
+        dictionaries = list(group_dict.values())
+
+        sort_indices = []
+        for sort_indices_tuple in itertools.zip_longest(*dictionaries):
+            temp_list = [x for x in [*sort_indices_tuple] if x is not None]
+            sort_indices.extend(temp_list)
+
+        data_df = data_df.iloc[sort_indices, :]
+
+    if len(shuffle_list) == 0 and random_shuffle:
+        data_df = data_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+
+    all_texts = data_df[[id_col, text_col, label_col]].values.tolist()
 
     max_length = len(all_texts)
     if limit < max_length:

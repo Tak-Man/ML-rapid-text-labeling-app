@@ -116,24 +116,6 @@
                                 <td>Select an existing dataset above to see details.</td>
                                 <td>Select an existing dataset above to see details.</td>
                             </tr>
-                            <tr>
-                                <td>
-                                    <a>
-                                        Select an existing dataset above to see details.
-                                    </a>
-                                </td>
-                                <td>Select an existing dataset above to see details.</td>
-                                <td>Select an existing dataset above to see details.</td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <a>
-                                        Select an existing dataset above to see details.
-                                    </a>
-                                </td>
-                                <td>Select an existing dataset above to see details.</td>
-                                <td>Select an existing dataset above to see details.</td>
-                            </tr>
                         {% endif %}
                         </tbody>
                     </table>
@@ -157,10 +139,16 @@
                     <p class="subHeading">Select an interface layout</p>
                     <input name="dataset_name" type="hidden" value="{{ dataset_name }}">
                     <div id="divRadioConfiguration">
-                        <input type="radio" id="config1" name="selected_config" value="config1">
-                        <label for="config1" title="A user interface where all the options for text labeling are displayed all at once.">Layout 1</label>
-                        <input type="radio" id="config2" name="selected_config" value="config2">
-                        <label for="config2" title="A streamlined interface where components are displayed according to the user's selections.">Layout 2</label>
+                        <div id="option1">
+                            <input type="radio" id="config1" name="selected_config" value="config1">
+                            <label for="config1" title="A user interface where all the options for text labeling are displayed all at once.">Layout 1</label>
+                        </div>
+                        <div id="option2">
+                            <input type="radio" id="config2" name="selected_config" value="config2">
+                            <label for="config2" title="A streamlined interface where components are displayed according to the user's selections.">Layout 2</label>
+                        </div>
+
+
                     </div>
                     <div id="divBodyLeft2InfoMessage">If this dataset is suitable click 'Select Dataset'</div>
                     <input id="loadDataSetButton" type="submit" name="load_dataset" value="Select Dataset"
@@ -171,11 +159,11 @@
         </div>
         <div id="gridTopMiddle">
             <h2>Select a New Dataset</h2>
-            <p class="subHeading">Select a single csv file</p>
+            <p class="subHeading">Select a single csv file containing a record identity column and a text column</p>
             <div id="bodyMiddle1">
                 <form id="formSelectFile" action="{{ url_for('upload_file') }}" method="POST"
                       enctype = "multipart/form-data">
-                    <input type="file" id="myFile" name="file" accept=".csv" class="appButton">
+                    <input type="file" id="myFile" name="file" accept=".csv, .tsv" class="appButton">
 
                     <h2>Raw Dataset Preview</h2>
                     <div id="divDataPreviewTable"></div>
@@ -183,16 +171,16 @@
                     <div id="divSelectCols">
                         <div class="block">
                             <label id="labelTextIdColDropDown" for="textIdColDropDown"
-                                   class="subHeading">Select the text ID columns name</label>
-                            <input list="textIdColList" name="textIdCol" id="textIdColDropDown">
+                                   class="subHeading">Select the text ID column</label>
+                            <input id="inputTextIdColDropDown" list="textIdColList" name="textIdCol" id="textIdColDropDown">
                             <datalist id="textIdColList">
                                 <option value="Default - Select a file">
                             </datalist>
                         </div>
                         <div class="block">
                             <label id="labelTextValueColDropDown" for="textValueColDropDown"
-                                   class="subHeading">Select the text column name</label>
-                            <input list="textValueColList" name="textValueCol" id="textValueColDropDown">
+                                   class="subHeading">Select the text column</label>
+                            <input id="inputTextValueColDropDown" list="textValueColList" name="textValueCol" id="textValueColDropDown">
                             <datalist id="textValueColList">
                                 <option value="Default - Select a file">
                             </datalist>
@@ -239,13 +227,26 @@
                     <form id="formEnterLabels" action="{{ url_for('label_entered') }}" method="POST">
                         <input id="inputLabelEntered" type="text" placeholder="Type a label" id="myLabel"
                                name="labelEntered">
-                        <button id="enterLabelButton" type="submit" class="appButton">Enter Label</button>
+                        <button id="enterLabelButton" type="submit" class="appButton" name="action" value="add">Enter Label</button>
+                        <button id="clearLabelButton" type="submit" class="appButton" name="action" value="clear">Clear Labels</button>
                     </form>
                     <div id="displayEnteredLabels">{{ entered_labels }}</div>
                 </div>
 
-                <form id="formConfirmNewDataset" action="{{ url_for('begin_labeling', dataset_name=dataset_name) }}"
+                <h2>Select a Layout</h2>
+                <p class="subHeading">Select an interface layout</p>
+                <form id="formConfirmNewDataset" action="{{ url_for('begin_labeling_new_dataset', dataset_name=dataset_name) }}"
                       method="POST">
+                    <div id="divRadioConfigurationNewData">
+                        <div id="option1NewData">
+                            <input type="radio" id="config1NewData" name="selected_config_new_data" value="config1">
+                            <label for="config1" title="A user interface where all the options for text labeling are displayed all at once.">Layout 1</label>
+                        </div>
+                        <div id="option2NewData">
+                            <input type="radio" id="config2NewData" name="selected_config_new_data" value="config2">
+                            <label for="config2" title="A streamlined interface where components are displayed according to the user's selections.">Layout 2</label>
+                        </div>
+                    </div>
                     <div id="loadNewDataSetMessage">If this dataset is suitable click 'Select Dataset'</div>
                     <input id="loadDataSetButton2" type="submit" name="load_dataset" value="Select Dataset"
                            class="appButton">
@@ -254,12 +255,12 @@
 
         </div>
         <div id="gridTopRight">
-            <h2>Watch a demo video</h2>
-            <p class="subHeading">Select any 'Text ID' (blue) on this page to focus on.</p>
+            <h2>Watch a Demo Video</h2>
+            <p class="subHeading">To understand how labeling works</p>
             <div id="bodyRight1"></div>
         </div>
         <div id="divBodyRight"></div>
-        <div id="divFooter">last updated 2021-10-26</div>
+        <div id="divFooter">Completed as part of the University of Michigan (School of Information) Master of Applied Data Science Program by Michael Penrose and Carlo Tak (December 2021)</div>
     </div>
     <script>
         var input = document.getElementById("myFile");

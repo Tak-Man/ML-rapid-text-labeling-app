@@ -205,7 +205,7 @@ div {
 }
 
 #difficultTextSummaryTable {
-    font-size: 0.65vw;
+    font-size: 0.9vw;
     font-family: sans-serif;
     font-weight: 600;
     color: #808080; /*grey*/
@@ -421,7 +421,7 @@ div {
 
 #divDifficultTextsTable {
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;
     height: 99%;
     width: 99%;
     font-size: 0.65vw;
@@ -600,6 +600,14 @@ div {
     max-height: 8vh;
     height: 8vh;
     margin: auto;
+}
+
+#labelSearchAllTextsExclude {
+    margin-left: 2vw;
+}
+
+#searchAllTextsInclude, #searchAllTextsExclude {
+    width: 15vw;
 }
 
 #divSimilarTextsBody {

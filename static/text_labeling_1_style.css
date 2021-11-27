@@ -91,6 +91,8 @@ div {
 
 
 #currentTextBody {
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: var(--main-padding);
     background-color: white;
     height: 85%;
