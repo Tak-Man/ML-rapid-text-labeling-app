@@ -79,7 +79,6 @@
                     {% endif %}
                     <br/>
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
                     <input name="page_number" type="hidden" value="{{ page_number }}">
 
                     <div id="labelMessage"><p>Info : {{ info_message }}</p></div>
@@ -150,11 +149,9 @@
                                     <a methods="POST"
                                        href="{{ url_for('text_labeling',
                                                         selected_text_id=text_record['id'],
-                                                        selected_text=text_record['text'],
                                                         label_selected=label_selected,
                                                         info_message='',
                                                         page_number=page_number,
-                                                        texts_list=texts_list,
                                                         texts_group_1=texts_group_1,
                                                         texts_group_2=[],
                                                         app_section='all_texts') }}">
@@ -250,7 +247,6 @@
                  title="'Difficult Texts' are the texts that the system finds hard to recommend. The most difficult texts will appear at the top of this list.">
                 <form id="formDifficultTextsButtons" action="{{ url_for('generate_difficult_texts') }}" method="POST">
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
                     <input name="page_number" type="hidden" value="{{ page_number }}">
                     <input id="selected_label" name="selected_label" type="hidden"
                                    value="{{ label_selected }}">
@@ -389,7 +385,6 @@
             <div id="labelingSummaryButtons">
                 <form id="formLabelAll" action="{{ url_for('label_all') }}" method="POST">
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                    <input name="selected_text" type="hidden" value="{{ selected_text }}">
                     <input name="page_number" type="hidden" value="{{ page_number }}">
                     <input name="selected_label" type="hidden" value="{{ label_selected }}">
                     <input id="labelAllButton"
@@ -424,11 +419,20 @@
             <button class="accordion">Label Single Text</button>
             <div class="panel" value="0">
                 <p class="subHeading">Label texts one at a time to increase accuracy</p>
-                <div id="currentTextBody"><br/><p>{{ selected_text }}</p></div>
+                {% if texts_list %}
+                    {% if selected_text_id != 'None' %}
+                        {% for text_record in texts_list %}
+                            {% if text_record['id'] == selected_text_id %}
+                            <div id="currentTextBody"><br/><p>{{ text_record['text'] }}</p></div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div id="currentTextBody"><br/><p>Select a text ID</p></div>
+                    {% endif %}
+                {% endif %}
                 <div id="divLabelButtonSingle" title="This single text will be assigned the label selected">
                     <form id="formLabelButtonSingle" action="{{ url_for('single_text') }}" method="POST">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input id="selected_label_single" name="selected_label_single" type="hidden"
                                value="{{ label_selected }}">
@@ -472,7 +476,6 @@
                                 <input id="searchAllTextsButton" type="submit" value="Submit" class="appButton">
                             </div>
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                            <input name="selected_text" type="hidden" value="{{ selected_text }}">
                             <input name="page_number" type="hidden" value="{{ page_number }}">
                             <input name="label_selected" type="hidden" value="{{ label_selected }}">
                         </form>
@@ -485,7 +488,6 @@
                             </div>
 
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                            <input name="selected_text" type="hidden" value="{{ selected_text }}">
                             <input name="page_number" type="hidden" value="{{ page_number }}">
                             <input name="label_selected" type="hidden" value="{{ label_selected }}">
                         </form>
@@ -494,7 +496,6 @@
                 <div id="divSearchTextsButton" title="This group of texts will be assigned the label selected">
                     <form id="formSearchTextsButton" action="{{ url_for('grouped_search_texts') }}" method="POST">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input name="search_results_length" type="hidden" value="{{ search_results_length }}">
                         <input id="selected_label_search_texts"
@@ -537,7 +538,6 @@
                         </select>
                         records
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input name="table_limit" type="hidden" value=10>
                         <input name="label_selected" type="hidden" value="{{ label_selected }}">
@@ -587,9 +587,7 @@
                 <div id="divSimilarTextsButton" title="This group of texts will be assigned the label selected">
                     <form id="formSimilarTextsButton" action="{{ url_for('grouped_1_texts') }}" method="POST">
                         <input name="texts_group_1" type="hidden" value="{{ texts_group_1 }}">
-                        <input name="texts_list" type="hidden" value="{{ texts_list }}">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input id="selected_label_group1" name="selected_label_group1" type="hidden"
                                value="{{ label_selected }}">
@@ -630,7 +628,6 @@
                         </select>
                         records
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input name="table_limit" type="hidden" value=10>
                         <input name="label_selected" type="hidden" value="{{ label_selected }}">
@@ -682,9 +679,7 @@
                 <div id="divRecommendedTextsButton" title="This group of texts will be assigned the label selected">
                     <form id="recommendedTextsForm" action="{{ url_for('grouped_2_texts') }}" method="POST">
                         <input name="texts_group_2" type="hidden" value="{{ texts_group_2 }}">
-                        <input name="texts_list" type="hidden" value="{{ texts_list }}">
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
-                        <input name="selected_text" type="hidden" value="{{ selected_text }}">
                         <input name="page_number" type="hidden" value="{{ page_number }}">
                         <input id="selected_label_group2" name="selected_label_group2" type="hidden"
                                value="{{ label_selected }}">

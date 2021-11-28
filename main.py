@@ -574,7 +574,7 @@ def text_labeling():
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
-                           selected_text=selected_text,
+                           # selected_text=selected_text,
                            label_selected=label_selected,
                            info_message="Text selected",
                            search_message=config.SEARCH_MESSAGE[0],
@@ -644,7 +644,7 @@ def single_text():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
 
     new_id = request.form["selected_text_id"]
-    new_text = request.form["selected_text"]
+    # new_text = request.form["selected_text"]
     page_number = int(request.form["page_number"])
     new_label = request.form["selected_label_single"]
     info_message = ""
@@ -670,7 +670,7 @@ def single_text():
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
-                               selected_text=new_text,
+                               # selected_text=new_text,
                                info_message=info_message,
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
@@ -690,6 +690,8 @@ def single_text():
                                initialize_flags=config.INITIALIZE_FLAGS[0],
                                search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
     else:
+        new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+        print("new_text :", new_text)
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
 
         utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
@@ -771,9 +773,11 @@ def grouped_1_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = request.form["selected_text"]
+    # new_text = request.form["selected_text"]
     selected_label_group1 = request.form["selected_label_group1"]
     info_message = ""
+
+    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
                                                      click_type="group_label_assigned",
@@ -904,8 +908,10 @@ def grouped_2_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = request.form["selected_text"]
+    # new_text = request.form["selected_text"]
     selected_label_group2 = request.form["selected_label_group2"]
+
+    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
 
     click_record, guid = utils.generate_click_record(click_location="recommended_texts",
                                                      click_type="group_label_assigned",
@@ -1034,8 +1040,10 @@ def grouped_2_texts():
 def label_all():
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = request.form["selected_text"]
+    # new_text = request.form["selected_text"]
     selected_label = request.form["selected_label"]
+
+    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
@@ -1429,7 +1437,7 @@ def label_selected():
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
-                           selected_text=selected_text,
+                           # selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
                            search_message=config.SEARCH_MESSAGE[0],
@@ -1459,8 +1467,9 @@ def generate_difficult_texts():
 
     page_number = int(request.form["page_number"])
     id = request.form["selected_text_id"]
-    text = request.form["selected_text"]
     label_selected = request.form["selected_label"]
+
+    text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == id]
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="generate_list",
@@ -1559,7 +1568,7 @@ def set_group_1_record_limit():
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
-                           selected_text=selected_text,
+                           # selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
                            search_message=config.SEARCH_MESSAGE[0],
@@ -1622,7 +1631,7 @@ def set_group_2_record_limit():
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
-                           selected_text=selected_text,
+                           # selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
                            search_message=config.SEARCH_MESSAGE[0],
@@ -1710,7 +1719,7 @@ def search_all_texts():
 
             return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=selected_text_id,
-                                   selected_text=selected_text,
+                                   # selected_text=selected_text,
                                    label_selected=label_selected,
                                    info_message=info_message,
                                    search_message=config.SEARCH_MESSAGE[0],
@@ -1749,7 +1758,7 @@ def search_all_texts():
 
             return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                    selected_text_id=selected_text_id,
-                                   selected_text=selected_text,
+                                   # selected_text=selected_text,
                                    label_selected=label_selected,
                                    info_message=info_message,
                                    search_message=config.SEARCH_MESSAGE[0],
@@ -1777,7 +1786,7 @@ def search_all_texts():
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=selected_text_id,
-                               selected_text=selected_text,
+                               # selected_text=selected_text,
                                label_selected=label_selected,
                                info_message=info_message,
                                search_message=config.SEARCH_MESSAGE[0],
@@ -1807,8 +1816,8 @@ def grouped_search_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = request.form["selected_text"]
-    search_results_length = request.form["search_results_length"]
+    # new_text = request.form["selected_text"]
+    # search_results_length = request.form["search_results_length"]
     selected_label_search_texts = request.form["selected_label_search_texts"]
     info_message = ""
 
@@ -1828,7 +1837,7 @@ def grouped_search_texts():
 
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
-                               selected_text=new_text,
+                               # selected_text=new_text,
                                info_message=info_message,
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
@@ -1965,7 +1974,7 @@ def clear_search_all_texts():
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
-                           selected_text=selected_text,
+                           # selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
                            search_message=config.SEARCH_MESSAGE[0],
