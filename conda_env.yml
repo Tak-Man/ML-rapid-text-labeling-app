@@ -19,6 +19,7 @@ dependencies:
     - colorama==0.4.4
     - flask==2.0.2
     - flask-session==0.4.0
+    - gunicorn==20.0.4
     - itsdangerous==2.0.1
     - jinja2==3.0.2
     - joblib==1.1.0
