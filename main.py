@@ -425,7 +425,8 @@ def begin_labeling():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/begin_labeling_new_dataset", methods=["POST"])
@@ -517,7 +518,8 @@ def begin_labeling_new_dataset():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/text_labeling", methods=["GET", "POST"])
@@ -591,7 +593,8 @@ def text_labeling():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/go_to_page", methods=["GET", "POST"])
@@ -631,7 +634,8 @@ def go_to_page():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/single_text", methods=["POST"])
@@ -683,7 +687,8 @@ def single_text():
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
     else:
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
 
@@ -755,7 +760,8 @@ def single_text():
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
-                               difficult_texts_message=difficult_texts_message)
+                               difficult_texts_message=difficult_texts_message,
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/grouped_1_texts", methods=["POST"])
@@ -806,7 +812,8 @@ def grouped_1_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
     else:
         texts_group_1_updated = copy.deepcopy(config.TEXTS_GROUP_1)
@@ -886,7 +893,8 @@ def grouped_1_texts():
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
-                               difficult_texts_message=difficult_texts_message)
+                               difficult_texts_message=difficult_texts_message,
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/grouped_2_texts", methods=["POST"])
@@ -938,7 +946,8 @@ def grouped_2_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
     else:
         texts_group_2_updated = copy.deepcopy(config.TEXTS_GROUP_2)
@@ -1017,7 +1026,8 @@ def grouped_2_texts():
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
-                               difficult_texts_message=difficult_texts_message)
+                               difficult_texts_message=difficult_texts_message,
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/label_all", methods=["POST"])
@@ -1065,7 +1075,8 @@ def label_all():
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
                                scroll_to_id=scroll_to_id,
-                               label_summary_message=label_summary_message)
+                               label_summary_message=label_summary_message,
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
     if len(config.CLASSIFIER_LIST) > 0:
         if config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] == 0:
@@ -1101,7 +1112,8 @@ def label_all():
                                    label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                    initialize_flags=config.INITIALIZE_FLAGS[0],
                                    scroll_to_id=scroll_to_id,
-                                   label_summary_message=label_summary_message)
+                                   label_summary_message=label_summary_message,
+                                   search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
         elif config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] == 1:
             info_message = \
@@ -1137,7 +1149,8 @@ def label_all():
                                    label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                    initialize_flags=config.INITIALIZE_FLAGS[0],
                                    scroll_to_id=scroll_to_id,
-                                   label_summary_message=label_summary_message)
+                                   label_summary_message=label_summary_message,
+                                   search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
         elif config.CONFIRM_LABEL_ALL_TEXTS_COUNTS[0] > 1:
             info_message = \
@@ -1188,7 +1201,8 @@ def label_all():
                                    label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                    initialize_flags=config.INITIALIZE_FLAGS[0],
                                    scroll_to_id=scroll_to_id,
-                                   label_summary_message=label_summary_message)
+                                   label_summary_message=label_summary_message,
+                                   search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
     # **********************************************************************************************
     else:
         info_message = "Label more texts before trying again."
@@ -1214,30 +1228,8 @@ def label_all():
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
                            initialize_flags=config.INITIALIZE_FLAGS[0],
-                           scroll_to_id=scroll_to_id)
-
-
-@app.route("/text/<id>", methods=["GET", "PUT", "DELETE"])
-def single_record(id):
-    if request.method == "GET":
-        for text in config.TEXTS_LIST:
-            if text in config.TEXTS_LIST:
-                return jsonify(text)
-            pass
-
-    if request.method == "PUT":
-        for text in config.TEXTS_LIST:
-            if text["id"] == id:
-                text["text"] = request.form["selected_text"]
-                text["label"] = request.form["assigned_label"]
-                updated_text = {"id": id, "text": text["text"], "label": text["label"]}
-                return jsonify(updated_text)
-
-    if request.method == "DELETE":
-        for index, book in enumerate(config.TEXTS_LIST):
-            if text["id"] == id:
-                config.TEXTS_LIST.pop(index)
-                return jsonify(config.TEXTS_LIST)
+                           scroll_to_id=scroll_to_id,
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route('/export_records', methods=['GET', 'POST'])
@@ -1253,6 +1245,14 @@ def export_records():
 
     download_files = []
 
+    print("After download_files")
+
+    texts_df = pd.DataFrame.from_dict(config.TEXTS_LIST_FULL[0])
+    texts_df.to_csv("./output/labeled_texts.csv", index=False)
+    download_files.append("./output/labeled_texts.csv")
+
+    print("After config.TEXTS_LIST_FULL")
+
     click_log_df = pd.DataFrame.from_dict(config.CLICK_LOG)
     click_log_df.to_csv("./output/click_log.csv", index=False)
     download_files.append("./output/click_log.csv")
@@ -1261,10 +1261,7 @@ def export_records():
     value_log_df.to_csv("./output/value_log.csv", index=False)
     download_files.append("./output/value_log.csv")
 
-    texts_df = pd.DataFrame.from_dict(config.TEXTS_LIST_FULL[0])
-    texts_df.to_csv("./output/labeled_texts.csv", index=False)
-    download_files.append("./output/labeled_texts.csv")
-
+    print("After config.VALUE_LOG")
 
     if len(config.CLASSIFIER_LIST) > 0:
         filename = "trained-classifier.pkl"
@@ -1365,7 +1362,8 @@ def save_state():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route('/update_panels', methods=['GET', 'POST'])
@@ -1450,7 +1448,8 @@ def label_selected():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route('/generate_difficult_texts', methods=['POST'])
@@ -1509,7 +1508,8 @@ def generate_difficult_texts():
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
                            initialize_flags=config.INITIALIZE_FLAGS[0],
                            scroll_to_id=scroll_to_id,
-                           difficult_texts_message=difficult_texts_message)
+                           difficult_texts_message=difficult_texts_message,
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/set_group_1_record_limit", methods=["POST"])
@@ -1578,7 +1578,8 @@ def set_group_1_record_limit():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/set_group_2_record_limit", methods=["POST"])
@@ -1640,7 +1641,8 @@ def set_group_2_record_limit():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/search_all_texts", methods=["POST"])
@@ -1654,6 +1656,15 @@ def search_all_texts():
     label_selected = request.form.get("label_selected", None)
     include_search_term = request.form.get("include_search_term", None)
     exclude_search_term = request.form.get("exclude_search_term", None)
+    allow_search_override_labels = request.form.get('searchAllTextRadio', None)
+    print("allow_search_override_labels :", allow_search_override_labels)
+
+    if allow_search_override_labels == "Yes":
+        config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
+        config.SEARCH_EXCLUDE_ALREADY_LABELED.append(False)
+    else:
+        config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
+        config.SEARCH_EXCLUDE_ALREADY_LABELED.append(True)
 
     click_record, guid = utils.generate_click_record(click_location="all_texts",
                                                      click_type="search_texts",
@@ -1669,7 +1680,7 @@ def search_all_texts():
         search_results = utils.search_all_texts(all_text=config.TEXTS_LIST_FULL[0],
                                                 include_search_term=include_search_term,
                                                 exclude_search_term=exclude_search_term,
-                                                exclude_already_labeled=False,
+                                                search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0],
                                                 include_behavior="conjunction",
                                                 exclude_behavior="conjunction",
                                                 all_upper=True)
@@ -1718,7 +1729,8 @@ def search_all_texts():
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                    overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                    label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                                   initialize_flags=config.INITIALIZE_FLAGS[0])
+                                   initialize_flags=config.INITIALIZE_FLAGS[0],
+                                   search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
         else:
             info_message = f"No search results for Include-'{include_search_term}', Exclude-'{exclude_search_term}'"
             config.SEARCH_MESSAGE.clear()
@@ -1756,7 +1768,8 @@ def search_all_texts():
                                    recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                    overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                    label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                                   initialize_flags=config.INITIALIZE_FLAGS[0])
+                                   initialize_flags=config.INITIALIZE_FLAGS[0],
+                                   search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
     else:
         info_message = "No search term entered"
         config.SEARCH_MESSAGE.clear()
@@ -1783,7 +1796,8 @@ def search_all_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/grouped_search_texts", methods=["POST"])
@@ -1832,7 +1846,8 @@ def grouped_search_texts():
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0])
+                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
     else:
         texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
@@ -1913,7 +1928,8 @@ def grouped_search_texts():
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                label_summary_string=config.LABEL_SUMMARY_STRING[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
-                               difficult_texts_message=difficult_texts_message)
+                               difficult_texts_message=difficult_texts_message,
+                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 @app.route("/clear_search_all_texts", methods=["POST"])
@@ -1968,7 +1984,8 @@ def clear_search_all_texts():
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                            overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                            label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0])
+                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
 if __name__ == "__main__":
