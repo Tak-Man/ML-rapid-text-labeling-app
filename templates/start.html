@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rapid Text Labeling - Start</title>
+    <title>Rapid Text Labeling - Home</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='start.css') }}" media="all">
     <script>
     </script>
@@ -10,9 +10,16 @@
 <body>
     <div class="container">
         <div id="divHeader">
-            <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
+            <h1 title="This tool is meant to be used for situations where a large number of texts records are to be evaluated so that a small number of labels can be assigned to them. The tool provides labeling methods that should be faster than a person labeling each text one at a time.">Rapid Labeling of Text Corpora Using Machine-Learning</h1>
         </div>
-        <div id="divBodyLeft"></div>
+        <div id="divBodyLeft">
+            <span title="Refresh this page if it is not displaying properly">
+                <a href="{{ url_for('home') }}">
+                    <img id="refreshIcon" src="{{ url_for('static', filename='refresh_icon_yellow.png') }}">
+                </a>
+            </span>
+            <br>
+        </div>
         <div id="gridTopLeft">
             <h2>Select an Existing Dataset</h2>
             <p class="subHeading">The available datasets are shown below</p>
@@ -152,7 +159,8 @@
                     </div>
                     <div id="divBodyLeft2InfoMessage">If this dataset is suitable click 'Select Dataset'</div>
                     <input id="loadDataSetButton" type="submit" name="load_dataset" value="Select Dataset"
-                           class="appButton">
+                           class="appButton"
+                           title="This will go to the labeling screen">
                 </form>
                 <p class="subHeading">{{ config1_message }}</p>
             </div>
@@ -171,7 +179,8 @@
                     <div id="divSelectCols">
                         <div class="block">
                             <label id="labelTextIdColDropDown" for="textIdColDropDown"
-                                   class="subHeading">Select the text ID column</label>
+                                   title="Identify which column has the unique identifiers (ID's) for each record"
+                                   class="subHeading">Select the ID column</label>
                             <input id="inputTextIdColDropDown" list="textIdColList" name="textIdCol" id="textIdColDropDown">
                             <datalist id="textIdColList">
                                 <option value="Default - Select a file">
@@ -179,6 +188,7 @@
                         </div>
                         <div class="block">
                             <label id="labelTextValueColDropDown" for="textValueColDropDown"
+                                   title="Identify which column has the texts in the dataset"
                                    class="subHeading">Select the text column</label>
                             <input id="inputTextValueColDropDown" list="textValueColList" name="textValueCol" id="textValueColDropDown">
                             <datalist id="textValueColList">
@@ -189,8 +199,11 @@
 
                     <br>
 
-                    <input type="submit" class="appButton" id="prepDataButton" value="Prepare Data">
-                    <div id="prepDataMessage1" class="subHeading">{{ prep_data_message1 }}</div>
+                    <input type="submit" class="appButton" id="prepDataButton"
+                           title="The selected dataset will be prepared for the labeling process"
+                           value="Prepare Data">
+                    <div id="prepDataMessage1" class="subHeading"
+                         title="If the 'Prepared Dataset Preview' does not appear to be correct do not continue. This app was developed using a limited number of input datasets and cannot be guaranteed to work on all formats">{{ prep_data_message1 }}</div>
                 </form>
 
                 <h2>Prepared Dataset Preview</h2>
@@ -249,7 +262,8 @@
                     </div>
                     <div id="loadNewDataSetMessage">If this dataset is suitable click 'Select Dataset'</div>
                     <input id="loadDataSetButton2" type="submit" name="load_dataset" value="Select Dataset"
-                           class="appButton">
+                           class="appButton"
+                           title="This will go to the labeling screen">
                 </form>
             </div>
 

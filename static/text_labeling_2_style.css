@@ -20,7 +20,6 @@ body {
 h1 {
     margin: 0.5vw;
     font-size: 1.5vw;
-
     font-family: sans-serif;
     font-weight: 600;
 }
@@ -82,6 +81,7 @@ div {
     grid-area: divHeader;
     border-radius: var(--main-radius);
     color: #ffffff;
+    padding-top: 0.75vh;
 }
 
 #divLeft {
@@ -90,14 +90,14 @@ div {
     border-radius: var(--main-radius);
 }
 
-#homeIcon, #saveIcon {
+#homeIcon, #saveIcon, #downloadIcon {
     width: 1.5vw;
     height: 1.5vw;
     padding-top: 0.5vw;
 
 }
 
-#homeIcon:hover, #saveIcon:hover, #homeIcon:focus, #saveIcon:focus {
+#homeIcon:hover, #saveIcon:hover, #downloadIcon:hover, #homeIcon:focus, #saveIcon:focus, #downloadIcon:focus {
     transform: scale(1.1);
 }
 
@@ -328,6 +328,7 @@ div {
     grid-area: divFooter;
     border-radius: var(--main-radius);
     font-size: 0.55vw;
+    padding-top: 2.0vh;
     color: white;
 }
 
@@ -335,7 +336,7 @@ div {
   display: grid;
   height: 100%;
   grid-template-columns: 2% 10% 36% 32% 18% 2%;
-  grid-template-rows: 5% 5% 40% 5% 40% 50% 45% 5%;
+  grid-template-rows: 7% 5% 40% 5% 40% 50% 45% 5%;
   grid-template-areas:
     "divHeader divHeader divHeader divHeader divHeader divHeader"
     "divLeft divLabel divSelectText divSummary divSummary divRight1"
@@ -596,10 +597,37 @@ div {
     background-color: white;
     width: 95%;
     padding: 0.5vw;
-    min-height: 8vh;
-    max-height: 8vh;
-    height: 8vh;
+    min-height: 9vh;
+    max-height: 9vh;
+    height: 9vh;
     margin: auto;
+}
+
+#searchTextsMessage {
+    display: inline-block;
+    width: 38.75vw;
+    text-align: right;
+    padding-right: 1.5vw;
+}
+
+#searchOverrideMessage {
+    display: inline-block;
+    width: 13.5vw;
+    text-align: right;
+    margin-top: 0.75vh;
+}
+
+#divSearchOverrideMessage {
+    font-weight: 200;
+    margin-bottom: 0.5vh;
+}
+
+#messageButtonBlock {
+    margin-top: 0.75vh;
+}
+
+#clearSearchButton, #searchAllTextsButton {
+    width: 2.75vw;
 }
 
 #labelSearchAllTextsExclude {

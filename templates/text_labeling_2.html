@@ -11,7 +11,7 @@
 <body>
     <div class="container">
         <div id="divHeader">
-            <h1>Rapid Labeling of Text Corpora Using Machine-Learning</h1>
+            <h1 title="This tool is meant to be used for situations where a large number of texts records are to be evaluated so that a small number of labels can be assigned to them. The tool provides labeling methods that should be faster than a person labeling each text one at a time.">Rapid Labeling of Text Corpora Using Machine-Learning</h1>
         </div>
         <div id="divLeft">
             <span title="Return to the home page where the source dataset can be selected">
@@ -23,6 +23,12 @@
             <span title="Save your work so that you can continue later">
                 <a href="{{ url_for('save_state') }}">
                     <img id="saveIcon" src="{{ url_for('static', filename='save_icon_yellow.png') }}">
+                </a>
+            </span>
+            <br>
+            <span title="Download the records of the labeling process">
+                <a href="{{ url_for('export_records') }}">
+                    <img id="downloadIcon" src="{{ url_for('static', filename='download_icon_yellow.png') }}">
                 </a>
             </span>
         </div>
@@ -389,9 +395,11 @@
                     <input id="labelAllButton"
                            type="submit"
                            class="appButton"
-                           name="label_all_texts_button" value="Label ALL Texts">
+                           name="label_all_texts_button" value="Label ALL Texts"
+                           title="Use what the machine has 'learned' from the labeling process to automatically assign labels">
                 </form>
-                <form id="summarySectionButtons" action="{{ url_for('export_records') }}" method="POST">
+                <form id="summarySectionButtons" action="{{ url_for('export_records') }}" method="POST"
+                      title="Download the records of the labeling process">
                     <input name="dummy_name" type="hidden" value="dummy_value">
                     <input id="exportRecordsButton" type="submit" name="export_records_button"
                            class="appButton"
@@ -438,22 +446,44 @@
                 <div id="divSearchTexts">
                     <div id="divSearchInput" title="Type in search terms to form a group that you wish to label">
                         <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
-                            <label id="labelSearchAllTextsInclude" for="searchAllTextsInclude">Include: </label>
-                            <input type="text" id="searchAllTextsInclude" name="include_search_term" placeholder="Include texts...">
-                            <label id="labelSearchAllTextsExclude" for="searchAllTextsExclude">Exclude: </label>
-                            <input type="text" id="searchAllTextsExclude" name="exclude_search_term" placeholder="Exclude texts...">
-                            <input id="searchAllTextsButton" type="submit" value="Submit" class="appButton">
+                            <div id="divSearchOverrideMessage">
+                                <label id="searchOverrideMessage">Allow search to override existing labels : </label>
+                                {% if search_exclude_already_labeled %}
+                                <label class="radio-inline">
+                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio" value="Yes">Yes
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio" value="No" checked>No
+                                </label>
+                                {% else %}
+                                <label class="radio-inline">
+                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio" value="Yes" checked>Yes
+                                </label>
+                                <label class="radio-inline">
+                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio" value="No">No
+                                </label>
+                                {% endif %}
+                            </div>
+                            <div id="divSearchAllText">
+                                <label id="labelSearchAllTextsInclude" for="searchAllTextsInclude">Include: </label>
+                                <input type="text" id="searchAllTextsInclude" name="include_search_term" placeholder="Include texts...">
+                                <label id="labelSearchAllTextsExclude" for="searchAllTextsExclude">Exclude: </label>
+                                <input type="text" id="searchAllTextsExclude" name="exclude_search_term" placeholder="Exclude texts...">
+                                <input id="searchAllTextsButton" type="submit" value="Submit" class="appButton">
+                            </div>
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                             <input name="selected_text" type="hidden" value="{{ selected_text }}">
                             <input name="page_number" type="hidden" value="{{ page_number }}">
                             <input name="label_selected" type="hidden" value="{{ label_selected }}">
                         </form>
                     </div>
-                    <br>
                     <div id="divSearchTextMessage">
                         <form id="formSearchTextMessage" method="POST" action="{{ url_for('clear_search_all_texts') }}">
-                            <b id="searchTextsMessage">{{ search_message }}</b>
-                            <input id="clearSearchButton" type="submit" value="Clear" class="appButton">
+                            <div id="messageButtonBlock">
+                                <b id="searchTextsMessage">{{ search_message }}</b>
+                                <input id="clearSearchButton" type="submit" value="Clear" class="appButton">
+                            </div>
+
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                             <input name="selected_text" type="hidden" value="{{ selected_text }}">
                             <input name="page_number" type="hidden" value="{{ page_number }}">

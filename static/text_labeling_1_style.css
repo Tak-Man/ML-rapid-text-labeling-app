@@ -32,14 +32,14 @@ div {
     /*padding: var(--main-padding);*/
 }
 
-#homeIcon, #saveIcon {
+#homeIcon, #saveIcon, #downloadIcon {
     width: 1.5vw;
     height: 1.5vw;
     padding-top: 0.5vw;
 
 }
 
-#homeIcon:hover, #saveIcon:hover, #homeIcon:focus, #saveIcon:focus {
+#homeIcon:hover, #saveIcon:hover, #downloadIcon:hover, #homeIcon:focus, #saveIcon:focus, #downloadIcon:focus {
     transform: scale(1.1);
     /*background-color: #0d57aa;*/
 }
@@ -181,8 +181,6 @@ div {
     grid-area: gridBottomLeft;
     border-radius: var(--main-radius);
     padding: var(--main-padding);
-    display: flex;
-    flex-direction: column;
 }
 
 #allTexts {
@@ -209,13 +207,30 @@ div {
     float: right;
 }
 
+#divSearchOverrideMessage {
+    font-weight: 350;
+    color: #0d57aa;
+    margin-bottom: 0.5vh;
+    text-align: left;
+}
+
+#searchOverrideMessage {
+    display: inline-block;
+    margin-top: 0.75vh;
+
+}
+
 #divSearchTexts {
-    padding-top: 0.75vh;
+    padding-top: 0.25vh;
     padding-bottom: 0.85vh;
 }
 
+#divSearchOverrideMessage {
+    font-weight: 200;
+    margin-bottom: 0.5vh;
+}
+
 #divSearchInput {
-    /*display: inline-block;*/
     float: left;
     padding-left: 0.5vw;
 }
@@ -253,6 +268,7 @@ div {
 #divSearchTextMessage {
     /*display: inline-block;*/
     margin-top: 0.25vh;
+    margin-bottom: 0.75vh;
     width: 33.75vw;
     float: left;
     font-weight: 600;
@@ -324,7 +340,7 @@ allTextTableNextButtons:hover {
 #divAllTextsTable {
     overflow-y: auto;
     overflow-x: hidden;
-    height: 70%;
+    height: 59%;
     width: 99%;
     width: 99%;
     min-width: 100px;
@@ -486,6 +502,8 @@ h2 {
     width: 99%;
     margin: auto;
     margin-top: 0.5vh;
+    justify-content: center;
+    font-size: 0.75vw;
 }
 
 #group1Button, #group2Button, #generateDifficultTextsButton {
@@ -715,6 +733,7 @@ h2 {
     border-radius: var(--main-radius);
     padding: var(--main-padding);
     font-size: 0.55vw;
+    color: white;
 }
 
 html {

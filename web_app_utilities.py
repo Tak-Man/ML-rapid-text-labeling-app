@@ -254,14 +254,14 @@ def filter_all_texts(all_text, filter_list, exclude_already_labeled=False):
 
 
 def search_all_texts(all_text, include_search_term, exclude_search_term,
-                     exclude_already_labeled=False,
+                     search_exclude_already_labeled=False,
                      include_behavior="conjunction",
                      exclude_behavior="disjunction",
                      all_upper=True):
 
     all_text_df = pd.DataFrame(all_text)
 
-    if exclude_already_labeled:
+    if search_exclude_already_labeled:
         filtered_all_text_df = all_text_df[all_text_df["label"].isin(["-"])]
     else:
         filtered_all_text_df = all_text_df

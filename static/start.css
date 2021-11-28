@@ -50,6 +50,17 @@ div {
     border-color: #333333;
 }
 
+#refreshIcon {
+    width: 1.5vw;
+    height: 1.5vw;
+    padding-top: 0.5vw;
+    padding-left: 0.25vw;
+}
+
+#refreshIcon:hover, #refreshIcon:focus {
+    transform: scale(1.1);
+}
+
 #divHeader {
     background-color: #00274c;
     grid-area: divHeader;
@@ -191,15 +202,16 @@ div {
     grid-area: divFooter;
     border-radius: var(--main-radius);
     font-size: 0.55vw;
-    padding-left: 0.5vw;
-    padding-top: 1.0vh;
+    color: white;
+    text-align: center;
+    padding-top: 2vh;
 }
 
 .container {
   display: grid;
   height: 135%;
   grid-template-columns: 2% 40% 40% 16% 2%;
-  grid-template-rows: 5% 90% 5%;
+  grid-template-rows: 5.5% 89% 5.5%;
   grid-template-areas:
     "divHeader divHeader divHeader divHeader divHeader"
     "divBodyLeft gridTopLeft gridTopMiddle gridTopRight divBodyRight"
@@ -275,16 +287,20 @@ div {
   clear: both;
 }
 
+#labelTextIdColDropDown {
+    margin-left: 1.45vw;
+}
+
 #labelTextValueColDropDown {
     margin-left: 0.95vw;
 }
 
 #inputTextIdColDropDown, #inputTextValueColDropDown {
-    width: 15vw;
+    width: 12vw;
 }
 
 #inputTextValueColDropDown {
-    width: 15vw;
+    width: 12vw;
 }
 
 #divSelectCols label {
