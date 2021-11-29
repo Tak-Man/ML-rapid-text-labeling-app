@@ -12,7 +12,10 @@ import pickle
 import json
 from werkzeug.utils import secure_filename
 import os
-
+# import sqlite3
+#
+#
+# db = SQLAlchemy()
 
 start_time = datetime.now()
 print("*"*20, "Process started @", start_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
@@ -25,6 +28,8 @@ app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
 app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
+
+db.init_app(app)
 
 
 def load_new_data(source_file,
@@ -337,6 +342,7 @@ def dataset_selected():
 
         config.TEXTS_LIST_FULL.clear()
         config.TEXTS_LIST_FULL.append(texts_list)
+        print("len(config.TEXTS_LIST_FULL[0] :", len(config.TEXTS_LIST_FULL[0]))
 
         config.TEXTS_LIST_LIST_FULL.clear()
         config.TEXTS_LIST_LIST_FULL.append(texts_list_list)
