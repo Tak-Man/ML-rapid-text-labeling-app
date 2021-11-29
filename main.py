@@ -29,7 +29,7 @@ app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
-db.init_app(app)
+# db.init_app(app)
 
 
 def load_new_data(source_file,
