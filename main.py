@@ -142,9 +142,10 @@ def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_fla
             if all_classes_present:
                 if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
                     texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
+                    text_list_full_sql = get_text_list_full()
                     utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                          corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                         texts_list=config.TEXTS_LIST_FULL[0],
+                                         texts_list=text_list_full_sql,
                                          texts_list_labeled=texts_group_updated,
                                          y_classes=config.Y_CLASSES[0],
                                          verbose=config.FIT_CLASSIFIER_VERBOSE,
@@ -809,14 +810,14 @@ def single_text():
     else:
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
 
-        utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
+        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=[new_obj],
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
                                       labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
-        utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+        utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -826,7 +827,7 @@ def single_text():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=config.TEXTS_LIST_FULL[0],
+                             texts_list=text_list_full_sql,
                              texts_list_labeled=[new_obj],
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
@@ -842,7 +843,7 @@ def single_text():
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=config.TEXTS_LIST_FULL[0],
+                                      texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=config.Y_CLASSES[0],
@@ -950,14 +951,14 @@ def grouped_1_texts():
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
+        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_1_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
                                       labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
-        utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+        utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -967,7 +968,7 @@ def grouped_1_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=config.TEXTS_LIST_FULL[0],
+                             texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_1_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
@@ -985,7 +986,7 @@ def grouped_1_texts():
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=config.TEXTS_LIST_FULL[0],
+                                      texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=config.Y_CLASSES[0],
@@ -1093,14 +1094,14 @@ def grouped_2_texts():
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
+        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_2_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
                                       labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
-        utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+        utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -1110,7 +1111,7 @@ def grouped_2_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=config.TEXTS_LIST_FULL[0],
+                             texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_2_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
@@ -1128,7 +1129,7 @@ def grouped_2_texts():
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=config.TEXTS_LIST_FULL[0],
+                                      texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=config.Y_CLASSES[0],
@@ -1306,7 +1307,7 @@ def label_all():
                 utils.label_all(fitted_classifier=config.CLASSIFIER_LIST[0],
                                 sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                 corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                texts_list=config.TEXTS_LIST_FULL[0],
+                                texts_list=text_list_full_sql,
                                 label_only_unlabeled=True,
                                 sub_list_limit=config.TABLE_LIMIT,
                                 update_in_place=False,
@@ -1316,7 +1317,7 @@ def label_all():
                 value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
                 utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-            utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+            utils.generate_summary(text_lists=text_list_full_sql,
                                    first_labeling_flag=config.FIRST_LABELING_FLAG,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -1393,11 +1394,10 @@ def export_records():
 
     print("After download_files")
 
-    texts_df = pd.DataFrame.from_dict(config.TEXTS_LIST_FULL[0])
+    text_list_full_sql = get_text_list_full()
+    texts_df = pd.DataFrame.from_dict(text_list_full_sql)
     texts_df.to_csv("./output/labeled_texts.csv", index=False)
     download_files.append("./output/labeled_texts.csv")
-
-    print("After config.TEXTS_LIST_FULL")
 
     click_log_df = pd.DataFrame.from_dict(config.CLICK_LOG)
     click_log_df.to_csv("./output/click_log.csv", index=False)
@@ -1463,7 +1463,8 @@ def save_state():
     save_state["SEARCH_MESSAGE"] = config.SEARCH_MESSAGE
 
     save_state["TEXTS_LIST"] = config.TEXTS_LIST
-    save_state["TEXTS_LIST_FULL"] = config.TEXTS_LIST_FULL
+    text_list_full_sql = get_text_list_full()
+    save_state["TEXTS_LIST_FULL"] = [text_list_full_sql]
 
     save_state["CORPUS_TEXT_IDS"] = config.CORPUS_TEXT_IDS
     print("len(config.TEXTS_LIST_LIST_FULL[0]) :", len(config.TEXTS_LIST_LIST_FULL[0]))
@@ -1558,7 +1559,7 @@ def label_selected():
                                                                        text_id=selected_text_id,
                                                                        keep_original=config.KEEP_ORIGINAL)
 
-        utils.get_top_similar_texts(all_texts_json=config.TEXTS_LIST_FULL[0],
+        utils.get_top_similar_texts(all_texts_json=text_list_full_sql,
                                     similarities_series=similarities_series,
                                     top=config.GROUP_1_KEEP_TOP[0],
                                     exclude_already_labeled=config.GROUP_1_EXCLUDE_ALREADY_LABELED,
@@ -1572,7 +1573,7 @@ def label_selected():
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                  texts_list=config.TEXTS_LIST_FULL[0],
+                                  texts_list=text_list_full_sql,
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                   y_classes=config.Y_CLASSES[0],
@@ -1722,7 +1723,7 @@ def set_group_1_record_limit():
                                                                        text_id=selected_text_id,
                                                                        keep_original=config.KEEP_ORIGINAL)
 
-        utils.get_top_similar_texts(all_texts_json=config.TEXTS_LIST_FULL[0],
+        utils.get_top_similar_texts(all_texts_json=text_list_full_sql,
                                     similarities_series=similarities_series,
                                     top=config.GROUP_1_KEEP_TOP[0],
                                     exclude_already_labeled=config.GROUP_1_EXCLUDE_ALREADY_LABELED,
@@ -1797,7 +1798,7 @@ def set_group_2_record_limit():
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                  texts_list=config.TEXTS_LIST_FULL[0],
+                                  texts_list=text_list_full_sql,
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                   y_classes=config.Y_CLASSES[0],
@@ -1873,7 +1874,7 @@ def search_all_texts():
     utils.add_log_record(value_record_2, log=config.VALUE_LOG)
 
     if len(include_search_term) > 0 or len(exclude_search_term) > 0:
-        search_results = utils.search_all_texts(all_text=config.TEXTS_LIST_FULL[0],
+        search_results = utils.search_all_texts(all_text=text_list_full_sql,
                                                 include_search_term=include_search_term,
                                                 exclude_search_term=exclude_search_term,
                                                 search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0],
@@ -2062,14 +2063,14 @@ def grouped_search_texts():
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=config.TEXTS_LIST_FULL[0],
+        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
                                       sub_list_limit=config.TABLE_LIMIT,
                                       updated_obj_lst=texts_group_updated,
                                       texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
                                       labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
                                       update_in_place=False)
 
-        utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+        utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -2079,7 +2080,7 @@ def grouped_search_texts():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=config.TEXTS_LIST_FULL[0],
+                             texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_updated,
                              y_classes=config.Y_CLASSES[0],
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
@@ -2097,7 +2098,7 @@ def grouped_search_texts():
                                       fitted_classifier=config.CLASSIFIER_LIST[0],
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=config.TEXTS_LIST_FULL[0],
+                                      texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=config.Y_CLASSES[0],
