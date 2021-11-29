@@ -602,7 +602,12 @@ def text_labeling():
 
     app_section = request.args.get("app_section", None)
     selected_text_id = request.args.get("selected_text_id", None)
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
+
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
     initialize_flags = request.args.get("initialize_flags", None)
@@ -717,7 +722,12 @@ def single_text():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
 
     new_id = request.form["selected_text_id"]
-    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id][0]
+    new_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+    if len(new_text_test) == 0:
+        new_text = ""
+    else:
+        new_text = new_text_test[0]
+
     page_number = int(request.form["page_number"])
     new_label = request.form["selected_label_single"]
     info_message = ""
@@ -847,8 +857,11 @@ def grouped_1_texts():
     # new_text = request.form["selected_text"]
     selected_label_group1 = request.form["selected_label_group1"]
     info_message = ""
-
-    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id][0]
+    new_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+    if len(new_text_test) == 0:
+        new_text = ""
+    else:
+        new_text = new_text_test[0]
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
                                                      click_type="group_label_assigned",
@@ -979,7 +992,12 @@ def grouped_2_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id][0]
+    new_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+    if len(new_text_test) == 0:
+        new_text = ""
+    else:
+        new_text = new_text_test[0]
+
     selected_label_group2 = request.form["selected_label_group2"]
 
     click_record, guid = utils.generate_click_record(click_location="recommended_texts",
@@ -1112,7 +1130,11 @@ def label_all():
     # new_text = request.form["selected_text"]
     selected_label = request.form["selected_label"]
 
-    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id][0]
+    new_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+    if len(new_text_test) == 0:
+        new_text = ""
+    else:
+        new_text = new_text_test[0]
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
@@ -1458,7 +1480,12 @@ def label_selected():
 
     label_selected = request.args.get("label_selected")
     selected_text_id = request.args.get("selected_text_id")
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
+
     page_number = int(request.args.get("page_number"))
 
     click_record, guid = utils.generate_click_record(click_location="label",
@@ -1538,7 +1565,11 @@ def generate_difficult_texts():
     id = request.form["selected_text_id"]
     label_selected = request.form["selected_label"]
 
-    text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == id][0]
+    text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == id]
+    if len(text_test) == 0:
+        text = ""
+    else:
+        text = text_test[0]
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="generate_list",
@@ -1597,7 +1628,14 @@ def set_group_1_record_limit():
 
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    print("selected_text_id :", selected_text_id)
+    print(">> in 'set_group_1_record_limit' - len(config.TEXTS_LIST_FULL[0]) :", len(config.TEXTS_LIST_FULL[0]))
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
+    print("selected_text :", selected_text)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group1_table_limit", None))
 
@@ -1667,7 +1705,11 @@ def set_group_2_record_limit():
 
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group2_table_limit", None))
 
@@ -1730,7 +1772,12 @@ def search_all_texts():
 
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
+
     label_selected = request.form.get("label_selected", None)
     include_search_term = request.form.get("include_search_term", None)
     exclude_search_term = request.form.get("exclude_search_term", None)
@@ -1885,8 +1932,12 @@ def grouped_search_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    new_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id][0]
-    # search_results_length = request.form["search_results_length"]
+    new_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == new_id]
+    if len(new_text_test) == 0:
+        new_text = ""
+    else:
+        new_text = new_text_test[0]
+
     selected_label_search_texts = request.form["selected_label_search_texts"]
     info_message = ""
 
@@ -2016,7 +2067,12 @@ def clear_search_all_texts():
     config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(0)
 
     selected_text_id = request.form.get("selected_text_id", None)
-    selected_text = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id][0]
+    selected_text_test = [text["text"] for text in config.TEXTS_LIST_FULL[0] if text["id"] == selected_text_id]
+    if len(selected_text_test) == 0:
+        selected_text = ""
+    else:
+        selected_text = selected_text_test[0]
+
     label_selected = request.form.get("label_selected", None)
     info_message = "Search cleared"
 
