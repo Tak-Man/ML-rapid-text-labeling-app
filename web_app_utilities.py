@@ -790,37 +790,6 @@ if __name__ == "__main__":
     start_time = datetime.now()
     print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
 
-    dataset_name, date_time, y_classes, total_summary = has_save_data(source_dir="./output")
-
-
-
-    print("config.DATE_TIME :", config.DATE_TIME)
-    load_save_state(source_dir="./output")
-
-    print("config.DATE_TIME :", config.DATE_TIME)
-    print("config.CLICK_LOG :", config.CLICK_LOG)
-    print("config.VALUE_LOG :", config.VALUE_LOG)
-    print("config.TOTAL_SUMMARY :", config.TOTAL_SUMMARY)
-    print("config.LABEL_SUMMARY :", config.LABEL_SUMMARY)
-    print("config.RECOMMENDATIONS_SUMMARY :", config.RECOMMENDATIONS_SUMMARY)
-    print("config.TEXTS_LIST_LABELED :", config.TEXTS_LIST_LABELED)
-    print("config.TEXTS_GROUP_1 :", config.TEXTS_GROUP_1)
-    print("config.TEXTS_GROUP_2 :", config.TEXTS_GROUP_2)
-    print("config.TEXTS_GROUP_3 :", config.TEXTS_GROUP_3)
-
-    # config.SEARCH_MESSAGE = save_state_json["SEARCH_MESSAGE"]
-    # config.TEXTS_LIST = save_state_json["TEXTS_LIST"]
-    # config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
-    # config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
-    # config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
-    # config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
-    # config.ADJ_TEXT_IDS = save_state_json["ADJ_TEXT_IDS"]
-    # config.TOTAL_PAGES = save_state_json["TOTAL_PAGES"]
-    # config.Y_CLASSES = save_state_json["Y_CLASSES"]
-    # config.SHUFFLE_BY = save_state_json["SHUFFLE_BY"]
-    # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
-    # config.HTML_CONFIG_TEMPLATE = save_state_json["HTML_CONFIG_TEMPLATE"]
-    # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
     # ********************************************************************************************************
     end_time = datetime.now()
     duration = end_time - start_time

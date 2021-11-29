@@ -15,24 +15,24 @@ def has_save_data(source_dir="./output"):
 
 
 FIXED_DATASETS = [{"name": "Disaster Tweets Dataset",
-                       "description": """
-                                        The HumAID Twitter dataset consists of several thousands of manually annotated 
-                                        tweets that has been collected during 19 major natural disaster events 
-                                        including earthquakes, hurricanes, wildfires, and floods, which happened 
-                                        from 2016 to 2019 across different parts of the World. The annotations in 
-                                        the provided datasets consists of following humanitarian categories. The 
-                                        dataset consists only english tweets and it is the largest dataset for 
-                                        crisis informatics so far.
-                                      """,
-                       "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"},
+                   "description": """
+                                    The HumAID Twitter dataset consists of several thousands of manually annotated 
+                                    tweets that has been collected during 19 major natural disaster events 
+                                    including earthquakes, hurricanes, wildfires, and floods, which happened 
+                                    from 2016 to 2019 across different parts of the World. The annotations in 
+                                    the provided datasets consists of following humanitarian categories. The 
+                                    dataset consists only english tweets and it is the largest dataset for 
+                                    crisis informatics so far.
+                                  """,
+                   "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"},
 
-                      {"name": "Disaster Tweets Dataset with 'Other'",
-                       "description": """
-                                        The same dataset as the 'Disaster Tweets Dataset' but the label 'Other'
-                                        is included to account for texts that do not neatly fall under the labels
-                                        'Earthquake', 'Hurricane', 'Fire', 'Flood'.
-                                       """,
-                       "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"}]
+                  {"name": "Disaster Tweets Dataset with 'Other'",
+                   "description": """
+                                    The same dataset as the 'Disaster Tweets Dataset' but the label 'Other'
+                                    is included to account for texts that do not neatly fall under the labels
+                                    'Earthquake', 'Hurricane', 'Fire', 'Flood'.
+                                   """,
+                   "url": "https://crisisnlp.qcri.org/humaid_dataset.html#"}]
 
 SAVES_DIR = "./output/"
 MAX_CONTENT_PATH = 10000
