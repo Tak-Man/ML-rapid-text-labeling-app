@@ -203,7 +203,7 @@ def label_entered():
     records_limit = 100
 
     return render_template("start.html",
-                           dataset_list=DATASETS_AVAILABLE,
+                           dataset_list=config.DATASETS_AVAILABLE,
                            prep_data_message1=prep_data_message1,
                            prep_data_message2=config.PREP_DATA_MESSAGE2[0],
                            prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit],
@@ -231,7 +231,7 @@ def upload_file():
         if not text_id_col or not text_value_col:
             prep_data_message = "Select BOTH a text ID column and the column that contains the text"
             return render_template("start.html",
-                                   dataset_list=DATASETS_AVAILABLE,
+                                   dataset_list=config.DATASETS_AVAILABLE,
                                    prep_data_message=prep_data_message)
         else:
             result, dataset_df = utils.read_new_dataset(source_file_name=filename,
@@ -264,7 +264,7 @@ def upload_file():
                 config.DATE_TIME.append(date_time)
 
                 return render_template("start.html",
-                                       dataset_list=DATASETS_AVAILABLE,
+                                       dataset_list=config.DATASETS_AVAILABLE,
                                        prep_data_message1=config.PREP_DATA_MESSAGE1[0],
                                        prep_data_message2=config.PREP_DATA_MESSAGE2[0],
                                        prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit])
@@ -273,7 +273,7 @@ def upload_file():
                                         separated, with texts which contain commas in quotation marks."""
 
                 return render_template("start.html",
-                                       dataset_list=DATASETS_AVAILABLE,
+                                       dataset_list=config.DATASETS_AVAILABLE,
                                        prep_data_message=prep_data_message)
 
 
@@ -305,7 +305,7 @@ def home():
         conn.commit()
         conn.close()
 
-        # return render_template("start.html", dataset_list=DATASETS_AVAILABLE)
+        # return render_template("start.html", dataset_list=config.DATASETS_AVAILABLE)
     # else:
         # DATASETS_AVAILABLE = config.FIXED_DATASETS
     conn = get_db_connection()
@@ -343,7 +343,7 @@ def index():
         conn.commit()
         conn.close()
 
-        # return render_template("start.html", dataset_list=DATASETS_AVAILABLE)
+        # return render_template("start.html", dataset_list=config.DATASETS_AVAILABLE)
     # else:
         # DATASETS_AVAILABLE = config.FIXED_DATASETS
     conn = get_db_connection()
@@ -448,7 +448,7 @@ def begin_labeling():
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
         return render_template("start.html",
-                               dataset_list=DATASETS_AVAILABLE,
+                               dataset_list=config.DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
     page_number = 0
@@ -458,8 +458,7 @@ def begin_labeling():
                            label_summary=config.LABEL_SUMMARY,
                            number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
                            label_summary_string=config.LABEL_SUMMARY_STRING)
-    # config.SEARCH_MESSAGE.clear()
-    # config.SEARCH_MESSAGE.append("Displaying all texts")
+    print("len(config.TEXTS_LIST_FULL[0] :", len(config.TEXTS_LIST_FULL[0]))
 
     if selected_config == "config1":
         html_config_template = "text_labeling_1.html"
@@ -541,7 +540,7 @@ def begin_labeling_new_dataset():
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
         return render_template("start.html",
-                               dataset_list=DATASETS_AVAILABLE,
+                               dataset_list=config.DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
     page_number = 0
