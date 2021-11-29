@@ -311,6 +311,8 @@ def home():
     conn = get_db_connection()
     available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
     conn.close()
+    print("available_datasets :")
+    print(available_datasets)
 
     return render_template("start.html", dataset_list=available_datasets)
 
@@ -385,6 +387,7 @@ def dataset_selected():
 
         conn = get_db_connection()
         cur = conn.cursor()
+        cur.execute("DELETE FROM texts;")
         for text_record in texts_list:
             cur.execute("INSERT INTO texts (id, text, label) VALUES (?, ?, ?)",
                         (text_record["id"], text_record["text"], "-"))
@@ -452,7 +455,12 @@ def begin_labeling():
                                config1_message=config1_message)
 
     page_number = 0
-    utils.generate_summary(text_lists=config.TEXTS_LIST_FULL[0],
+    print("len(config.TEXTS_LIST_FULL[0] :", len(config.TEXTS_LIST_FULL[0]))
+    conn = get_db_connection()
+    TEXTS_LIST_FULL = conn.execute('SELECT * FROM texts').fetchall()
+    conn.close()
+    print("len(TEXTS_LIST_FULL) :", len(TEXTS_LIST_FULL))
+    utils.generate_summary(text_lists=TEXTS_LIST_FULL,
                            first_labeling_flag=config.FIRST_LABELING_FLAG,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
