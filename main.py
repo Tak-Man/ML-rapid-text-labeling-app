@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 import os
 import sqlite3
 
+
 connection = sqlite3.connect('database.db')
 with open("schema.sql") as f:
     connection.executescript(f.read())
@@ -23,13 +24,14 @@ start_time = datetime.now()
 print("*"*20, "Process started @", start_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
 
 app = Flask(__name__)
-# Session(app)
+Session(app)
 app.secret_key = "super secret key"
 app.config.from_object(__name__)
 app.config["UPLOAD_FOLDER"] = config.UPLOAD_FOLDER
 app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
+
 
 
 def get_db_connection():
@@ -201,7 +203,7 @@ def label_entered():
     records_limit = 100
 
     return render_template("start.html",
-                           dataset_list=config.DATASETS_AVAILABLE,
+                           dataset_list=DATASETS_AVAILABLE,
                            prep_data_message1=prep_data_message1,
                            prep_data_message2=config.PREP_DATA_MESSAGE2[0],
                            prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit],
@@ -229,7 +231,7 @@ def upload_file():
         if not text_id_col or not text_value_col:
             prep_data_message = "Select BOTH a text ID column and the column that contains the text"
             return render_template("start.html",
-                                   dataset_list=config.DATASETS_AVAILABLE,
+                                   dataset_list=DATASETS_AVAILABLE,
                                    prep_data_message=prep_data_message)
         else:
             result, dataset_df = utils.read_new_dataset(source_file_name=filename,
@@ -262,7 +264,7 @@ def upload_file():
                 config.DATE_TIME.append(date_time)
 
                 return render_template("start.html",
-                                       dataset_list=config.DATASETS_AVAILABLE,
+                                       dataset_list=DATASETS_AVAILABLE,
                                        prep_data_message1=config.PREP_DATA_MESSAGE1[0],
                                        prep_data_message2=config.PREP_DATA_MESSAGE2[0],
                                        prepared_data_list=config.PREPARED_DATA_LIST[0][:records_limit])
@@ -271,7 +273,7 @@ def upload_file():
                                         separated, with texts which contain commas in quotation marks."""
 
                 return render_template("start.html",
-                                       dataset_list=config.DATASETS_AVAILABLE,
+                                       dataset_list=DATASETS_AVAILABLE,
                                        prep_data_message=prep_data_message)
 
 
@@ -291,8 +293,8 @@ def home():
             #              "url": dataset_url[0]}
         # temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
         # temp_datasets_available.append(temp_dict)
-        # config.DATASETS_AVAILABLE.clear()
-        # config.DATASETS_AVAILABLE.extend(temp_datasets_available)
+        # DATASETS_AVAILABLE.clear()
+        # DATASETS_AVAILABLE.extend(temp_datasets_available)
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",
@@ -303,9 +305,9 @@ def home():
         conn.commit()
         conn.close()
 
-        # return render_template("start.html", dataset_list=config.DATASETS_AVAILABLE)
+        # return render_template("start.html", dataset_list=DATASETS_AVAILABLE)
     # else:
-        # config.DATASETS_AVAILABLE = config.FIXED_DATASETS
+        # DATASETS_AVAILABLE = config.FIXED_DATASETS
     conn = get_db_connection()
     available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
     conn.close()
@@ -315,21 +317,40 @@ def home():
 
 @app.route("/")
 def index():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM availableDatasets;")
+    cur.execute("INSERT INTO availableDatasets SELECT * FROM fixedDatasets;")
+    conn.commit()
+    conn.close()
     dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output/save")
     if dataset_name:
-        temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
-                     "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
-                                    " of " + total_summary[0]["number"] + " texts labeled.",
-                     "url": dataset_url[0]}
+            # temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
+            #              "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
+            #                             " of " + total_summary[0]["number"] + " texts labeled.",
+            #              "url": dataset_url[0]}
+        # temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
+        # temp_datasets_available.append(temp_dict)
+        # DATASETS_AVAILABLE.clear()
+        # DATASETS_AVAILABLE.extend(temp_datasets_available)
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",
+                    (dataset_name[0] + "-" + date_time[0],
+                     "A partially labeled dataset having " + total_summary[2]["percentage"] +
+                     " of " + total_summary[0]["number"] + " texts labeled.",
+                     dataset_url[0]))
+        conn.commit()
+        conn.close()
 
-        temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
-        temp_datasets_available.append(temp_dict)
-        config.DATASETS_AVAILABLE.clear()
-        config.DATASETS_AVAILABLE.extend(temp_datasets_available)
-    else:
-        config.DATASETS_AVAILABLE = config.FIXED_DATASETS
+        # return render_template("start.html", dataset_list=DATASETS_AVAILABLE)
+    # else:
+        # DATASETS_AVAILABLE = config.FIXED_DATASETS
+    conn = get_db_connection()
+    available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
+    conn.close()
     return render_template("start.html",
-                           dataset_list=config.DATASETS_AVAILABLE)
+                           dataset_list=available_datasets)
 
 
 @app.route("/dataset_selected", methods=["GET", "POST"])
@@ -341,6 +362,10 @@ def dataset_selected():
     dataset_url = request.args.get("dataset_url", None)
     config.DATASET_URL.clear()
     config.DATASET_URL.append(dataset_url)
+
+    conn = get_db_connection()
+    available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
+    conn.close()
 
     if dataset_name in ["Disaster Tweets Dataset", "Disaster Tweets Dataset with 'Other'"]:
         config.Y_CLASSES.clear()
@@ -390,8 +415,10 @@ def dataset_selected():
         config.TEXTS_GROUP_3.clear()
         config.OVERALL_QUALITY_SCORE.clear()
         config.OVERALL_QUALITY_SCORE.append("-")
+
+
         return render_template("start.html",
-                               dataset_list=config.DATASETS_AVAILABLE,
+                               dataset_list=available_datasets,
                                texts_list=config.TEXTS_LIST_LIST[0][0],
                                dataset_name=dataset_name,
                                dataset_labels=config.Y_CLASSES[0])
@@ -401,7 +428,7 @@ def dataset_selected():
         print('config.SEARCH_MESSAGE :', config.SEARCH_MESSAGE)
         if load_status == 1:
             return render_template("start.html",
-                                   dataset_list=config.DATASETS_AVAILABLE,
+                                   dataset_list=available_datasets,
                                    texts_list=config.TEXTS_LIST_LIST[0][0],
                                    dataset_name=dataset_name,
                                    dataset_labels=config.Y_CLASSES[0])
@@ -421,7 +448,7 @@ def begin_labeling():
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
         return render_template("start.html",
-                               dataset_list=config.DATASETS_AVAILABLE,
+                               dataset_list=DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
     page_number = 0
@@ -514,7 +541,7 @@ def begin_labeling_new_dataset():
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
         return render_template("start.html",
-                               dataset_list=config.DATASETS_AVAILABLE,
+                               dataset_list=DATASETS_AVAILABLE,
                                config1_message=config1_message)
 
     page_number = 0
