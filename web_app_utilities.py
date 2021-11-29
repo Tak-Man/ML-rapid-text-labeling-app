@@ -660,7 +660,6 @@ def get_similarities_single_record(similarities_df, corpus_text_id):
 
 def get_top_similar_texts(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, verbose=True,
                           similar_texts=[]):
-
     if exclude_already_labeled:
         all_texts_df = pd.DataFrame.from_dict(all_texts_json)
         similarities_df = pd.DataFrame(similarities_series).reset_index().rename(columns={0: "proba", "index": "id"})
