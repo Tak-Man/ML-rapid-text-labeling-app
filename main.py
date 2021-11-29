@@ -12,10 +12,12 @@ import pickle
 import json
 from werkzeug.utils import secure_filename
 import os
-# import sqlite3
-#
-#
-# db = SQLAlchemy()
+import sqlite3
+
+connection = sqlite3.connect('database.db')
+with open("schema.sql") as f:
+    connection.executescript(f.read())
+
 
 start_time = datetime.now()
 print("*"*20, "Process started @", start_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
@@ -29,7 +31,11 @@ app.config["MAX_CONTENT_PATH"] = config.MAX_CONTENT_PATH
 
 app.jinja_env.add_extension('jinja2.ext.do')
 
-# db.init_app(app)
+
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 def load_new_data(source_file,
@@ -271,20 +277,40 @@ def upload_file():
 
 @app.route("/home")
 def home():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM availableDatasets;")
+    cur.execute("INSERT INTO availableDatasets SELECT * FROM fixedDatasets;")
+    conn.commit()
+    conn.close()
     dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output/save")
     if dataset_name:
-        temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
-                     "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
-                                    " of " + total_summary[0]["number"] + " texts labeled.",
-                     "url": dataset_url[0]}
-        temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
-        temp_datasets_available.append(temp_dict)
-        config.DATASETS_AVAILABLE.clear()
-        config.DATASETS_AVAILABLE.extend(temp_datasets_available)
+            # temp_dict = {"name": dataset_name[0] + "-" + date_time[0],
+            #              "description": "A partially labeled dataset having " + total_summary[2]["percentage"] +
+            #                             " of " + total_summary[0]["number"] + " texts labeled.",
+            #              "url": dataset_url[0]}
+        # temp_datasets_available = copy.deepcopy(config.FIXED_DATASETS[:2])
+        # temp_datasets_available.append(temp_dict)
+        # config.DATASETS_AVAILABLE.clear()
+        # config.DATASETS_AVAILABLE.extend(temp_datasets_available)
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",
+                    (dataset_name[0] + "-" + date_time[0],
+                     "A partially labeled dataset having " + total_summary[2]["percentage"] +
+                     " of " + total_summary[0]["number"] + " texts labeled.",
+                     dataset_url[0]))
+        conn.commit()
+        conn.close()
 
-    else:
-        config.DATASETS_AVAILABLE = config.FIXED_DATASETS
-    return render_template("start.html", dataset_list=config.DATASETS_AVAILABLE)
+        # return render_template("start.html", dataset_list=config.DATASETS_AVAILABLE)
+    # else:
+        # config.DATASETS_AVAILABLE = config.FIXED_DATASETS
+    conn = get_db_connection()
+    available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
+    conn.close()
+
+    return render_template("start.html", dataset_list=available_datasets)
 
 
 @app.route("/")
@@ -331,6 +357,14 @@ def dataset_selected():
                            table_limit=config.TABLE_LIMIT, texts_limit=config.TEXTS_LIMIT,
                            max_features=config.MAX_FEATURES,
                            y_classes=config.Y_CLASSES[0], rnd_state=config.RND_STATE)
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        for text_record in texts_list:
+            cur.execute("INSERT INTO texts (id, text, label) VALUES (?, ?, ?)",
+                        (text_record["id"], text_record["text"], "-"))
+        conn.commit()
+        conn.close()
 
         for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
                                    config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
