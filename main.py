@@ -214,6 +214,31 @@ def label_all_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, 
     return text_list_full, texts_list_list , labeled_text_ids
 
 
+def set_variable(name, value):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    query = """INSERT OR REPLACE INTO variables (name, value) VALUES (?, ?) 
+                """
+    cur.execute(query, (name, value))
+    conn.commit()
+    conn.close()
+    return 1
+
+
+def get_variable_value(name):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    query = cur.execute('SELECT value FROM variables WHERE name = ?', (name,)).fetchall()
+    value = [dict(row)["value"] for row in query]
+    value = value[0]
+    if name in ["TOTAL_PAGES"]:
+        value = int(value)
+
+    conn.commit()
+    conn.close()
+    return value
+
 
 def load_new_data(source_file,
                   source_folder="./output/upload/",
@@ -585,8 +610,10 @@ def dataset_selected():
         config.TEXTS_LIST_LIST_FULL.clear()
         config.TEXTS_LIST_LIST_FULL.append(texts_list_list)
 
-        config.TOTAL_PAGES_FULL.clear()
-        config.TOTAL_PAGES_FULL.append(total_pages)
+        # config.TOTAL_PAGES_FULL.clear()
+        # config.TOTAL_PAGES_FULL.append(total_pages)
+
+        set_variable(name="TOTAL_PAGES", value=total_pages)
 
         config.CLASSIFIER_LIST.clear()
         config.TEXTS_GROUP_1.clear()
@@ -657,6 +684,9 @@ def begin_labeling():
     config.HTML_CONFIG_TEMPLATE.append(html_config_template)
 
     y_classes_sql = get_y_classes()
+    total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    print("total_pages_sql :", total_pages_sql)
+    print("type(total_pages_sql):", type(total_pages_sql))
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
@@ -665,7 +695,7 @@ def begin_labeling():
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
                            y_classes=y_classes_sql,
-                           total_pages=config.TOTAL_PAGES[0],
+                           total_pages=total_pages_sql,
                            texts_list=text_list_list_sql[page_number],
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],

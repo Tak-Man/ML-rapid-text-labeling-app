@@ -38,5 +38,11 @@ CREATE TABLE yClasses (
     className TEXT NOT NULL
 );
 
-INSERT INTO yClasses (className)
-VALUES ("Test 123");
+
+DROP TABLE IF EXISTS variables;
+
+CREATE TABLE variables (
+    name TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
