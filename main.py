@@ -680,14 +680,16 @@ def begin_labeling():
     else:
         html_config_template = "text_labeling_1.html"
 
-    config.HTML_CONFIG_TEMPLATE.clear()
-    config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+    # config.HTML_CONFIG_TEMPLATE.clear()
+    # config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+    set_variable(name="HTML_CONFIG_TEMPLATE", value=html_config_template)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
 
     y_classes_sql = get_y_classes()
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
     print("total_pages_sql :", total_pages_sql)
     print("type(total_pages_sql):", type(total_pages_sql))
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
@@ -793,10 +795,11 @@ def begin_labeling_new_dataset():
     else:
         html_config_template = "text_labeling_1.html"
 
-    config.HTML_CONFIG_TEMPLATE.clear()
-    config.HTML_CONFIG_TEMPLATE.append(html_config_template)
-
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    # config.HTML_CONFIG_TEMPLATE.clear()
+    # config.HTML_CONFIG_TEMPLATE.append(html_config_template)
+    set_variable(name="HTML_CONFIG_TEMPLATE", value=html_config_template)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
+    return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
@@ -832,7 +835,7 @@ def text_labeling():
 
     text_list_full_sql = get_text_list_full()
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
-
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
     initialize_flags = request.args.get("initialize_flags", None)
@@ -878,7 +881,7 @@ def text_labeling():
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
     text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -916,6 +919,7 @@ def go_to_page():
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
     text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
 
     click_record, guid = utils.generate_click_record(click_location=app_section,
                                                      click_type=selection,
@@ -923,7 +927,7 @@ def go_to_page():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            label_selected=label_selected,
@@ -957,6 +961,7 @@ def single_text():
 
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     page_number = int(request.form["page_number"])
@@ -983,7 +988,7 @@ def single_text():
             info_message += "\n" + f"Select a 'Text ID'."
 
         text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -1058,7 +1063,7 @@ def single_text():
                                                     full_fit_if_labels_got_overridden=True, round_to=1,
                                                     format_as_percentage=True)
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=new_label,
@@ -1098,6 +1103,7 @@ def grouped_1_texts():
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
     text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
@@ -1117,7 +1123,7 @@ def grouped_1_texts():
         if len(config.TEXTS_GROUP_1) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -1202,7 +1208,7 @@ def grouped_1_texts():
                                                     full_fit_if_labels_got_overridden=True, round_to=1,
                                                     format_as_percentage=True)
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group1,
@@ -1240,7 +1246,7 @@ def grouped_2_texts():
 
     text_list_full_sql = get_text_list_full()
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
-
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     selected_label_group2 = request.form["selected_label_group2"]
 
     click_record, guid = utils.generate_click_record(click_location="recommended_texts",
@@ -1263,7 +1269,7 @@ def grouped_2_texts():
 
         text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                    sub_list_limit=config.TABLE_LIMIT)
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label_group2,
@@ -1350,7 +1356,7 @@ def grouped_2_texts():
                                                     full_fit_if_labels_got_overridden=True, round_to=1,
                                                     format_as_percentage=True)
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group2,
@@ -1387,6 +1393,7 @@ def label_all():
     text_list_full_sql = get_text_list_full()
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
@@ -1405,7 +1412,7 @@ def label_all():
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
                        "auto-labeling, then work through the 'Difficult Texts' to improve the quality."
         label_summary_message = info_message
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label,
@@ -1442,7 +1449,7 @@ def label_all():
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
 
-            return render_template(config.HTML_CONFIG_TEMPLATE[0],
+            return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
@@ -1479,7 +1486,7 @@ def label_all():
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.clear()
             config.CONFIRM_LABEL_ALL_TEXTS_COUNTS.append(temp_count + 1)
 
-            return render_template(config.HTML_CONFIG_TEMPLATE[0],
+            return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
@@ -1540,7 +1547,7 @@ def label_all():
                                    label_summary_string=config.LABEL_SUMMARY_STRING)
 
             label_summary_message = info_message
-            return render_template(config.HTML_CONFIG_TEMPLATE[0],
+            return render_template(html_config_template_sql,
                                    selected_text_id="None", # new_id,
                                    selected_text="Select a text below to label.", # new_text,
                                    label_selected=selected_label,
@@ -1568,7 +1575,7 @@ def label_all():
     # **********************************************************************************************
     else:
         info_message = "Label more texts before trying again."
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=new_id,
                            selected_text=new_text,
                            label_selected=selected_label,
@@ -1668,6 +1675,7 @@ def save_state():
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
 
     save_state = {}
     save_state["DATASET_NAME"] = config.DATASET_NAME
@@ -1707,7 +1715,7 @@ def save_state():
         temp_filename = filename + ".pkl"
         pickle.dump(eval("config." + filename), open("./output/save/" + temp_filename, "wb"))
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
@@ -1750,6 +1758,7 @@ def label_selected():
     y_classes_sql = get_y_classes()
 
     text_list_full_sql = get_text_list_full()
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
     page_number = int(request.args.get("page_number"))
@@ -1799,7 +1808,7 @@ def label_selected():
 
     text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT,)
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1836,6 +1845,7 @@ def generate_difficult_texts():
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     text = get_selected_text(selected_text_id=id, text_list_full_sql=text_list_full_sql)
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
@@ -1853,15 +1863,14 @@ def generate_difficult_texts():
 
     # **********************************************************************************************
 
-
-    if config.HTML_CONFIG_TEMPLATE[0] in ["text_labeling_2.html"]:
+    if html_config_template in ["text_labeling_2.html"]:
         scroll_to_id = "labelAllButton"
         difficult_texts_message = info_message
     else:
         scroll_to_id = None
         difficult_texts_message = None
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=id,
                            selected_text=text,
                            label_selected=label_selected,
@@ -1898,6 +1907,7 @@ def set_group_1_record_limit():
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
     label_selected = request.form.get("label_selected", None)
@@ -1937,7 +1947,7 @@ def set_group_1_record_limit():
         duration = end_test_time - start_test_time
     # **********************************************************************************************
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -1975,6 +1985,7 @@ def set_group_2_record_limit():
     text_list_full_sql = get_text_list_full()
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group2_table_limit", None))
 
@@ -2005,7 +2016,7 @@ def set_group_2_record_limit():
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
@@ -2040,7 +2051,7 @@ def search_all_texts():
 
     text_list_full_sql = get_text_list_full()
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
-
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     label_selected = request.form.get("label_selected", None)
     include_search_term = request.form.get("include_search_term", None)
     exclude_search_term = request.form.get("exclude_search_term", None)
@@ -2098,7 +2109,7 @@ def search_all_texts():
             config.SEARCH_MESSAGE.clear()
             config.SEARCH_MESSAGE.append(info_message)
 
-            return render_template(config.HTML_CONFIG_TEMPLATE[0],
+            return render_template(html_config_template_sql,
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
@@ -2137,7 +2148,7 @@ def search_all_texts():
 
             page_number = -1
 
-            return render_template(config.HTML_CONFIG_TEMPLATE[0],
+            return render_template(html_config_template_sql,
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
@@ -2167,7 +2178,7 @@ def search_all_texts():
 
         text_list_full_sql = get_text_list_full()
         text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=selected_text_id,
                                selected_text=selected_text,
                                label_selected=label_selected,
@@ -2205,6 +2216,8 @@ def grouped_search_texts():
     text_list_full_sql = get_text_list_full()
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
+
     selected_label_search_texts = request.form["selected_label_search_texts"]
     info_message = ""
 
@@ -2223,7 +2236,7 @@ def grouped_search_texts():
             info_message += f"Select a 'Label'."
 
         text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
@@ -2310,7 +2323,7 @@ def grouped_search_texts():
                                                     format_as_percentage=True)
         # **********************************************************************************************
 
-        return render_template(config.HTML_CONFIG_TEMPLATE[0],
+        return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_search_texts,
@@ -2347,7 +2360,7 @@ def clear_search_all_texts():
     text_list_full_sql = get_text_list_full()
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
-
+    html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     label_selected = request.form.get("label_selected", None)
     info_message = "Search cleared"
 
@@ -2372,7 +2385,7 @@ def clear_search_all_texts():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
-    return render_template(config.HTML_CONFIG_TEMPLATE[0],
+    return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
