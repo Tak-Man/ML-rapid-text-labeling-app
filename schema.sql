@@ -30,3 +30,13 @@ CREATE TABLE availableDatasets (
     description TEXT NOT NULL,
     url TEXT NOT NULL
 );
+
+DROP TABLE IF EXISTS yClasses;
+
+CREATE TABLE yClasses (
+    classId INTEGER,
+    className TEXT NOT NULL
+);
+
+INSERT INTO yClasses (className)
+VALUES ("Test 123");

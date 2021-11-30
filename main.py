@@ -49,6 +49,172 @@ def get_text_list_full():
     return text_list_full_sql
 
 
+def get_y_classes():
+    conn = get_db_connection()
+    y_classes_sql = conn.execute('SELECT className FROM yClasses;').fetchall()
+    y_classes_sql = [dict(row)["className"] for row in y_classes_sql]
+    conn.close()
+    return y_classes_sql
+
+
+def add_y_classes(y_classses_list, begin_fresh=True):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # try:
+    if begin_fresh:
+        cur.execute("DELETE FROM yClasses;")
+
+    for i, value in enumerate(y_classses_list):
+        cur.execute("INSERT INTO yClasses (classId, className) VALUES (?, ?)", (i, value))
+
+    conn.commit()
+    conn.close()
+
+    return 1
+    # except:
+    #     return 0
+
+
+def get_selected_text(selected_text_id, text_list_full_sql):
+    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
+    if selected_text_id:
+        if len(selected_text_test) == 0:
+            selected_text = ""
+        else:
+            selected_text = selected_text_test[0]
+    else:
+        selected_text = ""
+    return selected_text
+
+
+def create_text_list_list(text_list_full_sql, sub_list_limit):
+    texts_list_list = \
+        [text_list_full_sql[i:i + sub_list_limit] for i in range(0, len(text_list_full_sql), sub_list_limit)]
+    return texts_list_list
+
+
+def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_ids=None, sub_list_limit=10,
+                                labels_got_overridden_flag=[],
+                                update_in_place=True):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # update_query = "UPDATE texts SET label = ? WHERE id = ?"
+    # records_to_update = [(selected_label, x) for x in update_ids]
+    # print("update_query :", update_query)
+    # cur.executemany(update_query, records_to_update)
+    if selected_label and update_ids and not update_objs:
+        update_query = "UPDATE texts SET label = ? WHERE id IN (%s)" % ",".join("?"*len(update_ids))
+        print("update_query :", update_query)
+        update_values = [selected_label]
+        update_values.extend(update_ids)
+        cur.execute(update_query, update_values)
+
+        if not update_in_place:
+            cur.execute("""
+                        IF OBJECT_ID(N'tempdb..#tempTexts') IS NOT NULL
+                        BEGIN
+                        DROP TABLE #tempTexts
+                        END
+                        GO
+                        """)
+            query = "SELECT * FROM texts INTO #tempTexts WHERE id IN (%s)" % ",".join("?" * len(update_ids))
+            cur.execute(query, update_ids)
+            cur.executemany("DELETE FROM texts WHERE id IN (%s)" % ",".join("?" * len(update_ids)), update_ids)
+            cur.execute("SELECT * INTO texts FROM #tempTexts;")
+
+        conn.commit()
+        conn.close()
+
+    # updated_texts_list_df = pd.DataFrame.from_dict(texts_list) # .copy()
+    #
+    # updated_obj_df = pd.DataFrame.from_dict(updated_obj_lst)
+    # update_ids = updated_obj_df["id"].values
+    #
+    # labels_to_be_updated = \
+    #     list(set(updated_texts_list_df[updated_texts_list_df["id"].isin(update_ids)]["label"].values))
+    # if len(labels_to_be_updated) > 1 or (len(labels_to_be_updated) == 1 and "-" not in labels_to_be_updated):
+    #     # "-" indicates an unlabeled text. So, if the labels_to_be_updated have anything other than "-"
+    #     # this indicates that already assigned labeled are going to be overridden.
+    #     overridden = True
+    # else:
+    #     overridden = False
+    # labels_got_overridden_flag.clear()
+    # labels_got_overridden_flag.extend([overridden])
+    #
+    # if update_in_place:
+    #     update_labels = list(set(updated_obj_df["label"].values))
+    #     if len(update_labels) == 1:
+    #         updated_texts_list_df.loc[updated_texts_list_df["id"].isin(update_ids), "label"] = update_labels[0]
+    #     else:
+    #         updated_texts_list_df.loc[updated_texts_list_df["id"].isin(update_ids), "label"] = \
+    #             updated_obj_df["label"].values
+    # else:
+    #     updated_texts_list_df = updated_texts_list_df[~updated_texts_list_df["id"].isin(update_ids)]
+    #     updated_texts_list_df = updated_texts_list_df.append(updated_obj_df)
+    #
+    # updated_texts_list = updated_texts_list_df.to_dict("records")
+    # texts_list.clear()
+    # texts_list.extend(updated_texts_list)
+
+    elif update_objs and not selected_label and not update_ids:
+        update_query = "UPDATE texts SET label = ? WHERE id = ?"
+        print("update_query :", update_query)
+        update_values = [(obj["label"], obj["id"]) for obj in update_objs]
+        for update_value in update_values:
+            cur.execute(update_query, update_value)
+        conn.commit()
+        conn.close()
+
+    text_list_full = get_text_list_full()
+    texts_list_list = create_text_list_list(text_list_full_sql=text_list_full, sub_list_limit=sub_list_limit)
+    return text_list_full, texts_list_list
+
+
+def label_all_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
+                  label_only_unlabeled=True, sub_list_limit=50, update_in_place=True):
+
+    texts_list_df = pd.DataFrame(texts_list)
+
+    if not label_only_unlabeled:
+        predictions = fitted_classifier.predict(sparse_vectorized_corpus)
+        predictions_df = pd.DataFrame(predictions)
+        predictions_df["id"] = corpus_text_ids
+        labeled_text_ids = corpus_text_ids
+    else:
+        label_only_these_ids = texts_list_df[texts_list_df["label"] == "-"]["id"].values
+        keep_indices = [corpus_text_ids.index(x) for x in label_only_these_ids]
+        sparse_vectorized_corpus_alt = sparse_vectorized_corpus[keep_indices, :]
+        predictions = fitted_classifier.predict(sparse_vectorized_corpus_alt)
+        predictions_df = pd.DataFrame(predictions)
+        predictions_df["id"] = label_only_these_ids
+        labeled_text_ids = label_only_these_ids
+
+    predictions_df = predictions_df.rename(columns={0: "label"})
+    predictions_df = predictions_df.merge(texts_list_df[["id", "text"]], left_on="id", right_on="id", how="left")
+    predictions_df = predictions_df[["id", "text", "label"]]
+    update_objects = predictions_df.to_dict("records")
+
+    text_list_full, texts_list_list = \
+        update_texts_list_by_id_sql(update_objs=update_objects,
+                                    selected_label=None,
+                                    update_ids=None,
+                                    sub_list_limit=sub_list_limit,
+                                    labels_got_overridden_flag=[],
+                                    update_in_place=update_in_place)
+
+    # updated_texts_list, updated_texts_list_list, overridden =  \
+    #     update_texts_list_by_id(texts_list=texts_list,
+    #                             sub_list_limit=sub_list_limit,
+    #                             updated_obj_lst=update_objects,
+    #                             texts_list_list=texts_list_list,
+    #                             update_in_place=update_in_place)
+
+    return text_list_full, texts_list_list , labeled_text_ids
+
+
+
 def load_new_data(source_file,
                   source_folder="./output/upload/",
                   shuffle_by="kmeans",
@@ -138,7 +304,8 @@ def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_fla
         if len(config.CLASSIFIER_LIST) > 0:
             label_summary_df = pd.DataFrame.from_dict(config.LABEL_SUMMARY)
             y_classes_labeled = label_summary_df["name"].values
-            all_classes_present = all(label in y_classes_labeled for label in config.Y_CLASSES[0])
+            y_classes_sql = get_y_classes()
+            all_classes_present = all(label in y_classes_labeled for label in y_classes_sql)
             if all_classes_present:
                 if config.FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS:
                     texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
@@ -147,7 +314,7 @@ def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_fla
                                          corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                          texts_list=text_list_full_sql,
                                          texts_list_labeled=texts_group_updated,
-                                         y_classes=config.Y_CLASSES[0],
+                                         y_classes=y_classes_sql,
                                          verbose=config.FIT_CLASSIFIER_VERBOSE,
                                          classifier_list=config.CLASSIFIER_LIST,
                                          random_state=config.RND_STATE,
@@ -160,7 +327,7 @@ def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_fla
                                           corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                           texts_list=config.TEXTS_LIST[0],
                                           top=config.GROUP_3_KEEP_TOP,
-                                          y_classes=config.Y_CLASSES[0],
+                                          y_classes=y_classes_sql,
                                           verbose=config.PREDICTIONS_VERBOSE,
                                           round_to=round_to,
                                           format_as_percentage=format_as_percentage,
@@ -190,19 +357,11 @@ def label_entered():
         label_entered = request.form["labelEntered"]
         print("label_entered :", label_entered)
 
-        if len(config.Y_CLASSES) == 0:
-            config.Y_CLASSES.append([label_entered])
-        else:
-            config.Y_CLASSES[0].append(label_entered)
-            temp_y_classes = copy.deepcopy(config.Y_CLASSES[0])
-            temp_y_classes = list(set(temp_y_classes))
-            config.Y_CLASSES.clear()
-            config.Y_CLASSES.append(temp_y_classes)
-
-
-        entered_labels = ", ".join(config.Y_CLASSES[0])
+        add_y_classes([label_entered], begin_fresh=False)
+        y_classes_sql = get_y_classes()
+        entered_labels = ", ".join(y_classes_sql)
     else:
-        config.Y_CLASSES.clear()
+        add_y_classes([], begin_fresh=True)
         entered_labels = ""
 
     if len(config.PREP_DATA_MESSAGE1) > 0:
@@ -380,11 +539,16 @@ def dataset_selected():
     conn.close()
 
     if dataset_name in ["Disaster Tweets Dataset", "Disaster Tweets Dataset with 'Other'"]:
-        config.Y_CLASSES.clear()
+        # config.Y_CLASSES.clear()
         if dataset_name == "Disaster Tweets Dataset with 'Other'":
-            config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane", "Other"])
+            add_y_classes(y_classses_list=["Earthquake", "Fire", "Flood", "Hurricane", "Other"], begin_fresh=True)
+            # config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane", "Other"])
         else:
-            config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane"])
+            add_y_classes(y_classses_list=["Earthquake", "Fire", "Flood", "Hurricane"], begin_fresh=True)
+            # config.Y_CLASSES.append(["Earthquake", "Fire", "Flood", "Hurricane"])
+
+        y_classes_sql = get_y_classes()
+        print("y_classes_sql :", y_classes_sql)
 
         config.SHUFFLE_BY.clear()
         config.SHUFFLE_BY.append("random")  # kmeans random
@@ -393,7 +557,7 @@ def dataset_selected():
             load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by=config.SHUFFLE_BY[0],
                            table_limit=config.TABLE_LIMIT, texts_limit=config.TEXTS_LIMIT,
                            max_features=config.MAX_FEATURES,
-                           y_classes=config.Y_CLASSES[0], rnd_state=config.RND_STATE)
+                           y_classes=y_classes_sql, rnd_state=config.RND_STATE)
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -416,6 +580,8 @@ def dataset_selected():
         config.TEXTS_LIST_FULL.append(texts_list)
         print("len(config.TEXTS_LIST_FULL[0] :", len(config.TEXTS_LIST_FULL[0]))
 
+        text_list_full_sql = get_text_list_full()
+        text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
         config.TEXTS_LIST_LIST_FULL.clear()
         config.TEXTS_LIST_LIST_FULL.append(texts_list_list)
 
@@ -429,22 +595,25 @@ def dataset_selected():
         config.OVERALL_QUALITY_SCORE.clear()
         config.OVERALL_QUALITY_SCORE.append("-")
 
-
         return render_template("start.html",
                                dataset_list=available_datasets,
-                               texts_list=config.TEXTS_LIST_LIST[0][0],
+                               texts_list=text_list_list_sql[0],
                                dataset_name=dataset_name,
-                               dataset_labels=config.Y_CLASSES[0])
+                               dataset_labels=y_classes_sql)
 
     else:
-        load_status = utils.dataset_list(source_dir="./output/save/")
+        load_status = utils.load_save_state(source_dir="./output/save/")
         print('config.SEARCH_MESSAGE :', config.SEARCH_MESSAGE)
         if load_status == 1:
+            y_classes_sql = get_y_classes()
+            text_list_full_sql = get_text_list_full()
+            text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql,
+                                                       sub_list_limit=config.TABLE_LIMIT)
             return render_template("start.html",
                                    dataset_list=available_datasets,
-                                   texts_list=config.TEXTS_LIST_LIST[0][0],
+                                   texts_list=text_list_list_sql[0],
                                    dataset_name=dataset_name,
-                                   dataset_labels=config.Y_CLASSES[0])
+                                   dataset_labels=y_classes_sql)
         else:
             print("Error loading dataset.")
 
@@ -465,10 +634,10 @@ def begin_labeling():
                                config1_message=config1_message)
 
     page_number = 0
-    conn = get_db_connection()
-    text_list_full_sql = conn.execute('SELECT * FROM texts').fetchall()
-    text_list_full_sql = [dict(row) for row in text_list_full_sql]
-    conn.close()
+
+    text_list_full_sql = get_text_list_full()
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+
     print("len(text_list_full_sql) :", len(text_list_full_sql))
     utils.generate_summary(text_lists=text_list_full_sql,
                            first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -487,6 +656,7 @@ def begin_labeling():
     config.HTML_CONFIG_TEMPLATE.clear()
     config.HTML_CONFIG_TEMPLATE.append(html_config_template)
 
+    y_classes_sql = get_y_classes()
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
@@ -494,9 +664,9 @@ def begin_labeling():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=text_list_list_sql[page_number],
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
@@ -518,6 +688,8 @@ def begin_labeling_new_dataset():
     config.SHUFFLE_BY.clear()
     config.SHUFFLE_BY.append("random")  # kmeans random
 
+    y_classes_sql = get_y_classes()
+
     texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
         load_new_data(config.DATASET_NAME[0],
                       source_folder="./output/upload/",
@@ -525,7 +697,7 @@ def begin_labeling_new_dataset():
                       table_limit=config.TABLE_LIMIT,
                       texts_limit=config.TEXTS_LIMIT,
                       max_features=config.MAX_FEATURES,
-                      y_classes=config.Y_CLASSES[0],
+                      y_classes=y_classes_sql,
                       rnd_state=config.RND_STATE)
 
     conn = get_db_connection()
@@ -570,10 +742,10 @@ def begin_labeling_new_dataset():
                                config1_message=config1_message)
 
     page_number = 0
-    conn = get_db_connection()
-    text_list_full_sql = conn.execute('SELECT * FROM texts').fetchall()
-    text_list_full_sql = [dict(row) for row in text_list_full_sql]
-    conn.close()
+
+    text_list_full_sql = get_text_list_full()
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+
     print("len(text_list_full_sql) :", len(text_list_full_sql))
     utils.generate_summary(text_lists=text_list_full_sql,
                            first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -601,9 +773,9 @@ def begin_labeling_new_dataset():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=text_list_list_sql[page_number],
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
@@ -626,15 +798,11 @@ def text_labeling():
     app_section = request.args.get("app_section", None)
     selected_text_id = request.args.get("selected_text_id", None)
 
+    y_classes_sql = get_y_classes()
+
     text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
+
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
     initialize_flags = request.args.get("initialize_flags", None)
@@ -674,12 +842,12 @@ def text_labeling():
                                   texts_list=text_list_full_sql,
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                  y_classes=config.Y_CLASSES[0],
+                                  y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
                                   exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
-
+    text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
@@ -688,9 +856,9 @@ def text_labeling():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=text_list_list[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -715,6 +883,10 @@ def go_to_page():
     page_number = int(request.args.get("page_number", None))
     label_selected = request.args.get("label_selected", None)
 
+    y_classes_sql = get_y_classes()
+    text_list_full_sql = get_text_list_full()
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+
     click_record, guid = utils.generate_click_record(click_location=app_section,
                                                      click_type=selection,
                                                      click_object="link",
@@ -729,9 +901,9 @@ def go_to_page():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=text_list_list_sql[page_number],
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -753,15 +925,9 @@ def single_text():
 
     new_id = request.form["selected_text_id"]
 
+    y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
-    new_text_test = [text["text"] for text in text_list_full_sql if text["id"] == new_id]
-    if new_id:
-        if len(new_text_test) == 0:
-            new_text = ""
-        else:
-            new_text = new_text_test[0]
-    else:
-        new_text = ""
+    new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     page_number = int(request.form["page_number"])
     new_label = request.form["selected_label_single"]
@@ -786,6 +952,7 @@ def single_text():
         if new_id == "None":
             info_message += "\n" + f"Select a 'Text ID'."
 
+        text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
@@ -793,9 +960,9 @@ def single_text():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -810,14 +977,19 @@ def single_text():
     else:
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
 
-        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
-                                      sub_list_limit=config.TABLE_LIMIT,
-                                      updated_obj_lst=[new_obj],
-                                      texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
-                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
-                                      update_in_place=False)
+        text_list_full, texts_list_list = update_texts_list_by_id_sql(selected_label=new_label, update_ids=[new_id],
+                                                                      sub_list_limit=config.TABLE_LIMIT,
+                                                                      labels_got_overridden_flag=[],
+                                                                      update_in_place=True)
 
-        utils.generate_summary(text_lists=text_list_full_sql,
+        # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
+        #                               sub_list_limit=config.TABLE_LIMIT,
+        #                               updated_obj_lst=[new_obj],
+        #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+        #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
+        #                               update_in_place=False)
+
+        utils.generate_summary(text_lists=text_list_full,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -827,9 +999,9 @@ def single_text():
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=text_list_full_sql,
+                             texts_list=text_list_full,
                              texts_list_labeled=[new_obj],
-                             y_classes=config.Y_CLASSES[0],
+                             y_classes=y_classes_sql,
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST,
                              random_state=config.RND_STATE,
@@ -846,7 +1018,7 @@ def single_text():
                                       texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=config.Y_CLASSES[0],
+                                      y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
@@ -864,9 +1036,9 @@ def single_text():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=texts_list_list[page_number],
                                texts_group_1=[], # TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -893,15 +1065,10 @@ def grouped_1_texts():
     selected_label_group1 = request.form["selected_label_group1"]
     info_message = ""
 
+    y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
-    new_text_test = [text["text"] for text in text_list_full_sql if text["id"] == new_id]
-    if new_id:
-        if len(new_text_test) == 0:
-            new_text = ""
-        else:
-            new_text = new_text_test[0]
-    else:
-        new_text = ""
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
                                                      click_type="group_label_assigned",
@@ -927,9 +1094,9 @@ def grouped_1_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list_sql[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
@@ -945,18 +1112,24 @@ def grouped_1_texts():
 
     else:
         texts_group_1_updated = copy.deepcopy(config.TEXTS_GROUP_1)
-
+        update_ids = []
         for obj in texts_group_1_updated:
+            update_ids.append(obj["id"])
             obj["label"] = selected_label_group1
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
-                                      sub_list_limit=config.TABLE_LIMIT,
-                                      updated_obj_lst=texts_group_1_updated,
-                                      texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
-                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
-                                      update_in_place=False)
+        text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=selected_label_group1,
+                                                                              update_ids=update_ids,
+                                                                              sub_list_limit=config.TABLE_LIMIT,
+                                                                              labels_got_overridden_flag=[],
+                                                                              update_in_place=True)
+        # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
+        #                               sub_list_limit=config.TABLE_LIMIT,
+        #                               updated_obj_lst=texts_group_1_updated,
+        #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+        #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
+        #                               update_in_place=False)
 
         utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -970,7 +1143,7 @@ def grouped_1_texts():
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_1_updated,
-                             y_classes=config.Y_CLASSES[0],
+                             y_classes=y_classes_sql,
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST,
                              random_state=config.RND_STATE,
@@ -989,7 +1162,7 @@ def grouped_1_texts():
                                       texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=config.Y_CLASSES[0],
+                                      y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
@@ -1007,9 +1180,9 @@ def grouped_1_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=texts_list_list_sql[page_number],
                                texts_group_1=[], # texts_group_1_updated,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -1033,15 +1206,10 @@ def grouped_2_texts():
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
 
+    y_classes_sql = get_y_classes()
+
     text_list_full_sql = get_text_list_full()
-    new_text_test = [text["text"] for text in text_list_full_sql if text["id"] == new_id]
-    if new_id:
-        if len(new_text_test) == 0:
-            new_text = ""
-        else:
-            new_text = new_text_test[0]
-    else:
-        new_text = ""
+    new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     selected_label_group2 = request.form["selected_label_group2"]
 
@@ -1063,6 +1231,8 @@ def grouped_2_texts():
         if len(config.TEXTS_GROUP_2) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
+        text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql,
+                                                   sub_list_limit=config.TABLE_LIMIT)
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
@@ -1071,9 +1241,9 @@ def grouped_2_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list_sql[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
@@ -1089,17 +1259,25 @@ def grouped_2_texts():
 
     else:
         texts_group_2_updated = copy.deepcopy(config.TEXTS_GROUP_2)
+        update_ids = []
         for obj in texts_group_2_updated:
+            update_ids.append(obj["id"])
             obj["label"] = selected_label_group2
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
-                                      sub_list_limit=config.TABLE_LIMIT,
-                                      updated_obj_lst=texts_group_2_updated,
-                                      texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
-                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
-                                      update_in_place=False)
+        text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=selected_label_group2,
+                                                                              update_ids=update_ids,
+                                                                              sub_list_limit=config.TABLE_LIMIT,
+                                                                              labels_got_overridden_flag=[],
+                                                                              update_in_place=True)
+
+        # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
+        #                               sub_list_limit=config.TABLE_LIMIT,
+        #                               updated_obj_lst=texts_group_2_updated,
+        #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+        #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
+        #                               update_in_place=False)
 
         utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -1113,7 +1291,7 @@ def grouped_2_texts():
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_2_updated,
-                             y_classes=config.Y_CLASSES[0],
+                             y_classes=y_classes_sql,
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST,
                              random_state=config.RND_STATE,
@@ -1132,7 +1310,7 @@ def grouped_2_texts():
                                       texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=config.Y_CLASSES[0],
+                                      y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
@@ -1150,9 +1328,9 @@ def grouped_2_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=texts_list_list_sql[page_number],
                                texts_group_1=[], # texts_group_1_updated,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -1174,15 +1352,11 @@ def label_all():
     new_id = request.form["selected_text_id"]
     selected_label = request.form["selected_label"]
 
+    y_classes_sql = get_y_classes()
+
     text_list_full_sql = get_text_list_full()
-    new_text_test = [text["text"] for text in text_list_full_sql if text["id"] == new_id]
-    if new_id:
-        if len(new_text_test) == 0:
-            new_text = ""
-        else:
-            new_text = new_text_test[0]
-    else:
-        new_text = ""
+    new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
@@ -1194,6 +1368,8 @@ def label_all():
         scroll_to_id = "labelAllButton"
     else:
         scroll_to_id = None
+
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
 
     if config.NUMBER_UNLABELED_TEXTS[0] == 0:
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
@@ -1207,9 +1383,9 @@ def label_all():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list_sql[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
@@ -1244,9 +1420,9 @@ def label_all():
                                    search_message=config.SEARCH_MESSAGE[0],
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
-                                   y_classes=config.Y_CLASSES[0],
+                                   y_classes=y_classes_sql,
                                    total_pages=config.TOTAL_PAGES[0],
-                                   texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                                   texts_list=text_list_list_sql[page_number],
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=[],
@@ -1281,9 +1457,9 @@ def label_all():
                                    search_message=config.SEARCH_MESSAGE[0],
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
-                                   y_classes=config.Y_CLASSES[0],
+                                   y_classes=y_classes_sql,
                                    total_pages=config.TOTAL_PAGES[0],
-                                   texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                                   texts_list=text_list_list_sql[page_number],
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=[],
@@ -1303,15 +1479,24 @@ def label_all():
             info_message = \
                 f"{config.NUMBER_UNLABELED_TEXTS[0]} texts were auto-labeled."
 
-            updated_texts_list, updated_texts_list_list, labeled_text_ids = \
-                utils.label_all(fitted_classifier=config.CLASSIFIER_LIST[0],
-                                sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                texts_list=text_list_full_sql,
-                                label_only_unlabeled=True,
-                                sub_list_limit=config.TABLE_LIMIT,
-                                update_in_place=False,
-                                texts_list_list=config.TEXTS_LIST_LIST_FULL[0])
+            text_list_full_sql, texts_list_list_sql, labeled_text_ids = \
+                label_all_sql(fitted_classifier=config.CLASSIFIER_LIST[0],
+                              sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                              texts_list=text_list_full_sql,
+                              label_only_unlabeled=True,
+                              sub_list_limit=config.TABLE_LIMIT,
+                              update_in_place=True)
+
+            # updated_texts_list, updated_texts_list_list, labeled_text_ids = \
+            #     utils.label_all(fitted_classifier=config.CLASSIFIER_LIST[0],
+            #                     sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+            #                     corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+            #                     texts_list=text_list_full_sql,
+            #                     label_only_unlabeled=True,
+            #                     sub_list_limit=config.TABLE_LIMIT,
+            #                     update_in_place=False,
+            #                     texts_list_list=config.TEXTS_LIST_LIST_FULL[0])
 
             for labeled_text_id in labeled_text_ids:
                 value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
@@ -1333,9 +1518,9 @@ def label_all():
                                    search_message=config.SEARCH_MESSAGE[0],
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
-                                   y_classes=config.Y_CLASSES[0],
+                                   y_classes=y_classes_sql,
                                    total_pages=config.TOTAL_PAGES[0],
-                                   texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                                   texts_list=texts_list_list_sql[page_number],
                                    texts_group_1=[], # texts_group_1_updated,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
@@ -1361,9 +1546,9 @@ def label_all():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=texts_list_list_sql[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
@@ -1450,6 +1635,10 @@ def save_state():
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
+    y_classes_sql = get_y_classes()
+    text_list_full_sql = get_text_list_full()
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+
     save_state = {}
     save_state["DATASET_NAME"] = config.DATASET_NAME
     save_state["DATASET_URL"] = config.DATASET_URL
@@ -1463,13 +1652,12 @@ def save_state():
     save_state["SEARCH_MESSAGE"] = config.SEARCH_MESSAGE
 
     save_state["TEXTS_LIST"] = config.TEXTS_LIST
-    text_list_full_sql = get_text_list_full()
     save_state["TEXTS_LIST_FULL"] = [text_list_full_sql]
 
     save_state["CORPUS_TEXT_IDS"] = config.CORPUS_TEXT_IDS
     print("len(config.TEXTS_LIST_LIST_FULL[0]) :", len(config.TEXTS_LIST_LIST_FULL[0]))
-    save_state["TEXTS_LIST_LIST"] = config.TEXTS_LIST_LIST
-    save_state["TEXTS_LIST_LIST_FULL"] = config.TEXTS_LIST_LIST_FULL
+    save_state["TEXTS_LIST_LIST"] = [texts_list_list_sql]
+    save_state["TEXTS_LIST_LIST_FULL"] = [texts_list_list_sql]
 
     save_state["TOTAL_PAGES_FULL"] = config.TOTAL_PAGES_FULL
     save_state["ADJ_TEXT_IDS"] = config.ADJ_TEXT_IDS
@@ -1496,9 +1684,9 @@ def save_state():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][0],
+                           texts_list=texts_list_list_sql[0],
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
@@ -1529,15 +1717,10 @@ def label_selected():
     label_selected = request.args.get("label_selected")
     selected_text_id = request.args.get("selected_text_id")
 
+    y_classes_sql = get_y_classes()
+
     text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
     page_number = int(request.args.get("page_number"))
 
@@ -1576,13 +1759,15 @@ def label_selected():
                                   texts_list=text_list_full_sql,
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                  y_classes=config.Y_CLASSES[0],
+                                  y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
                                   exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
 
     info_message = f"'{label_selected}' selected"
+
+    text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT,)
 
     return render_template(config.HTML_CONFIG_TEMPLATE[0],
                            selected_text_id=selected_text_id,
@@ -1592,9 +1777,9 @@ def label_selected():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=text_list_list[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -1618,15 +1803,10 @@ def generate_difficult_texts():
     id = request.form["selected_text_id"]
     label_selected = request.form["selected_label"]
 
+    y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
-    text_test = [text["text"] for text in text_list_full_sql if text["id"] == id]
-    if label_selected:
-        if len(text_test) == 0:
-            text = ""
-        else:
-            text = text_test[0]
-    else:
-        text = ""
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    text = get_selected_text(selected_text_id=id, text_list_full_sql=text_list_full_sql)
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="generate_list",
@@ -1659,9 +1839,9 @@ def generate_difficult_texts():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=texts_list_list_sql[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -1685,18 +1865,11 @@ def set_group_1_record_limit():
 
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
-
+    y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
-    print("selected_text :", selected_text)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group1_table_limit", None))
 
@@ -1742,9 +1915,9 @@ def set_group_1_record_limit():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=texts_list_list_sql[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -1767,16 +1940,11 @@ def set_group_2_record_limit():
     page_number = int(request.form.get("page_number", None))
     selected_text_id = request.form.get("selected_text_id", None)
 
-    text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    y_classes_sql = get_y_classes()
 
+    text_list_full_sql = get_text_list_full()
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group2_table_limit", None))
 
@@ -1801,7 +1969,7 @@ def set_group_2_record_limit():
                                   texts_list=text_list_full_sql,
                                   top=config.PREDICTIONS_NUMBER[0],
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                  y_classes=config.Y_CLASSES[0],
+                                  y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
                                   exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                   similar_texts=config.TEXTS_GROUP_2)
@@ -1815,9 +1983,9 @@ def set_group_2_record_limit():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                           texts_list=texts_list_list_sql[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
@@ -1841,14 +2009,7 @@ def search_all_texts():
     selected_text_id = request.form.get("selected_text_id", None)
 
     text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
     label_selected = request.form.get("label_selected", None)
     include_search_term = request.form.get("include_search_term", None)
@@ -1873,6 +2034,8 @@ def search_all_texts():
     value_record_2 = utils.generate_value_record(guid=guid, value_type="exclude_search_term", value=exclude_search_term)
     utils.add_log_record(value_record_2, log=config.VALUE_LOG)
 
+    y_classes_sql = get_y_classes()
+
     if len(include_search_term) > 0 or len(exclude_search_term) > 0:
         search_results = utils.search_all_texts(all_text=text_list_full_sql,
                                                 include_search_term=include_search_term,
@@ -1895,8 +2058,8 @@ def search_all_texts():
             search_results_total_pages = len(search_results_list)
             search_result_page_number = 0
 
-            config.TEXTS_LIST_LIST.clear()
-            config.TEXTS_LIST_LIST.append(search_results_list)
+            # config.TEXTS_LIST_LIST.clear()
+            # config.TEXTS_LIST_LIST.append(search_results_list)
 
             config.TOTAL_PAGES.clear()
             config.TOTAL_PAGES.append(search_results_total_pages)
@@ -1913,9 +2076,9 @@ def search_all_texts():
                                    search_message=config.SEARCH_MESSAGE[0],
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=search_result_page_number,
-                                   y_classes=config.Y_CLASSES[0],
+                                   y_classes=y_classes_sql,
                                    total_pages=config.TOTAL_PAGES[0],
-                                   texts_list=config.TEXTS_LIST_LIST[0][search_result_page_number],
+                                   texts_list=search_results_list[search_result_page_number],
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
@@ -1936,8 +2099,8 @@ def search_all_texts():
             config.SEARCH_RESULT_LENGTH.clear()
             config.SEARCH_RESULT_LENGTH.append(0)
 
-            config.TEXTS_LIST_LIST.clear()
-            config.TEXTS_LIST_LIST.append([[]])
+            # config.TEXTS_LIST_LIST.clear()
+            # config.TEXTS_LIST_LIST.append([[]])
 
             config.TOTAL_PAGES.clear()
             config.TOTAL_PAGES.append(0)
@@ -1952,9 +2115,9 @@ def search_all_texts():
                                    search_message=config.SEARCH_MESSAGE[0],
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
-                                   y_classes=config.Y_CLASSES[0],
+                                   y_classes=y_classes_sql,
                                    total_pages=config.TOTAL_PAGES[0],
-                                   texts_list=config.TEXTS_LIST_LIST[0][0],
+                                   texts_list=[[]][0],
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
@@ -1972,6 +2135,8 @@ def search_all_texts():
         config.SEARCH_MESSAGE.clear()
         config.SEARCH_MESSAGE.append(info_message)
 
+        text_list_full_sql = get_text_list_full()
+        text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=selected_text_id,
                                selected_text=selected_text,
@@ -1980,9 +2145,9 @@ def search_all_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=0,
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -2005,15 +2170,10 @@ def grouped_search_texts():
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
 
+    y_classes_sql = get_y_classes()
+
     text_list_full_sql = get_text_list_full()
-    new_text_test = [text["text"] for text in text_list_full_sql if text["id"] == new_id]
-    if new_id:
-        if len(new_text_test) == 0:
-            new_text = ""
-        else:
-            new_text = new_text_test[0]
-    else:
-        new_text = ""
+    new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
 
     selected_label_search_texts = request.form["selected_label_search_texts"]
     info_message = ""
@@ -2032,6 +2192,7 @@ def grouped_search_texts():
         if selected_label_search_texts == "":
             info_message += f"Select a 'Label'."
 
+        text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
         return render_template(config.HTML_CONFIG_TEMPLATE[0],
                                selected_text_id=new_id,
                                selected_text=new_text,
@@ -2039,9 +2200,9 @@ def grouped_search_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
@@ -2057,18 +2218,25 @@ def grouped_search_texts():
 
     else:
         texts_group_updated = copy.deepcopy(config.TEXTS_LIST[0])
-
+        update_ids = []
         for obj in texts_group_updated:
+            update_ids.append(obj["id"])
             obj["label"] = selected_label_search_texts
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
             utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-        utils.update_texts_list_by_id(texts_list=text_list_full_sql,
-                                      sub_list_limit=config.TABLE_LIMIT,
-                                      updated_obj_lst=texts_group_updated,
-                                      texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
-                                      labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
-                                      update_in_place=False)
+        text_list_full_sql, text_list_list_sql = \
+            update_texts_list_by_id_sql(selected_label=selected_label_search_texts,
+                                        update_ids=update_ids,
+                                        sub_list_limit=config.TABLE_LIMIT,
+                                        labels_got_overridden_flag=[],
+                                        update_in_place=True)
+        # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
+        #                               sub_list_limit=config.TABLE_LIMIT,
+        #                               updated_obj_lst=texts_group_updated,
+        #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
+        #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
+        #                               update_in_place=False)
 
         utils.generate_summary(text_lists=text_list_full_sql,
                                first_labeling_flag=config.FIRST_LABELING_FLAG,
@@ -2082,7 +2250,7 @@ def grouped_search_texts():
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                              texts_list=text_list_full_sql,
                              texts_list_labeled=texts_group_updated,
-                             y_classes=config.Y_CLASSES[0],
+                             y_classes=y_classes_sql,
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST,
                              random_state=config.RND_STATE,
@@ -2101,7 +2269,7 @@ def grouped_search_texts():
                                       texts_list=text_list_full_sql,
                                       top=config.PREDICTIONS_NUMBER[0],
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=config.Y_CLASSES[0],
+                                      y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
                                       exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
                                       similar_texts=config.TEXTS_GROUP_2)
@@ -2120,9 +2288,9 @@ def grouped_search_texts():
                                search_message=config.SEARCH_MESSAGE[0],
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
-                               y_classes=config.Y_CLASSES[0],
+                               y_classes=y_classes_sql,
                                total_pages=config.TOTAL_PAGES[0],
-                               texts_list=config.TEXTS_LIST_LIST[0][page_number],
+                               texts_list=text_list_list_sql[page_number],
                                texts_group_1=[], # texts_group_1_updated,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
@@ -2145,15 +2313,10 @@ def clear_search_all_texts():
 
     selected_text_id = request.form.get("selected_text_id", None)
 
+    y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list_full()
-    selected_text_test = [text["text"] for text in text_list_full_sql if text["id"] == selected_text_id]
-    if selected_text_id:
-        if len(selected_text_test) == 0:
-            selected_text = ""
-        else:
-            selected_text = selected_text_test[0]
-    else:
-        selected_text = ""
+    texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
 
     label_selected = request.form.get("label_selected", None)
     info_message = "Search cleared"
@@ -2164,8 +2327,8 @@ def clear_search_all_texts():
     config.TEXTS_LIST.clear()
     config.TEXTS_LIST.append(config.TEXTS_LIST_FULL[0])
 
-    config.TEXTS_LIST_LIST.clear()
-    config.TEXTS_LIST_LIST.append(config.TEXTS_LIST_LIST_FULL[0])
+    # config.TEXTS_LIST_LIST.clear()
+    # config.TEXTS_LIST_LIST.append(config.TEXTS_LIST_LIST_FULL[0])
 
     config.TOTAL_PAGES.clear()
     config.TOTAL_PAGES.append(config.TOTAL_PAGES_FULL[0])
@@ -2187,9 +2350,9 @@ def clear_search_all_texts():
                            search_message=config.SEARCH_MESSAGE[0],
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
-                           y_classes=config.Y_CLASSES[0],
+                           y_classes=y_classes_sql,
                            total_pages=config.TOTAL_PAGES[0],
-                           texts_list=config.TEXTS_LIST_LIST[0][0],
+                           texts_list=texts_list_list_sql[0],
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
