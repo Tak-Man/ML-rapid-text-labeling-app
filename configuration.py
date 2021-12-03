@@ -98,3 +98,13 @@ HTML_CONFIG_TEMPLATE = []
 LABEL_SUMMARY_STRING = []
 
 
+class appVectorizer:
+    def __init__(self, vect=None):
+        self._vect = vect
+
+    def get_vect(self):
+        return self._vect
+
+    def set_vect(self, x):
+        self._vect = x
+

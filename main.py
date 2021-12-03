@@ -13,9 +13,9 @@ import json
 from werkzeug.utils import secure_filename
 import os
 import sqlite3
-
-
-
+from collections import Counter
+import numpy as np
+from sklearn.linear_model import SGDClassifier
 
 
 start_time = datetime.now()
@@ -39,6 +39,19 @@ def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def set_pkl(name, pkl_data):
+    pickle.dump(pkl_data, open("./output/pkl/" + name + ".pkl", "wb"))
+    return None
+
+
+def get_pkl(name):
+    try:
+        pkl_data = pickle.load(open(os.path.join("./output/pkl", name + ".pkl"), "rb"))
+        return pkl_data
+    except:
+        return None
 
 
 def get_text_list_full():
@@ -74,6 +87,124 @@ def add_y_classes(y_classses_list, begin_fresh=True):
     return 1
     # except:
     #     return 0
+
+
+def get_panel_flags():
+    conn = get_db_connection()
+    sql_table = conn.execute('SELECT name, value FROM initializeFlags;').fetchall()
+    panel_flags = {dict(row)["name"]: dict(row)["value"] for row in sql_table}
+    # INITIALIZE_FLAGS = [{0: 1, 1: 0, 2: 0, 3: 0}]
+    conn.close()
+    print("panel_flags :", panel_flags)
+    return panel_flags
+
+
+def update_panel_flags_sql(update_flag):
+    print("update_flag :", update_flag)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    update_query = "UPDATE initializeFlags SET value = ? WHERE name = ?;"
+
+    for name, value in update_flag.items():
+        cur.execute(update_query, (value, name))
+    conn.commit()
+    conn.close()
+    return None
+
+
+def get_texts_group_x(table_name="group1Texts"):
+    conn = get_db_connection()
+    sql_table = conn.execute("SELECT id, text, label FROM " + table_name + ";").fetchall()
+    texts_group_2 = [{"id": dict(row)["id"], "text": dict(row)["text"], "label": dict(row)["label"]} for row in sql_table]
+    conn.close()
+    return texts_group_2
+
+
+def set_texts_group_x(top_texts, table_name="group1Texts"):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM " + table_name + ";")
+    for record in top_texts:
+        cur.execute("INSERT INTO " + table_name + " (id, text, label) VALUES (?, ?, ?)",
+                    (record["id"], record["text"], record["label"]))
+    conn.commit()
+    conn.close()
+    return None
+
+
+def get_total_summary_sql():
+    conn = get_db_connection()
+    sql_table = conn.execute('SELECT name, number, percentage FROM totalSummary;').fetchall()
+    total_summary = [{"name": dict(row)["name"],
+                      "number": dict(row)["number"],
+                      "percentage": dict(row)["percentage"]} for row in sql_table]
+    conn.close()
+    return total_summary
+
+
+def set_total_summary(text_lists):
+    labels = [text_obj["label"] for text_obj in text_lists]
+    label_counter = Counter(labels)
+    total_texts = len(text_lists)
+    number_unlabeled = label_counter["-"]
+    number_labeled = total_texts - number_unlabeled
+    total_texts_percentage = "100.00%"
+    number_unlabeled_percentage = "{:.2%}".format(number_unlabeled / total_texts)
+    number_labeled_percentage = "{:.2%}".format(number_labeled / total_texts)
+
+    total_summary = list()
+    total_summary.append({"name": "Total Texts",
+                          "number": "{:,}".format(total_texts),
+                          "percentage": total_texts_percentage})
+    total_summary.append({"name": "Total Unlabeled",
+                          "number": "{:,}".format(number_unlabeled),
+                          "percentage": number_unlabeled_percentage})
+    total_summary.append({"name": "Total Labeled",
+                          "number": "{:,}".format(number_labeled),
+                          "percentage": number_labeled_percentage})
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM totalSummary;")
+    for record in total_summary:
+        cur.execute("INSERT INTO totalSummary (name, number, percentage) VALUES (?, ?, ?)",
+                    (record["name"], record["number"], record["percentage"]))
+
+    conn.commit()
+    conn.close()
+    return None
+
+
+def get_label_summary_sql():
+    conn = get_db_connection()
+    sql_table = conn.execute('SELECT name, number, percentage FROM labelSummary;').fetchall()
+    label_summary = [{"name": dict(row)["name"],
+                      "number": dict(row)["number"],
+                      "percentage": dict(row)["percentage"]} for row in sql_table]
+    conn.close()
+    return label_summary
+
+
+def set_label_summary(text_lists):
+    labels = [text_obj["label"] for text_obj in text_lists]
+    label_counter = Counter(labels)
+    total_texts = len(text_lists)
+
+    label_summary = []
+    for key, value in label_counter.items():
+        label_summary.append({"name": key,
+                              "number": "{:,}".format(value),
+                              "percentage": "{:.2%}".format(value / total_texts)})
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM labelSummary;")
+    for record in label_summary:
+        cur.execute("INSERT INTO labelSummary (name, number, percentage) VALUES (?, ?, ?)",
+                    (record["name"], record["number"], record["percentage"]))
+    conn.commit()
+    conn.close()
+    return None
 
 
 def get_selected_text(selected_text_id, text_list_full_sql):
@@ -211,7 +342,27 @@ def label_all_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, 
     #                             texts_list_list=texts_list_list,
     #                             update_in_place=update_in_place)
 
-    return text_list_full, texts_list_list , labeled_text_ids
+    return text_list_full, texts_list_list, labeled_text_ids
+
+
+def generate_summary_sql(text_lists):
+    labels = [text_obj["label"] for text_obj in text_lists]
+    label_counter = Counter(labels)
+    total_texts = len(text_lists)
+    number_unlabeled = label_counter["-"]
+    number_labeled = total_texts - number_unlabeled
+
+    set_total_summary(text_lists=text_lists)
+    set_label_summary(text_lists=text_lists)
+    set_variable(name="NUMBER_UNLABELED_TEXTS", value=number_unlabeled)
+
+    # set_variable(name="TOTAL_SUMMARY", value=total_summary)
+    # set_variable(name="LABEL_SUMMARY", value=label_summary)
+
+    summary_headline = \
+        "Total Labeled : {:,} / {:,} {:.1%}".format(number_labeled, total_texts, number_labeled / total_texts)
+    set_variable(name="LABEL_SUMMARY_STRING", value=summary_headline)
+    return None
 
 
 def set_variable(name, value):
@@ -232,12 +383,235 @@ def get_variable_value(name):
     query = cur.execute('SELECT value FROM variables WHERE name = ?', (name,)).fetchall()
     value = [dict(row)["value"] for row in query]
     value = value[0]
-    if name in ["TOTAL_PAGES"]:
+    if name in ["TOTAL_PAGES", "NUMBER_UNLABELED_TEXTS", "MAX_CONTENT_PATH", "TEXTS_LIMIT", "TABLE_LIMIT",
+                "MAX_FEATURES", "RND_STATE", "PREDICTIONS_NUMBER", "SEARCH_RESULT_LENGTH", "GROUP_1_KEEP_TOP",
+                "GROUP_3_KEEP_TOP", "CONFIRM_LABEL_ALL_TEXTS_COUNTS"]:
         value = int(value)
+
+    if name in ["KEEP_ORIGINAL", "GROUP_1_EXCLUDE_ALREADY_LABELED", "GROUP_2_EXCLUDE_ALREADY_LABELED",
+                "PREDICTIONS_VERBOSE", "SIMILAR_TEXT_VERBOSE", "FIT_CLASSIFIER_VERBOSE", "FIRST_LABELING_FLAG",
+                "FULL_FIT_IF_LABELS_GOT_OVERRIDDEN", "FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS",
+                "LABELS_GOT_OVERRIDDEN_FLAG", "SEARCH_EXCLUDE_ALREADY_LABELED"]:
+        value = bool(value)
+
+    if name in ["PREDICTIONS_PROBABILITY"]:
+        value = float(value)
 
     conn.commit()
     conn.close()
     return value
+
+
+def get_difficult_texts_sql():
+    conn = get_db_connection()
+    sql_table = conn.execute('SELECT name, number, percentage FROM difficultTexts;').fetchall()
+    total_summary = [{"name": dict(row)["name"],
+                      "number": dict(row)["number"],
+                      "percentage": dict(row)["percentage"]} for row in sql_table]
+    conn.close()
+    return total_summary
+
+
+def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
+                            top=5,
+                            y_classes=["earthquake", "fire", "flood", "hurricane"],
+                            verbose=False,
+                            round_to=2,
+                            format_as_percentage=False):
+
+    predictions = fitted_classifier.predict_proba(sparse_vectorized_corpus)
+
+    predictions_df = pd.DataFrame(predictions)
+    predictions_df.columns = y_classes
+
+    # predictions_summary_full = predictions_df.describe()
+    # predictions_summary_alt = predictions_df.mean(axis=0)
+
+    predictions_summary = predictions_df.replace(0.0, np.NaN).mean(axis=0)
+
+    predictions_df["id"] = corpus_text_ids
+
+    texts_list_df = pd.DataFrame(texts_list)
+    predictions_df = predictions_df.merge(texts_list_df, left_on="id", right_on="id")
+
+    keep_cols = ["id", "text"]
+    keep_cols.extend(y_classes)
+    predictions_df = predictions_df[keep_cols]
+
+    pred_scores = utils.score_predictions(predictions_df[y_classes], use_entropy=True, num_labels=len(y_classes))
+    overall_quality = np.mean(pred_scores)
+    predictions_df["pred_scores"] = pred_scores
+
+    if round_to and not format_as_percentage:
+        predictions_df[y_classes] = predictions_df[y_classes].round(round_to)
+        predictions_summary = predictions_summary.round(round_to)
+        overall_quality = overall_quality.round(round_to)
+
+    if format_as_percentage:
+        if verbose:
+            print(">> get_all_predictions > predictions_df.head() :")
+            print(predictions_df.head(top))
+        predictions_df[y_classes] = predictions_df[y_classes]\
+            .astype(float)\
+            .applymap(lambda x: "{0:.0%}".format(x))
+
+        predictions_summary = (predictions_summary.astype(float) * 100).round(1).astype(str) + "%" # .applymap(lambda x: "{0:.0%}".format(x))
+
+        overall_quality = (overall_quality.astype(float) * 100).round(1).astype(str) + "%"
+
+    predictions_df = predictions_df.sort_values(["pred_scores"], ascending=[True])
+
+    if verbose:
+        print(">> get_all_predictions > predictions_df.head() :")
+        print(predictions_df.head(top))
+        print(">> get_all_predictions > predictions_df.tail() :")
+        print(predictions_df.tail(top))
+
+    keep_cols = ["id", "text"]
+    keep_cols.extend(y_classes)
+    sql_cols_list = [x + "TEXT NOT NULL" for x in keep_cols]
+    sql_cols = ", ".join(sql_cols_list)
+    top_texts = predictions_df.head(top)[keep_cols].to_dict("records")
+
+    sql_query = """
+                    DROP TABLE IF EXISTS difficultTexts;
+            
+                    CREATE TABLE difficultTexts (
+                """ + sql_cols + """        
+                    );
+                """
+    print("sql_query :")
+    print(sql_query)
+
+    # similar_texts.clear()
+    # similar_texts.extend(top_texts)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    parameters = ", ".join(["?"] * len(sql_cols))
+    query = "INSERT INTO difficultTexts (" + sql_cols + ") VALUES (%s)" % parameters
+    print(">> In 'get_all_predictions_sql', query :", query)
+    for record in top_texts:
+        cur.execute(query, ([value for key, value in record.items()]))
+    conn.commit()
+    conn.close()
+
+    conn = get_db_connection()
+    sql_table = conn.execute("SELECT " + sql_cols + " FROM difficultTexts;").fetchall()
+    texts_group_3_sql = []
+    for row in sql_table:
+        texts_group_3_sql.append({key: value for key, value in row.items()})
+    conn.close()
+
+    # predictions_summary_df = pd.DataFrame({"label": predictions_summary.index,
+    #                                        "avg_confidence": predictions_summary.values})
+    # predictions_summary_list = predictions_summary_df.to_dict("records")
+    # predictions_report.clear()
+    # predictions_report.extend(predictions_summary_list)
+
+    # overall_quality_score.clear()
+    # overall_quality_score.append(overall_quality)
+    set_variable(name="OVERALL_QUALITY_SCORE", value=overall_quality)
+    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+
+    return texts_group_3_sql, overall_quality_score_sql
+
+
+def get_top_predictions_sql(selected_class, fitted_classifier, sparse_vectorized_corpus, corpus_text_ids,
+                            texts_list,
+                            top=5,
+                            cutoff_proba=0.95,
+                            y_classes=["earthquake", "fire", "flood", "hurricane"],
+                            verbose=False,
+                            exclude_already_labeled=True):
+
+    predictions = fitted_classifier.predict_proba(sparse_vectorized_corpus)
+
+    predictions_df = pd.DataFrame(predictions)
+    predictions_df.columns = y_classes
+    predictions_df["id"] = corpus_text_ids
+
+    keep_cols = ["id"]
+    keep_cols.extend([selected_class])
+    predictions_df = predictions_df[keep_cols]
+
+    predictions_df = predictions_df[predictions_df[selected_class] > cutoff_proba]
+    predictions_df = predictions_df.sort_values([selected_class], ascending=False)
+
+    if exclude_already_labeled:
+        texts_list_df = pd.DataFrame.from_dict(texts_list)
+        predictions_df = predictions_df.merge(texts_list_df, left_on="id", right_on="id", how="left")
+        predictions_df = predictions_df[predictions_df["label"].isin(["-"])]
+
+    if verbose:
+        print(">> get_top_predictions > predictions_df :")
+        print(predictions_df.head(top))
+
+    filter_list = predictions_df.head(top)["id"].values
+    top_texts = utils.filter_all_texts(texts_list, filter_list, exclude_already_labeled=False)
+
+    print("top_texts :")
+    print(top_texts[:3])
+
+    set_texts_group_x(top_texts=top_texts, table_name="group2Texts")
+    texts_group_3_sql = get_texts_group_x(table_name="group2Texts")
+
+    return texts_group_3_sql
+
+
+def fit_classifier_sql(sparse_vectorized_corpus, corpus_text_ids, texts_list, texts_list_labeled,
+                   y_classes=["earthquake", "fire", "flood", "hurricane"],
+                   verbose=False,
+                   random_state=2584,
+                   n_jobs=-1,
+                   labels_got_overridden_flag=False,
+                   full_fit_if_labels_got_overridden=False):
+    texts_list_labeled_df = pd.DataFrame.from_dict(texts_list_labeled)
+
+    if verbose:
+        print("texts_list_labeled_df :")
+        print(texts_list_labeled_df.head())
+
+    ids = texts_list_labeled_df["id"].values
+    y_train = texts_list_labeled_df["label"].values
+    indices = [corpus_text_ids.index(x) for x in ids]
+    X_train = sparse_vectorized_corpus[indices, :]
+
+    classifier_sql = get_pkl(name="CLASSIFIER")
+    if classifier_sql:
+        clf = classifier_sql
+    else:
+        # clf = make_pipeline(StandardScaler(), SGDClassifier(max_iter=1000, tol=1e-3, random_state=2584))
+        clf = SGDClassifier(loss="modified_huber", max_iter=1000, tol=1e-3, random_state=random_state, n_jobs=n_jobs)
+
+
+    if labels_got_overridden_flag:
+        if full_fit_if_labels_got_overridden:
+            all_texts_list_labeled_df = pd.DataFrame.from_dict(texts_list)
+            all_texts_list_labeled_df = all_texts_list_labeled_df[~all_texts_list_labeled_df["label"].isin(["-"])]
+
+            y_classes_labeled = list(set(all_texts_list_labeled_df["label"].values))
+            all_classes_present = all(label in y_classes_labeled for label in y_classes)
+            clf = SGDClassifier(loss="modified_huber", max_iter=1000, tol=1e-3, random_state=random_state,
+                                n_jobs=n_jobs)
+
+            ids_all = all_texts_list_labeled_df["id"].values
+            y_train_all = all_texts_list_labeled_df["label"].values
+            indices_all = [corpus_text_ids.index(x) for x in ids_all]
+            X_train_all = sparse_vectorized_corpus[indices_all, :]
+            print("all_classes_present :", all_classes_present)
+            if all_classes_present:
+                print("Classifier fitted on all labels.")
+                clf.fit(X_train_all, y_train_all)
+            else:
+                clf.partial_fit(X_train_all, y_train_all, classes=y_classes)
+        else:
+            clf.partial_fit(X_train, y_train, classes=y_classes)
+    else:
+        clf.partial_fit(X_train, y_train, classes=y_classes)
+
+    set_pkl(name="CLASSIFIER", pkl_data=clf)
+    classifier_sql = get_pkl(name="CLASSIFIER")
+    return classifier_sql
 
 
 def load_new_data(source_file,
@@ -295,9 +669,13 @@ def load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by="kmeans",
         corpus_text_ids = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
 
         vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
+
         # https://stackoverflow.com/questions/69326639/sklearn-warnings-in-version-1-0
         vectorized_corpus = \
             vectorizer.fit_transform(consolidated_disaster_tweet_data_df["tweet_text"].values)
+
+        set_pkl(name="VECTORIZER", pkl_data=vectorizer)
+        set_pkl(name="VECTORIZED_CORPUS", pkl_data=vectorized_corpus)
 
         if shuffle_by == "kmeans":
             kmeans = KMeans(n_clusters=len(y_classes), random_state=config.RND_STATE).fit(vectorized_corpus)
@@ -317,13 +695,16 @@ def load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by="kmeans",
                                                                               random_state=rnd_state)
 
     texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
+
     total_pages = len(texts_list_list)
 
     return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids
 
 
-def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
-                                            full_fit_if_labels_got_overridden=True, round_to=1,
+def generate_all_predictions_if_appropriate(n_jobs=-1,
+                                            labels_got_overridden_flag=True,
+                                            full_fit_if_labels_got_overridden=True,
+                                            round_to=1,
                                             format_as_percentage=True):
     try:
         if len(config.CLASSIFIER_LIST) > 0:
@@ -347,27 +728,26 @@ def generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_fla
                                          labels_got_overridden_flag=labels_got_overridden_flag,
                                          full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden)
 
-                utils.get_all_predictions(fitted_classifier=config.CLASSIFIER_LIST[0],
-                                          sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                          corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                          texts_list=config.TEXTS_LIST[0],
-                                          top=config.GROUP_3_KEEP_TOP,
-                                          y_classes=y_classes_sql,
-                                          verbose=config.PREDICTIONS_VERBOSE,
-                                          round_to=round_to,
-                                          format_as_percentage=format_as_percentage,
-                                          similar_texts=config.TEXTS_GROUP_3,
-                                          predictions_report=config.RECOMMENDATIONS_SUMMARY,
-                                          overall_quality_score=config.OVERALL_QUALITY_SCORE)
-                return 1, "The difficult texts list has been generated."
+                top_sql = get_variable_value(name="GROUP_3_KEEP_TOP")
+                texts_group_3_sql, overall_quality_score_sql = \
+                    get_all_predictions_sql(fitted_classifier=config.CLASSIFIER_LIST[0],
+                                            sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                            corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                                            texts_list=config.TEXTS_LIST[0],
+                                            top=top_sql,
+                                            y_classes=y_classes_sql,
+                                            verbose=config.PREDICTIONS_VERBOSE,
+                                            round_to=round_to,
+                                            format_as_percentage=format_as_percentage)
+                return 1, "The difficult texts list has been generated.", texts_group_3_sql, overall_quality_score_sql
             else:
-                return 1, """Examples of all labels are not present. 
-                                  Label more texts then try generating the difficult text list."""
+                return 0, """Examples of all labels are not present. 
+                                  Label more texts then try generating the difficult text list.""", None, None
         else:
-                return 1, "Label more texts then try generating the difficult text list."
+                return 0, "Label more texts then try generating the difficult text list.", None, None
 
     except:
-        return 0, "An error occurred when trying to generate the difficult texts."
+        return -1, "An error occurred when trying to generate the difficult texts.", None, None
 
 
 end_time = datetime.now()
@@ -447,8 +827,9 @@ def upload_file():
                 config.PREP_DATA_MESSAGE2.clear()
                 config.PREP_DATA_MESSAGE2.append(prep_data_message2)
 
-                config.DATASET_NAME.clear()
-                config.DATASET_NAME.append(filename)
+                # config.DATASET_NAME.clear()
+                # config.DATASET_NAME.append(filename)
+                set_variable(name="DATASET_NAME", value=filename)
 
                 config.DATASET_URL.clear()
                 config.DATASET_URL.append("-")
@@ -552,12 +933,16 @@ def index():
 @app.route("/dataset_selected", methods=["GET", "POST"])
 def dataset_selected():
     dataset_name = request.args.get("dataset_name", None)
-    config.DATASET_NAME.clear()
-    config.DATASET_NAME.append(dataset_name)
+    # config.DATASET_NAME.clear()
+    # config.DATASET_NAME.append(dataset_name)
+    set_variable(name="DATASET_NAME", value=dataset_name)
+    dataset_name_sql = get_variable_value(name="DATASET_NAME")
 
     dataset_url = request.args.get("dataset_url", None)
-    config.DATASET_URL.clear()
-    config.DATASET_URL.append(dataset_url)
+    # config.DATASET_URL.clear()
+    # config.DATASET_URL.append(dataset_url)
+    set_variable(name="DATASET_URL", value=dataset_url)
+    dataset_url_sql = get_variable_value(name="DATASET_URL")
 
     conn = get_db_connection()
     available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
@@ -575,11 +960,14 @@ def dataset_selected():
         y_classes_sql = get_y_classes()
         print("y_classes_sql :", y_classes_sql)
 
-        config.SHUFFLE_BY.clear()
-        config.SHUFFLE_BY.append("random")  # kmeans random
+        # config.SHUFFLE_BY.clear()
+        # config.SHUFFLE_BY.append("random")  # kmeans random
+
+        set_variable(name="SHUFFLE_BY", value="random")
+        shuffle_by_sql = get_variable_value(name="SHUFFLE_BY")
 
         texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
-            load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by=config.SHUFFLE_BY[0],
+            load_demo_data(dataset_name="Disaster Tweets Dataset", shuffle_by=shuffle_by_sql,
                            table_limit=config.TABLE_LIMIT, texts_limit=config.TEXTS_LIMIT,
                            max_features=config.MAX_FEATURES,
                            y_classes=y_classes_sql, rnd_state=config.RND_STATE)
@@ -614,32 +1002,35 @@ def dataset_selected():
         # config.TOTAL_PAGES_FULL.append(total_pages)
 
         set_variable(name="TOTAL_PAGES", value=total_pages)
+        set_variable(name="SEARCH_MESSAGE", value="")
 
         config.CLASSIFIER_LIST.clear()
         config.TEXTS_GROUP_1.clear()
         config.TEXTS_GROUP_2.clear()
         config.TEXTS_GROUP_3.clear()
-        config.OVERALL_QUALITY_SCORE.clear()
-        config.OVERALL_QUALITY_SCORE.append("-")
+        # config.OVERALL_QUALITY_SCORE.clear()
+        # config.OVERALL_QUALITY_SCORE.append("-")
+        set_variable(name="OVERALL_QUALITY_SCORE", value="-")
 
         return render_template("start.html",
                                dataset_list=available_datasets,
                                texts_list=text_list_list_sql[0],
-                               dataset_name=dataset_name,
+                               dataset_name=dataset_name_sql,
                                dataset_labels=y_classes_sql)
 
     else:
         load_status = utils.load_save_state(source_dir="./output/save/")
-        print('config.SEARCH_MESSAGE :', config.SEARCH_MESSAGE)
+        # print('config.SEARCH_MESSAGE :', config.SEARCH_MESSAGE)
         if load_status == 1:
             y_classes_sql = get_y_classes()
             text_list_full_sql = get_text_list_full()
             text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                        sub_list_limit=config.TABLE_LIMIT)
+            dataset_name_sql = get_variable_value(name="DATASET_NAME")
             return render_template("start.html",
                                    dataset_list=available_datasets,
                                    texts_list=text_list_list_sql[0],
-                                   dataset_name=dataset_name,
+                                   dataset_name=dataset_name_sql,
                                    dataset_labels=y_classes_sql)
         else:
             print("Error loading dataset.")
@@ -651,8 +1042,9 @@ def begin_labeling():
     selected_config = request.form.get("selected_config", None)
 
     date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    config.DATE_TIME.clear()
-    config.DATE_TIME.append(date_time)
+    # config.DATE_TIME.clear()
+    # config.DATE_TIME.append(date_time)
+    set_variable(name="DATE_TIME", value=date_time)
 
     if not dataset_name or not selected_config:
         config1_message = "Select a dataset AND configuration above"
@@ -663,15 +1055,17 @@ def begin_labeling():
     page_number = 0
 
     text_list_full_sql = get_text_list_full()
-    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    table_limit_sql = get_variable_value(name="TABLE_LIMIT")
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
 
     print("len(text_list_full_sql) :", len(text_list_full_sql))
-    utils.generate_summary(text_lists=text_list_full_sql,
-                           first_labeling_flag=config.FIRST_LABELING_FLAG,
-                           total_summary=config.TOTAL_SUMMARY,
-                           label_summary=config.LABEL_SUMMARY,
-                           number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                           label_summary_string=config.LABEL_SUMMARY_STRING)
+    generate_summary_sql(text_lists=text_list_full_sql)
+    # utils.generate_summary(text_lists=text_list_full_sql,
+    #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+    #                        total_summary=config.TOTAL_SUMMARY,
+    #                        label_summary=config.LABEL_SUMMARY,
+    #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+    #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
     if selected_config == "config1":
         html_config_template = "text_labeling_1.html"
@@ -684,17 +1078,23 @@ def begin_labeling():
     # config.HTML_CONFIG_TEMPLATE.append(html_config_template)
     set_variable(name="HTML_CONFIG_TEMPLATE", value=html_config_template)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
+    print(">> in 'begin_labeling' >> html_config_template_sql :", html_config_template_sql)
 
     y_classes_sql = get_y_classes()
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
-    print("total_pages_sql :", total_pages_sql)
-    print("type(total_pages_sql):", type(total_pages_sql))
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+    print("label_summary_string_sql :", label_summary_string_sql)
+    search_result_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
-                           search_message=config.SEARCH_MESSAGE[0],
-                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           search_message=search_message_sql,
+                           search_results_length=search_result_length_sql,
                            page_number=0,
                            y_classes=y_classes_sql,
                            total_pages=total_pages_sql,
@@ -702,13 +1102,13 @@ def begin_labeling():
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=[],
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
+                           overall_quality_score=overall_quality_score_sql,
+                           label_summary_string=label_summary_string_sql,
                            initialize_flags=config.INITIALIZE_FLAGS[0],
                            search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
@@ -717,15 +1117,17 @@ def begin_labeling():
 def begin_labeling_new_dataset():
     print("In 'begin_labeling_new_dataset()")
 
-    config.SHUFFLE_BY.clear()
-    config.SHUFFLE_BY.append("random")  # kmeans random
-
+    # config.SHUFFLE_BY.clear()
+    # config.SHUFFLE_BY.append("random")  # kmeans random
+    set_variable(name="SHUFFLE_BY", value="random")
+    shuffle_by_sql = get_variable_value(name="SHUFFLE_BY")
+    dataset_name_sql = get_variable_value(name="DATASET_NAME")
     y_classes_sql = get_y_classes()
 
     texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
-        load_new_data(config.DATASET_NAME[0],
+        load_new_data(dataset_name_sql,
                       source_folder="./output/upload/",
-                      shuffle_by=config.SHUFFLE_BY[0],
+                      shuffle_by=shuffle_by_sql,
                       table_limit=config.TABLE_LIMIT,
                       texts_limit=config.TEXTS_LIMIT,
                       max_features=config.MAX_FEATURES,
@@ -762,7 +1164,7 @@ def begin_labeling_new_dataset():
 
     config.CLASSIFIER_LIST.clear()
 
-    dataset_name = config.DATASET_NAME[0]
+    dataset_name = get_variable_value(name="DATASET_NAME")
     selected_config = request.form.get("selected_config_new_data", None)
 
     date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
@@ -781,14 +1183,17 @@ def begin_labeling_new_dataset():
     text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
 
     print("len(text_list_full_sql) :", len(text_list_full_sql))
-    utils.generate_summary(text_lists=text_list_full_sql,
-                           first_labeling_flag=config.FIRST_LABELING_FLAG,
-                           total_summary=config.TOTAL_SUMMARY,
-                           label_summary=config.LABEL_SUMMARY,
-                           number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                           label_summary_string=config.LABEL_SUMMARY_STRING)
-    config.SEARCH_MESSAGE.clear()
-    config.SEARCH_MESSAGE.append("Displaying all texts")
+    generate_summary_sql(text_lists=text_list_full_sql)
+    # utils.generate_summary(text_lists=text_list_full_sql,
+    #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+    #                        total_summary=config.TOTAL_SUMMARY,
+    #                        label_summary=config.LABEL_SUMMARY,
+    #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+    #                        label_summary_string=config.LABEL_SUMMARY_STRING)
+
+    set_variable(name="SEARCH_MESSAGE", value="Displaying all texts")
+    # config.SEARCH_MESSAGE.clear()
+    # config.SEARCH_MESSAGE.append("Displaying all texts")
 
     if selected_config == "config1":
         html_config_template = "text_labeling_1.html"
@@ -801,11 +1206,14 @@ def begin_labeling_new_dataset():
     # config.HTML_CONFIG_TEMPLATE.append(html_config_template)
     set_variable(name="HTML_CONFIG_TEMPLATE", value=html_config_template)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
                            y_classes=y_classes_sql,
@@ -814,7 +1222,7 @@ def begin_labeling_new_dataset():
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=[],
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -839,6 +1247,8 @@ def text_labeling():
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+    keep_original_sql = get_variable_value(name="KEEP_ORIGINAL")
 
     label_selected = request.args.get("label_selected", None)
     page_number = int(request.args.get("page_number", None))
@@ -852,10 +1262,11 @@ def text_labeling():
     utils.add_log_record(click_record, log=config.CLICK_LOG)
 
     # Group 1 ************************************************************************************
-    similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+    vectorized_corpus_sql = get_pkl(name="VECTORIZED_CORPUS")
+    similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=vectorized_corpus_sql,
                                                                    corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                                                    text_id=selected_text_id,
-                                                                   keep_original=config.KEEP_ORIGINAL)
+                                                                   keep_original=keep_original_sql)
     conn = get_db_connection()
     text_list_full_sql = conn.execute('SELECT * FROM texts').fetchall()
     text_list_full_sql = [dict(row) for row in text_list_full_sql]
@@ -870,14 +1281,14 @@ def text_labeling():
     # **********************************************************************************************
 
     # Group 2 ************************************************************************************
-
-    if len(config.CLASSIFIER_LIST) > 0 and (label_selected is not None and label_selected != "" and label_selected != "None"):
+    classifier_sql = get_pkl(name="CLASSIFIER_LIST")
+    if classifier_sql and (label_selected is not None and label_selected != "" and label_selected != "None"):
         utils.get_top_predictions(selected_class=label_selected,
                                   fitted_classifier=config.CLASSIFIER_LIST[0],
-                                  sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                  sparse_vectorized_corpus=vectorized_corpus_sql,
                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=text_list_full_sql,
-                                  top=config.PREDICTIONS_NUMBER[0],
+                                  top=predictions_number_sql,
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                   y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
@@ -885,29 +1296,39 @@ def text_labeling():
                                   similar_texts=config.TEXTS_GROUP_2)
     # **********************************************************************************************
     text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    search_result_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+    search_exclude_already_labeled_sql = get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
+    group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
+    initialize_flags = get_panel_flags()
+    # recommendations_summary_sql = ge
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message="Text selected",
-                           search_message=config.SEARCH_MESSAGE[0],
-                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           search_message=search_message_sql,
+                           search_results_length=search_result_length_sql,
                            page_number=page_number,
                            y_classes=y_classes_sql,
                            total_pages=total_pages_sql,
                            texts_list=text_list_list[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
-                           group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                           group1_table_limit_value=group_1_keep_top_sql,
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0],
-                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                           overall_quality_score=overall_quality_score_sql,
+                           label_summary_string=label_summary_string_sql,
+                           initialize_flags=initialize_flags,
+                           search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
 
 @app.route("/go_to_page", methods=["GET", "POST"])
@@ -925,6 +1346,8 @@ def go_to_page():
     text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     click_record, guid = utils.generate_click_record(click_location=app_section,
                                                      click_type=selection,
@@ -937,7 +1360,7 @@ def go_to_page():
                            selected_text="Select a text to begin labeling.",
                            label_selected=label_selected,
                            info_message="",
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
                            y_classes=y_classes_sql,
@@ -946,7 +1369,7 @@ def go_to_page():
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -969,6 +1392,18 @@ def single_text():
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+    predictions_probability_sql = get_variable_value(name="PREDICTIONS_PROBABILITY")
+    predictions_verbose_sql = get_variable_value(name="PREDICTIONS_VERBOSE")
+    exclude_already_labeled_sql = get_variable_value(name="GROUP_2_EXCLUDE_ALREADY_LABELED")
+    random_state_sql = get_variable_value(name="RND_STATE")
+    labels_got_overridden_sql = get_variable_value(name="LABELS_GOT_OVERRIDDEN_FLAG")
+    full_fit_if_labels_got_overridden_sql = get_variable_value(name="FULL_FIT_IF_LABELS_GOT_OVERRIDDEN")
+
+    search_results_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
+    initialize_flags_sql = get_panel_flags()
 
     page_number = int(request.form["page_number"])
     new_label = request.form["selected_label_single"]
@@ -998,7 +1433,7 @@ def single_text():
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -1007,21 +1442,22 @@ def single_text():
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
                                overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
                                initialize_flags=config.INITIALIZE_FLAGS[0],
-                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                               search_exclude_already_labeled=exclude_already_labeled_sql)
     else:
         new_obj = {"id": new_id, "text": new_text, "label": new_label}
 
-        text_list_full, texts_list_list = update_texts_list_by_id_sql(selected_label=new_label, update_ids=[new_id],
-                                                                      sub_list_limit=config.TABLE_LIMIT,
-                                                                      labels_got_overridden_flag=[],
-                                                                      update_in_place=True)
+        text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=new_label,
+                                                                              update_ids=[new_id],
+                                                                              sub_list_limit=config.TABLE_LIMIT,
+                                                                              labels_got_overridden_flag=[],
+                                                                              update_in_place=True)
 
         # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
         #                               sub_list_limit=config.TABLE_LIMIT,
@@ -1029,70 +1465,72 @@ def single_text():
         #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
         #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
         #                               update_in_place=False)
-
-        utils.generate_summary(text_lists=text_list_full,
-                               first_labeling_flag=config.FIRST_LABELING_FLAG,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                               label_summary_string=config.LABEL_SUMMARY_STRING)
+        generate_summary_sql(text_lists=text_list_full_sql)
+        # utils.generate_summary(text_lists=text_list_full,
+        #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+        #                        total_summary=config.TOTAL_SUMMARY,
+        #                        label_summary=config.LABEL_SUMMARY,
+        #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+        #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                              corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=text_list_full,
+                             texts_list=text_list_full_sql,
                              texts_list_labeled=[new_obj],
                              y_classes=y_classes_sql,
                              verbose=config.FIT_CLASSIFIER_VERBOSE,
                              classifier_list=config.CLASSIFIER_LIST,
-                             random_state=config.RND_STATE,
+                             random_state=random_state_sql,
                              n_jobs=-1,
-                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
-                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
+                             labels_got_overridden_flag=labels_got_overridden_sql,
+                             full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden_sql)
 
         if len(config.CLASSIFIER_LIST) > 0 and \
                 (new_label is not None and new_label != "" and new_label != "None"):
-            utils.get_top_predictions(selected_class=new_label,
-                                      fitted_classifier=config.CLASSIFIER_LIST[0],
-                                      sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=text_list_full_sql,
-                                      top=config.PREDICTIONS_NUMBER[0],
-                                      cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=y_classes_sql,
-                                      verbose=config.PREDICTIONS_VERBOSE,
-                                      exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
-                                      similar_texts=config.TEXTS_GROUP_2)
+            texts_group_2_sql = \
+                get_top_predictions_sql(selected_class=new_label,
+                                        fitted_classifier=config.CLASSIFIER_LIST[0],
+                                        sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                        corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                                        texts_list=text_list_full_sql,
+                                        top=predictions_number_sql,
+                                        cutoff_proba=predictions_probability_sql,
+                                        y_classes=y_classes_sql,
+                                        verbose=predictions_verbose_sql,
+                                        exclude_already_labeled=exclude_already_labeled_sql)
 
-        result, difficult_texts_message = \
+        result, difficult_texts_message, texts_group_3_sql, overall_quality_score_sql = \
             generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
                                                     full_fit_if_labels_got_overridden=True, round_to=1,
                                                     format_as_percentage=True)
 
+        label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+        # overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=new_label,
                                info_message="Label assigned",
-                               search_message=config.SEARCH_MESSAGE[0],
-                               search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                               search_message=search_message_sql,
+                               search_results_length=search_results_length_sql,
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
-                               texts_list=texts_list_list[page_number],
+                               texts_list=texts_list_list_sql[page_number],
                                texts_group_1=[], # TEXTS_GROUP_1,
-                               group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
-                               texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
-                               texts_group_3=config.TEXTS_GROUP_3,
+                               group1_table_limit_value=group_1_keep_top_sql,
+                               texts_group_2=texts_group_2_sql,
+                               group2_table_limit_value=predictions_number_sql,
+                               texts_group_3=texts_group_3_sql,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               overall_quality_score=overall_quality_score_sql,
+                               label_summary_string=label_summary_string_sql,
+                               initialize_flags=initialize_flags_sql,
                                difficult_texts_message=difficult_texts_message,
-                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                               search_exclude_already_labeled=exclude_already_labeled_sql)
 
 
 @app.route("/grouped_1_texts", methods=["POST"])
@@ -1112,6 +1550,21 @@ def grouped_1_texts():
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+    predictions_probability_sql = get_variable_value(name="PREDICTIONS_PROBABILITY")
+    predictions_verbose_sql = get_variable_value(name="PREDICTIONS_VERBOSE")
+    group_2_exclude_already_labeled_sql = get_variable_value(name="GROUP_2_EXCLUDE_ALREADY_LABELED")
+    group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
+    search_exclude_already_labeled_sql = get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
+    random_state_sql = get_variable_value(name="RND_STATE")
+    fit_classifier_verbose_sql = get_variable_value(name="FIT_CLASSIFIER_VERBOSE")
+    full_fit_if_labels_got_overridden_sql = get_variable_value(name="FULL_FIT_IF_LABELS_GOT_OVERRIDDEN")
+    labels_got_overridden_flag_sql = get_variable_value(name="LABELS_GOT_OVERRIDDEN_FLAG")
+    initialize_flags_sql = get_panel_flags()
+    search_results_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    table_limit_sql = get_variable_value(name="TABLE_LIMIT")
+    vectorized_corpus_sql = get_pkl(name="VECTORIZED_CORPUS")
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
                                                      click_type="group_label_assigned",
@@ -1130,28 +1583,32 @@ def grouped_1_texts():
         if len(config.TEXTS_GROUP_1) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
+        total_summary_sql = get_total_summary_sql()
+        label_summary_sql = get_label_summary_sql()
+        label_summary_string_sql = get_variable_value("LABEL_SUMMARY_STRING")
+        overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
-                               search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                               search_message=search_message_sql,
+                               search_results_length=search_results_length_sql,
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=text_list_list_sql[page_number],
                                texts_group_1=config.TEXTS_GROUP_1,
-                               group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                               group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=[],
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
+                               total_summary=total_summary_sql,
+                               label_summary=label_summary_sql,
                                recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0],
-                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                               overall_quality_score=overall_quality_score_sql,
+                               label_summary_string=label_summary_string_sql,
+                               initialize_flags=initialize_flags_sql,
+                               search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
     else:
         texts_group_1_updated = copy.deepcopy(config.TEXTS_GROUP_1)
@@ -1164,7 +1621,7 @@ def grouped_1_texts():
 
         text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=selected_label_group1,
                                                                               update_ids=update_ids,
-                                                                              sub_list_limit=config.TABLE_LIMIT,
+                                                                              sub_list_limit=table_limit_sql,
                                                                               labels_got_overridden_flag=[],
                                                                               update_in_place=True)
         # utils.update_texts_list_by_id(texts_list=text_list_full_sql,
@@ -1174,71 +1631,89 @@ def grouped_1_texts():
         #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
         #                               update_in_place=False)
 
-        utils.generate_summary(text_lists=text_list_full_sql,
-                               first_labeling_flag=config.FIRST_LABELING_FLAG,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                               label_summary_string=config.LABEL_SUMMARY_STRING)
+        generate_summary_sql(text_lists=text_list_full_sql)
+        # utils.generate_summary(text_lists=text_list_full_sql,
+        #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+        #                        total_summary=config.TOTAL_SUMMARY,
+        #                        label_summary=config.LABEL_SUMMARY,
+        #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+        #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
-        utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                             corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                             texts_list=text_list_full_sql,
-                             texts_list_labeled=texts_group_1_updated,
-                             y_classes=y_classes_sql,
-                             verbose=config.FIT_CLASSIFIER_VERBOSE,
-                             classifier_list=config.CLASSIFIER_LIST,
-                             random_state=config.RND_STATE,
-                             n_jobs=-1,
-                             labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG[0],
-                             full_fit_if_labels_got_overridden=config.FULL_FIT_IF_LABELS_GOT_OVERRIDDEN)
+        print("type(vectorized_corpus_sql) :", type(vectorized_corpus_sql))
+        classifier_sql = \
+            fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
+                               corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                               texts_list=text_list_full_sql,
+                               texts_list_labeled=texts_group_1_updated,
+                               y_classes=y_classes_sql,
+                               verbose=fit_classifier_verbose_sql,
+                               # classifier_list=config.CLASSIFIER_LIST,
+                               random_state=random_state_sql,
+                               n_jobs=-1,
+                               labels_got_overridden_flag=labels_got_overridden_flag_sql,
+                               full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden_sql)
 
-        if len(config.CLASSIFIER_LIST) > 0 and \
+        if classifier_sql and \
                 (selected_label_group1 is not None and
                  selected_label_group1 != "" and
                  selected_label_group1 != "None"):
-            utils.get_top_predictions(selected_class=selected_label_group1,
-                                      fitted_classifier=config.CLASSIFIER_LIST[0],
-                                      sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
-                                      corpus_text_ids=config.CORPUS_TEXT_IDS[0],
-                                      texts_list=text_list_full_sql,
-                                      top=config.PREDICTIONS_NUMBER[0],
-                                      cutoff_proba=config.PREDICTIONS_PROBABILITY,
-                                      y_classes=y_classes_sql,
-                                      verbose=config.PREDICTIONS_VERBOSE,
-                                      exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
-                                      similar_texts=config.TEXTS_GROUP_2)
+            texts_group_2_sql = \
+                get_top_predictions_sql(selected_class=selected_label_group1,
+                                        fitted_classifier=classifier_sql,
+                                        sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                        corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+                                        texts_list=text_list_full_sql,
+                                        top=predictions_number_sql,
+                                        cutoff_proba=predictions_probability_sql,
+                                        y_classes=y_classes_sql,
+                                        verbose=predictions_verbose_sql,
+                                        exclude_already_labeled=group_2_exclude_already_labeled_sql)
 
-        result, difficult_texts_message = \
+            # utils.get_top_predictions(selected_class=selected_label_group1,
+            #                           fitted_classifier=config.CLASSIFIER_LIST[0],
+            #                           sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+            #                           corpus_text_ids=config.CORPUS_TEXT_IDS[0],
+            #                           texts_list=text_list_full_sql,
+            #                           top=predictions_number_sql,
+            #                           cutoff_proba=config.PREDICTIONS_PROBABILITY,
+            #                           y_classes=y_classes_sql,
+            #                           verbose=config.PREDICTIONS_VERBOSE,
+            #                           exclude_already_labeled=config.GROUP_2_EXCLUDE_ALREADY_LABELED,
+            #                           similar_texts=config.TEXTS_GROUP_2)
+
+        result, difficult_texts_message, recommendations_summary_sql, overall_quality_score_sql = \
             generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
                                                     full_fit_if_labels_got_overridden=True, round_to=1,
                                                     format_as_percentage=True)
 
+        overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+        label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+        initialize_flags_sql = get_panel_flags()
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group1,
                                info_message="Labels assigned to group",
-                               search_message=config.SEARCH_MESSAGE[0],
-                               search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                               search_message=search_message_sql,
+                               search_results_length=search_results_length_sql,
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=texts_list_list_sql[page_number],
                                texts_group_1=[], # texts_group_1_updated,
-                               group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
-                               texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group1_table_limit_value=group_1_keep_top_sql,
+                               texts_group_2=texts_group_2_sql,
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
-                               recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                               overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                               label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                               initialize_flags=config.INITIALIZE_FLAGS[0],
+                               recommendations_summary=recommendations_summary_sql,
+                               overall_quality_score=overall_quality_score_sql,
+                               label_summary_string=label_summary_string_sql,
+                               initialize_flags=initialize_flags_sql,
                                difficult_texts_message=difficult_texts_message,
-                               search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                               search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
 
 @app.route("/grouped_2_texts", methods=["POST"])
@@ -1255,6 +1730,8 @@ def grouped_2_texts():
     new_text = get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     selected_label_group2 = request.form["selected_label_group2"]
 
@@ -1283,7 +1760,7 @@ def grouped_2_texts():
                                selected_text=new_text,
                                label_selected=selected_label_group2,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -1292,7 +1769,7 @@ def grouped_2_texts():
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -1323,13 +1800,13 @@ def grouped_2_texts():
         #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
         #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
         #                               update_in_place=False)
-
-        utils.generate_summary(text_lists=text_list_full_sql,
-                               first_labeling_flag=config.FIRST_LABELING_FLAG,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                               label_summary_string=config.LABEL_SUMMARY_STRING)
+        generate_summary_sql(text_lists=text_list_full_sql)
+        # utils.generate_summary(text_lists=text_list_full_sql,
+        #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+        #                        total_summary=config.TOTAL_SUMMARY,
+        #                        label_summary=config.LABEL_SUMMARY,
+        #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+        #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -1353,7 +1830,7 @@ def grouped_2_texts():
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=text_list_full_sql,
-                                      top=config.PREDICTIONS_NUMBER[0],
+                                      top=predictions_number_sql,
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
@@ -1370,7 +1847,7 @@ def grouped_2_texts():
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group2,
                                info_message="Labels assigned to group",
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -1379,7 +1856,7 @@ def grouped_2_texts():
                                texts_group_1=[], # texts_group_1_updated,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -1404,6 +1881,8 @@ def label_all():
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     click_record, guid = utils.generate_click_record(click_location="difficult_texts",
                                                      click_type="group_label_assigned",
@@ -1427,7 +1906,7 @@ def label_all():
                                selected_text=new_text,
                                label_selected=selected_label,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -1436,7 +1915,7 @@ def label_all():
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -1464,7 +1943,7 @@ def label_all():
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
-                                   search_message=config.SEARCH_MESSAGE[0],
+                                   search_message=search_message_sql,
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
                                    y_classes=y_classes_sql,
@@ -1473,7 +1952,7 @@ def label_all():
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=[],
-                                   group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                                   group2_table_limit_value=predictions_number_sql,
                                    texts_group_3=config.TEXTS_GROUP_3,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -1501,7 +1980,7 @@ def label_all():
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
-                                   search_message=config.SEARCH_MESSAGE[0],
+                                   search_message=search_message_sql,
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
                                    y_classes=y_classes_sql,
@@ -1510,7 +1989,7 @@ def label_all():
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=[],
-                                   group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                                   group2_table_limit_value=predictions_number_sql,
                                    texts_group_3=config.TEXTS_GROUP_3,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -1549,12 +2028,13 @@ def label_all():
                 value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
                 utils.add_log_record(value_record, log=config.VALUE_LOG)
 
-            utils.generate_summary(text_lists=text_list_full_sql,
-                                   first_labeling_flag=config.FIRST_LABELING_FLAG,
-                                   total_summary=config.TOTAL_SUMMARY,
-                                   label_summary=config.LABEL_SUMMARY,
-                                   number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                                   label_summary_string=config.LABEL_SUMMARY_STRING)
+            generate_summary_sql(text_lists=text_list_full_sql)
+            # utils.generate_summary(text_lists=text_list_full_sql,
+            #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+            #                        total_summary=config.TOTAL_SUMMARY,
+            #                        label_summary=config.LABEL_SUMMARY,
+            #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+            #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
             label_summary_message = info_message
             return render_template(html_config_template_sql,
@@ -1562,7 +2042,7 @@ def label_all():
                                    selected_text="Select a text below to label.", # new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
-                                   search_message=config.SEARCH_MESSAGE[0],
+                                   search_message=search_message_sql,
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
                                    y_classes=y_classes_sql,
@@ -1571,7 +2051,7 @@ def label_all():
                                    texts_group_1=[], # texts_group_1_updated,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
-                                   group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                                   group2_table_limit_value=predictions_number_sql,
                                    texts_group_3=config.TEXTS_GROUP_3,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -1590,7 +2070,7 @@ def label_all():
                            selected_text=new_text,
                            label_selected=selected_label,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
                            y_classes=y_classes_sql,
@@ -1599,7 +2079,7 @@ def label_all():
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -1689,7 +2169,8 @@ def save_state():
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
 
     save_state = {}
-    save_state["DATASET_NAME"] = config.DATASET_NAME
+    dataset_name_sql = get_variable_value(name="DATASET_NAME")
+    save_state["DATASET_NAME"] = dataset_name_sql
     save_state["DATASET_URL"] = config.DATASET_URL
     save_state["TOTAL_SUMMARY"] = config.TOTAL_SUMMARY
     save_state["LABEL_SUMMARY"] = config.LABEL_SUMMARY
@@ -1698,7 +2179,8 @@ def save_state():
     save_state["TEXTS_GROUP_1"] = config.TEXTS_GROUP_1
     save_state["TEXTS_GROUP_2"] = config.TEXTS_GROUP_2
     save_state["TEXTS_GROUP_3"] = config.TEXTS_GROUP_3
-    save_state["SEARCH_MESSAGE"] = config.SEARCH_MESSAGE
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    save_state["SEARCH_MESSAGE"] = search_message_sql
 
     save_state["TEXTS_LIST"] = config.TEXTS_LIST
     save_state["TEXTS_LIST_FULL"] = [text_list_full_sql]
@@ -1712,11 +2194,15 @@ def save_state():
     save_state["ADJ_TEXT_IDS"] = config.ADJ_TEXT_IDS
     save_state["TOTAL_PAGES"] = config.TOTAL_PAGES
     save_state["Y_CLASSES"] = config.Y_CLASSES
-    save_state["SHUFFLE_BY"] = config.SHUFFLE_BY
+
+    shuffle_by_sql = get_variable_value(name="SHUFFLE_BY")
+    save_state["SHUFFLE_BY"] = shuffle_by_sql
     save_state["NUMBER_UNLABELED_TEXTS"] = config.NUMBER_UNLABELED_TEXTS
     save_state["HTML_CONFIG_TEMPLATE"] = config.HTML_CONFIG_TEMPLATE
     save_state["LABEL_SUMMARY_STRING"] = config.LABEL_SUMMARY_STRING
 
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+    save_state["PREDICTIONS_NUMBER"] = predictions_number_sql
     with open("./output/save/save_state.json", "w") as outfile:
         json.dump(save_state, outfile)
 
@@ -1730,7 +2216,7 @@ def save_state():
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
                            y_classes=y_classes_sql,
@@ -1739,7 +2225,7 @@ def save_state():
                            texts_group_1=[],
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=[],
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=[],
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -1752,9 +2238,11 @@ def save_state():
 
 @app.route('/update_panels', methods=['GET', 'POST'])
 def update_panels():
+    panel_flags_sql = get_panel_flags()
+    print("panel_flags_sql :", panel_flags_sql)
     panel_flag = eval(request.args.get("panel_flag", None))
-    utils.update_panel_flags(update_flag=panel_flag, panel_flags=config.INITIALIZE_FLAGS[0])
-
+    # utils.update_panel_flags(update_flag=panel_flag, panel_flags=config.INITIALIZE_FLAGS[0])
+    update_panel_flags_sql(update_flag=panel_flag)
     return panel_flag
 
 
@@ -1771,8 +2259,9 @@ def label_selected():
     text_list_full_sql = get_text_list_full()
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
-
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     page_number = int(request.args.get("page_number"))
 
@@ -1809,7 +2298,7 @@ def label_selected():
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=text_list_full_sql,
-                                  top=config.PREDICTIONS_NUMBER[0],
+                                  top=predictions_number_sql,
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                   y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
@@ -1819,30 +2308,34 @@ def label_selected():
 
     info_message = f"'{label_selected}' selected"
 
-    text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT,)
-
+    text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    search_results_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
+    label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+    initialize_flags_sql = get_panel_flags()
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
-                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           search_message=search_message_sql,
+                           search_results_length=search_results_length_sql,
                            page_number=page_number,
                            y_classes=y_classes_sql,
                            total_pages=total_pages_sql,
                            texts_list=text_list_list[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
-                           group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                           group1_table_limit_value=group_1_keep_top_sql,
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0],
+                           overall_quality_score=overall_quality_score_sql,
+                           label_summary_string=label_summary_string_sql,
+                           initialize_flags=initialize_flags_sql,
                            search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
 
 
@@ -1860,6 +2353,8 @@ def generate_difficult_texts():
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     text = get_selected_text(selected_text_id=id, text_list_full_sql=text_list_full_sql)
 
@@ -1890,7 +2385,7 @@ def generate_difficult_texts():
                            selected_text=text,
                            label_selected=label_selected,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
                            y_classes=y_classes_sql,
@@ -1899,7 +2394,7 @@ def generate_difficult_texts():
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -1924,14 +2419,19 @@ def set_group_1_record_limit():
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group1_table_limit", None))
 
     info_message = f"Set 'Similar Texts' display limit to {table_limit}"
-    config.GROUP_1_KEEP_TOP.clear()
-    config.GROUP_1_KEEP_TOP.append(table_limit)
+    # config.GROUP_1_KEEP_TOP.clear()
+    # config.GROUP_1_KEEP_TOP.append(table_limit)
+    set_variable(name="GROUP_1_KEEP_TOP", value=table_limit)
+    group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
+    print("group_1_keep_top_sql :", group_1_keep_top_sql)
 
     click_record, guid = utils.generate_click_record(click_location="similar_texts",
                                                      click_type="set_table_limit",
@@ -1945,8 +2445,6 @@ def set_group_1_record_limit():
     if selected_text_id == "None":
         config.TEXTS_GROUP_1.clear()
     else:
-        start_test_time = datetime.now()
-
         similarities_series = utils.get_all_similarities_one_at_a_time(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                                                        corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                                                        text_id=selected_text_id,
@@ -1954,38 +2452,41 @@ def set_group_1_record_limit():
 
         utils.get_top_similar_texts(all_texts_json=text_list_full_sql,
                                     similarities_series=similarities_series,
-                                    top=config.GROUP_1_KEEP_TOP[0],
+                                    top=group_1_keep_top_sql,
                                     exclude_already_labeled=config.GROUP_1_EXCLUDE_ALREADY_LABELED,
                                     verbose=config.SIMILAR_TEXT_VERBOSE,
                                     similar_texts=config.TEXTS_GROUP_1)
 
-        end_test_time = datetime.now()
-        duration = end_test_time - start_test_time
     # **********************************************************************************************
-
+    search_results_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
+    label_summary_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
+    initialize_flags_sql = get_panel_flags()
+    print("initialize_flags_sql :", initialize_flags_sql)
+    search_exclude_already_labeled_sql = get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
-                           search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                           search_message=search_message_sql,
+                           search_results_length=search_results_length_sql,
                            page_number=page_number,
                            y_classes=y_classes_sql,
                            total_pages=total_pages_sql,
                            texts_list=texts_list_list_sql[page_number],
                            texts_group_1=config.TEXTS_GROUP_1,
-                           group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
+                           group1_table_limit_value=group_1_keep_top_sql,
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
                            recommendations_summary=config.RECOMMENDATIONS_SUMMARY,
-                           overall_quality_score=config.OVERALL_QUALITY_SCORE[0],
-                           label_summary_string=config.LABEL_SUMMARY_STRING[0],
-                           initialize_flags=config.INITIALIZE_FLAGS[0],
-                           search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
+                           overall_quality_score=overall_quality_score_sql,
+                           label_summary_string=label_summary_sql,
+                           initialize_flags=initialize_flags_sql,
+                           search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
 
 @app.route("/set_group_2_record_limit", methods=["POST"])
@@ -2003,13 +2504,16 @@ def set_group_2_record_limit():
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
 
     label_selected = request.form.get("label_selected", None)
     table_limit = int(request.form.get("group2_table_limit", None))
 
     info_message = f"Set 'Similar Texts' display limit to {table_limit}"
-    config.PREDICTIONS_NUMBER.clear()
-    config.PREDICTIONS_NUMBER.append(table_limit)
+    # config.PREDICTIONS_NUMBER.clear()
+    # config.PREDICTIONS_NUMBER.append(table_limit)
+    set_variable(name="PREDICTIONS_NUMBER", value=table_limit)
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
 
     click_record, guid = utils.generate_click_record(click_location="recommended_texts",
                                                      click_type="set_table_limit",
@@ -2026,7 +2530,7 @@ def set_group_2_record_limit():
                                   sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                   corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                   texts_list=text_list_full_sql,
-                                  top=config.PREDICTIONS_NUMBER[0],
+                                  top=predictions_number_sql,
                                   cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                   y_classes=y_classes_sql,
                                   verbose=config.PREDICTIONS_VERBOSE,
@@ -2039,7 +2543,7 @@ def set_group_2_record_limit():
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=page_number,
                            y_classes=y_classes_sql,
@@ -2048,7 +2552,7 @@ def set_group_2_record_limit():
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
@@ -2072,6 +2576,8 @@ def search_all_texts():
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
 
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     label_selected = request.form.get("label_selected", None)
     include_search_term = request.form.get("include_search_term", None)
     exclude_search_term = request.form.get("exclude_search_term", None)
@@ -2079,11 +2585,13 @@ def search_all_texts():
     print("allow_search_override_labels :", allow_search_override_labels)
 
     if allow_search_override_labels == "Yes":
-        config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
-        config.SEARCH_EXCLUDE_ALREADY_LABELED.append(False)
+        # config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
+        # config.SEARCH_EXCLUDE_ALREADY_LABELED.append(False)
+        set_variable(name="SEARCH_EXCLUDE_ALREADY_LABELED", value=False)
     else:
-        config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
-        config.SEARCH_EXCLUDE_ALREADY_LABELED.append(True)
+        # config.SEARCH_EXCLUDE_ALREADY_LABELED.clear()
+        # config.SEARCH_EXCLUDE_ALREADY_LABELED.append(True)
+        set_variable(name="SEARCH_EXCLUDE_ALREADY_LABELED", value=True)
 
     click_record, guid = utils.generate_click_record(click_location="all_texts",
                                                      click_type="search_texts",
@@ -2098,18 +2606,20 @@ def search_all_texts():
     y_classes_sql = get_y_classes()
 
     if len(include_search_term) > 0 or len(exclude_search_term) > 0:
+        search_exclude_already_labeled_sql = get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
         search_results = utils.search_all_texts(all_text=text_list_full_sql,
                                                 include_search_term=include_search_term,
                                                 exclude_search_term=exclude_search_term,
-                                                search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0],
+                                                search_exclude_already_labeled=search_exclude_already_labeled_sql,
                                                 include_behavior="conjunction",
                                                 exclude_behavior="conjunction",
                                                 all_upper=True)
         search_results_length = len(search_results)
 
         if search_results_length > 0:
-            config.SEARCH_RESULT_LENGTH.clear()
-            config.SEARCH_RESULT_LENGTH.append(search_results_length)
+            # config.SEARCH_RESULT_LENGTH.clear()
+            # config.SEARCH_RESULT_LENGTH.append(search_results_length)
+            set_variable(name="SEARCH_RESULT_LENGTH", value=search_results_length)
 
             config.TEXTS_LIST.clear()
             config.TEXTS_LIST.append(search_results)
@@ -2128,16 +2638,19 @@ def search_all_texts():
             total_pages_sql = get_variable_value(name="TOTAL_PAGES")
 
             info_message = f"Showing results Include-'{include_search_term}', Exclude-'{exclude_search_term}'"
-            config.SEARCH_MESSAGE.clear()
-            config.SEARCH_MESSAGE.append(info_message)
+            set_variable(name="SEARCH_MESSAGE", value=info_message)
+            search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+            search_results_length_sql = get_variable_value(name="SEARCH_RESULT_LENGTH")
+            # config.SEARCH_MESSAGE.clear()
+            # config.SEARCH_MESSAGE.append(info_message)
 
             return render_template(html_config_template_sql,
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
                                    info_message=info_message,
-                                   search_message=config.SEARCH_MESSAGE[0],
-                                   search_results_length=config.SEARCH_RESULT_LENGTH[0],
+                                   search_message=search_message_sql,
+                                   search_results_length=search_results_length_sql,
                                    page_number=search_result_page_number,
                                    y_classes=y_classes_sql,
                                    total_pages=total_pages_sql,
@@ -2145,7 +2658,7 @@ def search_all_texts():
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
-                                   group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                                   group2_table_limit_value=predictions_number_sql,
                                    texts_group_3=config.TEXTS_GROUP_3,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -2156,11 +2669,14 @@ def search_all_texts():
                                    search_exclude_already_labeled=config.SEARCH_EXCLUDE_ALREADY_LABELED[0])
         else:
             info_message = f"No search results for Include-'{include_search_term}', Exclude-'{exclude_search_term}'"
-            config.SEARCH_MESSAGE.clear()
-            config.SEARCH_MESSAGE.append(info_message)
+            set_variable(name="SEARCH_MESSAGE", value=info_message)
+            set_variable(name="SEARCH_RESULT_LENGTH", value=0)
 
-            config.SEARCH_RESULT_LENGTH.clear()
-            config.SEARCH_RESULT_LENGTH.append(0)
+            # config.SEARCH_MESSAGE.clear()
+            # config.SEARCH_MESSAGE.append(info_message)
+            #
+            # config.SEARCH_RESULT_LENGTH.clear()
+            # config.SEARCH_RESULT_LENGTH.append(0)
 
             # config.TEXTS_LIST_LIST.clear()
             # config.TEXTS_LIST_LIST.append([[]])
@@ -2172,12 +2688,13 @@ def search_all_texts():
 
             page_number = -1
 
+            search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
             return render_template(html_config_template_sql,
                                    selected_text_id=selected_text_id,
                                    selected_text=selected_text,
                                    label_selected=label_selected,
                                    info_message=info_message,
-                                   search_message=config.SEARCH_MESSAGE[0],
+                                   search_message=search_message_sql,
                                    search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                    page_number=page_number,
                                    y_classes=y_classes_sql,
@@ -2186,7 +2703,7 @@ def search_all_texts():
                                    texts_group_1=config.TEXTS_GROUP_1,
                                    group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                    texts_group_2=config.TEXTS_GROUP_2,
-                                   group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                                   group2_table_limit_value=predictions_number_sql,
                                    texts_group_3=config.TEXTS_GROUP_3,
                                    total_summary=config.TOTAL_SUMMARY,
                                    label_summary=config.LABEL_SUMMARY,
@@ -2202,12 +2719,14 @@ def search_all_texts():
 
         text_list_full_sql = get_text_list_full()
         text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+        set_variable(name="SEARCH_MESSAGE", value=info_message)
+        search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
         return render_template(html_config_template_sql,
                                selected_text_id=selected_text_id,
                                selected_text=selected_text,
                                label_selected=label_selected,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=0,
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -2216,7 +2735,7 @@ def search_all_texts():
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -2242,6 +2761,9 @@ def grouped_search_texts():
 
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     selected_label_search_texts = request.form["selected_label_search_texts"]
     info_message = ""
 
@@ -2264,7 +2786,7 @@ def grouped_search_texts():
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -2273,7 +2795,7 @@ def grouped_search_texts():
                                texts_group_1=config.TEXTS_GROUP_1,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=[],
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -2304,13 +2826,13 @@ def grouped_search_texts():
         #                               texts_list_list=config.TEXTS_LIST_LIST_FULL[0],
         #                               labels_got_overridden_flag=config.LABELS_GOT_OVERRIDDEN_FLAG,
         #                               update_in_place=False)
-
-        utils.generate_summary(text_lists=text_list_full_sql,
-                               first_labeling_flag=config.FIRST_LABELING_FLAG,
-                               total_summary=config.TOTAL_SUMMARY,
-                               label_summary=config.LABEL_SUMMARY,
-                               number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                               label_summary_string=config.LABEL_SUMMARY_STRING)
+        generate_summary_sql(text_lists=text_list_full_sql)
+        # utils.generate_summary(text_lists=text_list_full_sql,
+        #                        first_labeling_flag=config.FIRST_LABELING_FLAG,
+        #                        total_summary=config.TOTAL_SUMMARY,
+        #                        label_summary=config.LABEL_SUMMARY,
+        #                        number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
+        #                        label_summary_string=config.LABEL_SUMMARY_STRING)
 
         # Group 2 **************************************************************************************
         utils.fit_classifier(sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
@@ -2334,7 +2856,7 @@ def grouped_search_texts():
                                       sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
                                       corpus_text_ids=config.CORPUS_TEXT_IDS[0],
                                       texts_list=text_list_full_sql,
-                                      top=config.PREDICTIONS_NUMBER[0],
+                                      top=predictions_number_sql,
                                       cutoff_proba=config.PREDICTIONS_PROBABILITY,
                                       y_classes=y_classes_sql,
                                       verbose=config.PREDICTIONS_VERBOSE,
@@ -2352,7 +2874,7 @@ def grouped_search_texts():
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_search_texts,
                                info_message="Labels assigned to group",
-                               search_message=config.SEARCH_MESSAGE[0],
+                               search_message=search_message_sql,
                                search_results_length=config.SEARCH_RESULT_LENGTH[0],
                                page_number=page_number,
                                y_classes=y_classes_sql,
@@ -2361,7 +2883,7 @@ def grouped_search_texts():
                                texts_group_1=[], # texts_group_1_updated,
                                group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                                texts_group_2=config.TEXTS_GROUP_2,
-                               group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                               group2_table_limit_value=predictions_number_sql,
                                texts_group_3=config.TEXTS_GROUP_3,
                                total_summary=config.TOTAL_SUMMARY,
                                label_summary=config.LABEL_SUMMARY,
@@ -2385,11 +2907,14 @@ def clear_search_all_texts():
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     selected_text = get_selected_text(selected_text_id=selected_text_id, text_list_full_sql=text_list_full_sql)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
+    predictions_number_sql = get_variable_value(name="PREDICTIONS_NUMBER")
+
     label_selected = request.form.get("label_selected", None)
     info_message = "Search cleared"
 
-    config.SEARCH_MESSAGE.clear()
-    config.SEARCH_MESSAGE.append("Displaying all texts")
+    # config.SEARCH_MESSAGE.clear()
+    # config.SEARCH_MESSAGE.append("Displaying all texts")
+    set_variable(name="SEARCH_MESSAGE", value="Displaying all texts")
 
     config.TEXTS_LIST.clear()
     config.TEXTS_LIST.append(config.TEXTS_LIST_FULL[0])
@@ -2401,21 +2926,22 @@ def clear_search_all_texts():
     # config.TOTAL_PAGES.append(config.TOTAL_PAGES_FULL[0])
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
 
-    config.SEARCH_RESULT_LENGTH.clear()
-    config.SEARCH_RESULT_LENGTH.append(0)
+    # config.SEARCH_RESULT_LENGTH.clear()
+    # config.SEARCH_RESULT_LENGTH.append(0)
+    set_variable(name="SEARCH_RESULT_LENGTH", value=0)
 
     click_record, guid = utils.generate_click_record(click_location="all_texts",
                                                      click_type="clear_search",
                                                      click_object="button",
                                                      guid=None)
     utils.add_log_record(click_record, log=config.CLICK_LOG)
-
+    search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
-                           search_message=config.SEARCH_MESSAGE[0],
+                           search_message=search_message_sql,
                            search_results_length=config.SEARCH_RESULT_LENGTH[0],
                            page_number=0,
                            y_classes=y_classes_sql,
@@ -2424,7 +2950,7 @@ def clear_search_all_texts():
                            texts_group_1=config.TEXTS_GROUP_1,
                            group1_table_limit_value=config.GROUP_1_KEEP_TOP[0],
                            texts_group_2=config.TEXTS_GROUP_2,
-                           group2_table_limit_value=config.PREDICTIONS_NUMBER[0],
+                           group2_table_limit_value=predictions_number_sql,
                            texts_group_3=config.TEXTS_GROUP_3,
                            total_summary=config.TOTAL_SUMMARY,
                            label_summary=config.LABEL_SUMMARY,
