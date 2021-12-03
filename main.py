@@ -16,6 +16,7 @@ import sqlite3
 from collections import Counter
 import numpy as np
 from sklearn.linear_model import SGDClassifier
+import pathlib
 
 
 start_time = datetime.now()
@@ -42,6 +43,7 @@ def get_db_connection():
 
 
 def set_pkl(name, pkl_data):
+    pathlib.Path("./output/pkl/").mkdir(parents=True, exist_ok=True)
     pickle.dump(pkl_data, open("./output/pkl/" + name + ".pkl", "wb"))
     return None
 
