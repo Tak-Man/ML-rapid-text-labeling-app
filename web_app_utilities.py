@@ -801,14 +801,15 @@ def update_panel_flags(update_flag, panel_flags):
 
 if __name__ == "__main__":
     start_time = datetime.now()
-    print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
+    # print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
 
     # ********************************************************************************************************
     end_time = datetime.now()
     duration = end_time - start_time
 
-    print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"), "*"*100)
-    print(">> Duration :", duration, "*"*100)
+    # print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"), "*"*100)
+    # print(">> Duration :", duration, "*"*100)
+
 
 
 

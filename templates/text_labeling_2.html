@@ -196,7 +196,7 @@
             </div>
             <div id="difficultTextsBody">
                 <div id="divDifficultTextsTable">
-                    {% if texts_group_3 is not none %}
+                    {% if texts_group_3 is defined and texts_group_3 | length > 0 %}
                     <table id="difficultTextsTable" class="fixed_headers">
                         <thead>
                             <tr>
