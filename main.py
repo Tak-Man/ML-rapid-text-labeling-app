@@ -709,7 +709,6 @@ def fit_classifier_sql(sparse_vectorized_corpus, corpus_text_ids, texts_list, te
                        n_jobs=-1,
                        labels_got_overridden_flag=False,
                        full_fit_if_labels_got_overridden=False):
-    print("y_classes :", y_classes)
     texts_list_labeled_df = pd.DataFrame.from_dict(texts_list_labeled)
 
     if verbose:
