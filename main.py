@@ -1251,16 +1251,20 @@ def begin_labeling_new_dataset():
     shuffle_by_sql = get_variable_value(name="SHUFFLE_BY")
     dataset_name_sql = get_variable_value(name="DATASET_NAME")
     y_classes_sql = get_y_classes()
+    table_limit_sql = get_variable_value(name="TABLE_LIMIT")
+    texts_limit_sql = get_variable_value(name="TEXTS_LIMIT")
+    max_features_sql = get_variable_value(name="MAX_FEATURES")
+    random_state_sql = get_variable_value(name="RND_STATE")
 
     texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
         load_new_data(dataset_name_sql,
                       source_folder="./output/upload/",
                       shuffle_by=shuffle_by_sql,
-                      table_limit=config.TABLE_LIMIT,
-                      texts_limit=config.TEXTS_LIMIT,
-                      max_features=config.MAX_FEATURES,
+                      table_limit=table_limit_sql,
+                      texts_limit=texts_limit_sql,
+                      max_features=max_features_sql,
                       y_classes=y_classes_sql,
-                      rnd_state=config.RND_STATE)
+                      rnd_state=random_state_sql)
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -1271,13 +1275,13 @@ def begin_labeling_new_dataset():
     conn.commit()
     conn.close()
 
-    for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
-                               config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
-                               config.CORPUS_TEXT_IDS],
-                              [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
-                               vectorizer, corpus_text_ids]):
-        master.clear()
-        master.append(update)
+    # for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
+    #                            config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
+    #                            config.CORPUS_TEXT_IDS],
+    #                           [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
+    #                            vectorizer, corpus_text_ids]):
+    #     master.clear()
+    #     master.append(update)
 
     set_variable(name="TOTAL_PAGES", value=total_pages)
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
@@ -1300,7 +1304,7 @@ def begin_labeling_new_dataset():
     page_number = 0
 
     text_list_full_sql = get_text_list(table_name="texts")
-    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
+    text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
     search_results_length_sql = get_variable_value(name="SEARCH_RESULTS_LENGTH")
     group_1_keep_top_sql = get_variable_value(name="GROUP_1_KEEP_TOP")
     initialize_flags_sql = get_panel_flags()
@@ -1422,7 +1426,6 @@ def text_labeling():
     else:
         texts_group_2_sql = get_texts_group_x(table_name="group2Texts")
     # **********************************************************************************************
-    # text_list_list = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=config.TABLE_LIMIT)
     search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
     search_results_length_sql = get_variable_value(name="SEARCH_RESULTS_LENGTH")
     label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
@@ -1762,7 +1765,6 @@ def grouped_1_texts():
                                search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
     else:
-        # texts_group_1_updated = copy.deepcopy(config.TEXTS_GROUP_1)
         texts_group_1_updated = get_texts_group_x(table_name="group1Texts")
         print("texts_group_1_updated :", texts_group_1_updated)
         update_ids = []
@@ -1804,7 +1806,7 @@ def grouped_1_texts():
             texts_group_2_sql = \
                 get_top_predictions_sql(selected_class=selected_label_group1,
                                         fitted_classifier=classifier_sql,
-                                        sparse_vectorized_corpus=config.VECTORIZED_CORPUS[0],
+                                        sparse_vectorized_corpus=vectorized_corpus_sql,
                                         corpus_text_ids=corpus_text_ids,
                                         texts_list=text_list_full_sql,
                                         top=predictions_number_sql,
@@ -1895,11 +1897,11 @@ def grouped_2_texts():
 
     info_message = ""
     if (selected_label_group2 is None) or (selected_label_group2 == "None") or (selected_label_group2 == "") or \
-            (len(config.TEXTS_GROUP_2) == 0):
+            (len(selected_label_group2) == 0):
         if selected_label_group2 == "":
             info_message += f"Select a 'Label'."
 
-        if len(config.TEXTS_GROUP_2) == 0:
+        if len(selected_label_group2) == 0:
             info_message += "\n" + f"Select a 'Text ID'."
 
         text_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql,

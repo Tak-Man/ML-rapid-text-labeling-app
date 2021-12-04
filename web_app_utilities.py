@@ -44,47 +44,56 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
         return 0, None
 
 
-def load_save_state(source_dir="./output/save"):
+def load_save_state_sql(source_dir="./output/save"):
     try:
         save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
+        main.set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
+        main.set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
+        main.set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
+        main.set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")), reset=False)
+        main.set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
+        main.set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+        main.set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
+        main.set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+        main.set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")), reset=False)
+        main.set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
+        main.set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
+        main.set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
 
-        config.DATE_TIME = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
-        config.CLICK_LOG = pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb"))
-        config.VALUE_LOG = pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb"))
-        config.VECTORIZED_CORPUS = pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb"))
-        config.VECTORIZER_LIST = pickle.load(open(os.path.join(source_dir, "VECTORIZER_LIST.pkl"), "rb"))
-        config.CLASSIFIER_LIST = pickle.load(open(os.path.join(source_dir, "CLASSIFIER_LIST.pkl"), "rb"))
-
-        config.DATASET_NAME = save_state_json["DATASET_NAME"]
+        main.set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+        main.set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
+        main.set_variable(name="Y_CLASSES", value=save_state_json["Y_CLASSES"])
+        main.set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
+        main.set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
+        main.set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+        main.set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
         # config.TOTAL_SUMMARY = save_state_json["TOTAL_SUMMARY"]
         # config.LABEL_SUMMARY = save_state_json["LABEL_SUMMARY"]
+
         config.RECOMMENDATIONS_SUMMARY = save_state_json["RECOMMENDATIONS_SUMMARY"]
         config.TEXTS_LIST_LABELED = save_state_json["TEXTS_LIST_LABELED"]
-        config.TEXTS_GROUP_1 = save_state_json["TEXTS_GROUP_1"]
-        config.TEXTS_GROUP_2 = save_state_json["TEXTS_GROUP_2"]
-        config.TEXTS_GROUP_3 = save_state_json["TEXTS_GROUP_3"]
-        print("save_state_json['SEARCH_MESSAGE']: ", save_state_json["SEARCH_MESSAGE"])
-        config.SEARCH_MESSAGE = save_state_json["SEARCH_MESSAGE"]
-        config.TEXTS_LIST = save_state_json["TEXTS_LIST"]
+
         config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
-        config.CORPUS_TEXT_IDS = save_state_json["CORPUS_TEXT_IDS"]
         config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
         config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
         config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
         config.ADJ_TEXT_IDS = save_state_json["ADJ_TEXT_IDS"]
-        config.TOTAL_PAGES = save_state_json["TOTAL_PAGES"]
-        config.Y_CLASSES = save_state_json["Y_CLASSES"]
-        config.SHUFFLE_BY = save_state_json["SHUFFLE_BY"]
-        # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
-        config.HTML_CONFIG_TEMPLATE = save_state_json["HTML_CONFIG_TEMPLATE"]
-        # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
 
-        generate_summary(text_lists=config.TEXTS_LIST[0],
-                         first_labeling_flag=config.FIRST_LABELING_FLAG,
-                         total_summary=config.TOTAL_SUMMARY,
-                         label_summary=config.LABEL_SUMMARY,
-                         number_unlabeled_texts=config.NUMBER_UNLABELED_TEXTS,
-                         label_summary_string=config.LABEL_SUMMARY_STRING)
+
+        # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
+
+        # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
+        texts_list_sql = main.get_text_list(table_name="texts")
+        total_summary_sql = main.get_total_summary_sql()
+        label_summary_sql = main.get_label_summary_sql()
+        number_unlabeled_texts_sql = main.get_variable_value(name="NUMBER_UNLABELED_TEXTS")
+        label_summary_string_sql = main.get_variable_value(name="LABEL_SUMMARY_STRING")
+        main.generate_summary_sql(text_lists=texts_list_sql,
+                                  first_labeling_flag=config.FIRST_LABELING_FLAG,
+                                  total_summary=total_summary_sql,
+                                  label_summary=label_summary_sql,
+                                  number_unlabeled_texts=number_unlabeled_texts_sql,
+                                  label_summary_string=label_summary_string_sql)
 
         return 1
     except:
