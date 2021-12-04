@@ -6,6 +6,33 @@ CREATE TABLE texts (
     label TEXT NOT NULL
 );
 
+DROP TABLE IF EXISTS searchResults;
+
+CREATE TABLE searchResults (
+    id TEXT NOT NULL,
+    text TEXT NOT NULL,
+    label TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS clickRecord;
+
+CREATE TABLE clickRecord (
+    click_id TEXT NOT NULL,
+    click_location TEXT NOT NULL,
+    click_type TEXT NOT NULL,
+    click_object TEXT NOT NULL,
+    click_date_time TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS valueRecord;
+
+CREATE TABLE valueRecord (
+    click_id TEXT NOT NULL,
+    value_type TEXT NOT NULL,
+    value TEXT NOT NULL
+);
+
+
 DROP TABLE IF EXISTS group1Texts;
 
 CREATE TABLE group1Texts (

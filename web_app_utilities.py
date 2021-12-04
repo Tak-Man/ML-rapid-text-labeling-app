@@ -17,7 +17,7 @@ import configuration as config
 import pickle
 import json
 import os
-
+import main
 
 pd.options.display.max_columns = 50
 pd.options.display.max_colwidth = 200
@@ -253,11 +253,11 @@ def filter_all_texts(all_text, filter_list, exclude_already_labeled=False):
     return filtered_all_text
 
 
-def search_all_texts(all_text, include_search_term, exclude_search_term,
-                     search_exclude_already_labeled=False,
-                     include_behavior="conjunction",
-                     exclude_behavior="disjunction",
-                     all_upper=True):
+def search_all_texts_sql(all_text, include_search_term, exclude_search_term,
+                         search_exclude_already_labeled=False,
+                         include_behavior="conjunction",
+                         exclude_behavior="disjunction",
+                         all_upper=True):
 
     all_text_df = pd.DataFrame(all_text)
 
@@ -301,7 +301,12 @@ def search_all_texts(all_text, include_search_term, exclude_search_term,
                     lambda text: all(word not in text for word in exclude_search_terms))]
 
     filtered_all_text = filtered_all_text_df.to_dict("records")
-    return filtered_all_text
+
+    search_results_sql = filtered_all_text
+    search_results_length_sql = len(filtered_all_text)
+    main.populate_texts_table_sql(filtered_all_text, table_name="searchResults")
+    main.set_variable(name="SEARCH_RESULT_LENGTH", value=search_results_length_sql)
+    return search_results_sql, search_results_length_sql
 
 
 def update_texts_list(texts_list, sub_list_limit, old_obj_lst=[], new_obj_lst=[], texts_list_list=[]):
