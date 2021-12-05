@@ -128,7 +128,7 @@
                     </table>
                 </div>
             </div>
-            <h2>Dataset Labels</h2>
+            <h2 id="existingLabels">Dataset Labels</h2>
             <p class="subHeading">These labels have been defined to label this dataset</p>
             <div id="divBottomLeftBody">
                 <p>
@@ -235,7 +235,7 @@
                     {% endif %}
                 </div>
 
-                <h2>Enter Dataset Labels</h2>
+                <h2 id="enterLabelsHeading">Enter Dataset Labels</h2>
                 <div id="enterLabels">
                     <form id="formEnterLabels" action="{{ url_for('label_entered') }}" method="POST">
                         <input id="inputLabelEntered" type="text" placeholder="Type a label" id="myLabel"

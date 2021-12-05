@@ -86,47 +86,51 @@
         <div id="divSelectText">
             <h2>Select a Text to Label</h2>
             <br>
-            <div id="allTextTableNextButtons" title="Use these links to navigate through the texts">
-                <a href="{{ url_for('go_to_page',
-                                     page_number=0,
-                                     label_selected=label_selected,
-                                     app_section='all_texts',
-                                     selection='first_page') }}" method="POST">first
-                    <input name="page_number" type="hidden" value=0>
-                </a>
-                {% if page_number > 0 %}
+            <div id="textsPageNavigation">
+                <div id="textPageNavigationMessage" class="subHeading">{{ page_navigation_message }}</div>
+                <div id="allTextTableNextButtons" title="Use these links to navigate through the texts">
                     <a href="{{ url_for('go_to_page',
-                                         page_number=page_number - 1,
+                                         page_number=0,
                                          label_selected=label_selected,
                                          app_section='all_texts',
-                                         selection='previous_page') }}" method="POST">&laquo;
-                        <input name="page_number" type="hidden" value={{ page_number - 1}}>
+                                         selection='first_page') }}" method="POST">first
+                        <input name="page_number" type="hidden" value=0>
                     </a>
-                {% else %}
-                    <a href="#">&laquo;</a>
-                {% endif %}
-                <a href="#">{{ page_number + 1}}</a>
-                <a href="#">of </a>
-                <a href="#">{{ total_pages }}</a>
-                {% if page_number < (total_pages - 1) %}
-                    <a href="{{ url_for('go_to_page',
-                                         page_number=page_number + 1,
+                    {% if page_number > 0 %}
+                        <a href="{{ url_for('go_to_page',
+                                             page_number=page_number - 1,
+                                             label_selected=label_selected,
+                                             app_section='all_texts',
+                                             selection='previous_page') }}" method="POST">&laquo;
+                            <input name="page_number" type="hidden" value={{ page_number - 1}}>
+                        </a>
+                    {% else %}
+                        <a href="#">&laquo;</a>
+                    {% endif %}
+                    <a href="#">{{ page_number + 1}}</a>
+                    <a href="#">of </a>
+                    <a href="#">{{ total_pages }}</a>
+                    {% if page_number < (total_pages - 1) %}
+                        <a href="{{ url_for('go_to_page',
+                                             page_number=page_number + 1,
+                                             label_selected=label_selected,
+                                             app_section='all_texts',
+                                             selection='next_page') }}" method="POST">&raquo;
+                            <input name="page_number" type="hidden" value={{ page_number + 1}}>
+                        </a>
+                    {% else %}
+                        <a href="#">&raquo;</a>
+                    {% endif %}
+                    <a  href="{{ url_for('go_to_page',
+                                         page_number=total_pages - 1,
                                          label_selected=label_selected,
                                          app_section='all_texts',
-                                         selection='next_page') }}" method="POST">&raquo;
-                        <input name="page_number" type="hidden" value={{ page_number + 1}}>
-                    </a>
-                {% else %}
-                    <a href="#">&raquo;</a>
-                {% endif %}
-                <a  href="{{ url_for('go_to_page',
-                                     page_number=total_pages - 1,
-                                     label_selected=label_selected,
-                                     app_section='all_texts',
-                                     selection='last_page') }}" method="POST">last
-                    <input name="page_number" type="hidden" value={{ total_pages - 1 }}>
+                                         selection='last_page') }}" method="POST">last
+                        <input name="page_number" type="hidden" value={{ total_pages - 1 }}>
                 </a>
             </div>
+            </div>
+
             <br>
             <div id="bodySelectText">
                 <div id="divAllTextsTable">
@@ -511,18 +515,18 @@
                           method="POST">
                         <label for="group1_table_limit">Display a maximum of </label>
                         <select name="group1_table_limit" id="group1_table_limit" class="selectDropDown">
-                            <option value=2
-                                    {% if group1_table_limit_value==2 %} selected="selected" {% endif %}>2</option>
-                        <option value=5
+                          <option value=2
+                                {% if group1_table_limit_value==2 %} selected="selected" {% endif %}>2</option>
+                          <option value=5
                                 {% if group1_table_limit_value==5 %} selected="selected" {% endif %}>5</option>
-                        <option value=10
+                          <option value=10
                                 {% if group1_table_limit_value==10 %} selected="selected" {% endif %}>10</option>
                           <option value=20
-                                  {% if group1_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
+                                {% if group1_table_limit_value==20 %} selected="selected" {% endif %}>20</option>
                           <option value=50
-                                  {% if group1_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
+                                {% if group1_table_limit_value==50 %} selected="selected" {% endif %}>50</option>
                           <option value=100
-                                  {% if group1_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
+                                {% if group1_table_limit_value==100 %} selected="selected" {% endif %}>100</option>
                         </select>
                         records
                         <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">

@@ -100,7 +100,9 @@ div {
 }
 
 #bodyLeftTable1 {
+    height: 32.5vh;
     margin-bottom: 2vh;
+    margin-bottom: 10.5vh;
 }
 
 #bodyLeft2 {
@@ -127,7 +129,7 @@ div {
 
 #divRadioConfiguration, #divRadioConfigurationNewData{
     display: flex;
-    /*color: #0d57aa;*/
+    margin-top: 2.0vh;
 }
 
 #option1NewData, #option1 {
@@ -209,7 +211,7 @@ div {
 
 .container {
   display: grid;
-  height: 135%;
+  height: 145%;
   grid-template-columns: 2% 40% 40% 16% 2%;
   grid-template-rows: 5.5% 89% 5.5%;
   grid-template-areas:
@@ -248,8 +250,8 @@ div {
 }
 
 #myFile {
-    margin-top: 0.1vh;
-    margin-bottom: 1.5vh;
+    margin-top: 0.01vh;
+    margin-bottom: 0.25vh;
     font-size: 1.5vh;
     font-weight: 600;
 }
@@ -275,10 +277,20 @@ div {
     width: 98%;
     margin: auto;
     margin-top: 0.1vh;
-    margin-bottom: 1.75vh;
+    margin-bottom: 4vh;
     white-space: normal;
     overflow-wrap: break-word;
     background-color: white;
+    height: 30vh;
+}
+
+#existingLabels {
+    margin-top: 1.5vh;
+    margin-bottom: 0.5vh;
+}
+
+#enterLabelsHeading {
+    margin-bottom: 1.95vh;
 }
 
 #divSelectCols {
@@ -334,11 +346,11 @@ div {
     border: 1px solid;
     border-color: #333333;
     border-radius: var(--main-radius);
-    height: 3.5vh;
+    height: 9.25vh;
     width: 97.5%;
     padding: 0.5vh;
     margin-top: 0.5vh;
-    margin-bottom: 2.0vh;
+    margin-bottom: 1.8vh;
     overflow-x: hidden;
     overflow-y: auto;
     white-space: normal;

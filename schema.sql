@@ -120,6 +120,7 @@ INSERT INTO variables (name, value) VALUES ("GROUP_3_KEEP_TOP", 50);
 INSERT INTO variables (name, value) VALUES ("CONFIRM_LABEL_ALL_TEXTS_COUNTS", 0);
 INSERT INTO variables (name, value) VALUES ("LABELS_GOT_OVERRIDDEN_FLAG", "False");
 INSERT INTO variables (name, value) VALUES ("SEARCH_EXCLUDE_ALREADY_LABELED", "Yes");
+INSERT INTO variables (name, value) VALUES ("UPDATE_TEXTS_IN_PLACE", "False");
 
 
 DROP TABLE IF EXISTS initializeFlags;

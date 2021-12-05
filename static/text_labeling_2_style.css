@@ -401,6 +401,15 @@ div {
     margin: auto;
 }
 
+#textsPageNavigation {
+
+}
+
+#textPageNavigationMessage {
+    float: left;
+    padding-left: 1vw;
+}
+
 #allTextTableNextButtons {
     padding-right: 0.75vw;
     font-size: 0.65vw;
