@@ -433,7 +433,6 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
                            );
                            """)
             all_update_ids = [obj["id"] for obj in update_objs]
-            print("len(all_update_ids) :", len(all_update_ids))
             query = "INSERT INTO temp_table SELECT * FROM texts WHERE id IN (%s)" % ",".join("?" * len(all_update_ids))
             cur.execute(query, all_update_ids)
             labels = set([obj["label"] for obj in update_objs])
@@ -443,7 +442,6 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
                 update_query = "UPDATE temp_table SET label = ? WHERE id IN (%s)" % update_ids_sql
                 conn.execute(update_query, (label,))
             delete_query = "DELETE FROM texts WHERE id IN (%s)" % ",".join("?" * len(all_update_ids))
-            print("delete_query :", delete_query)
             cur.execute(delete_query, all_update_ids)
             cur.execute("INSERT INTO texts SELECT * FROM temp_table;")
 
@@ -835,13 +833,13 @@ def fit_classifier_sql(sparse_vectorized_corpus, corpus_text_ids, texts_list, te
     return classifier_sql
 
 
-def load_new_data(source_file,
-                  text_id_col,
-                  text_value_col,
-                  source_folder="./output/upload/",
-                  shuffle_by="kmeans",
-                  table_limit=50, texts_limit=1000, max_features=100,
-                  y_classes=["Label 1", "Label 2", "Label 3", "Label 4"], rnd_state=258):
+def load_new_data_sql(source_file,
+                      text_id_col,
+                      text_value_col,
+                      source_folder="./output/upload/",
+                      shuffle_by="kmeans",
+                      table_limit=50, texts_limit=1000, max_features=100,
+                      y_classes=["Label 1", "Label 2", "Label 3", "Label 4"], rnd_state=258):
 
     data_df = get_new_data(source_file=source_file,
                            source_folder=source_folder,
@@ -858,26 +856,39 @@ def load_new_data(source_file,
         kmeans = KMeans(n_clusters=len(y_classes), random_state=rnd_state).fit(vectorized_corpus)
         kmeans_labels = kmeans.labels_
         texts_list, adj_text_ids = convert_new_data_into_list_json(data_df,
-                                                                         limit=texts_limit,
-                                                                         shuffle_list=kmeans_labels,
-                                                                         random_shuffle=False,
-                                                                         random_state=rnd_state,
-                                                                         id_col=text_id_col,
-                                                                         text_col=text_value_col,
-                                                                         label_col="label")
+                                                                   limit=texts_limit,
+                                                                   shuffle_list=kmeans_labels,
+                                                                   random_shuffle=False,
+                                                                   random_state=rnd_state,
+                                                                   id_col=text_id_col,
+                                                                   text_col=text_value_col,
+                                                                   label_col="label")
     else:
         texts_list, adj_text_ids = convert_new_data_into_list_json(data_df,
-                                                                         limit=texts_limit,
-                                                                         shuffle_list=[],
-                                                                         random_shuffle=True,
-                                                                         random_state=rnd_state,
-                                                                         id_col=text_id_col,
-                                                                         text_col=text_value_col,
-                                                                         label_col="label")
+                                                                   limit=texts_limit,
+                                                                   shuffle_list=[],
+                                                                   random_shuffle=True,
+                                                                   random_state=rnd_state,
+                                                                   id_col=text_id_col,
+                                                                   text_col=text_value_col,
+                                                                   label_col="label")
+    populate_texts_table_sql(texts_list=texts_list, table_name="texts")
+
+    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=None, reset=True)
+    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=adj_text_ids, reset=False)
 
     texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
     total_pages = len(texts_list_list)
     set_variable(name="TOTAL_PAGES", value=total_pages)
+
+    set_pkl(name="TEXTS_LIST_LIST", pkl_data=None, reset=True)
+    set_pkl(name="TEXTS_LIST_LIST", pkl_data=texts_list_list, reset=False)
+
+    set_pkl(name="VECTORIZED_CORPUS", pkl_data=None, reset=True)
+    set_pkl(name="VECTORIZED_CORPUS", pkl_data=vectorized_corpus, reset=False)
+
+    set_pkl(name="VECTORIZER", pkl_data=None, reset=True)
+    set_pkl(name="VECTORIZER", pkl_data=vectorizer, reset=False)
 
     return texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids
 

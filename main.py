@@ -82,7 +82,6 @@ def upload_file():
                 prep_data_message1 = "Data set prepared. Inspect the data set below, and if it appears correct continue."
                 utils.set_variable(name="PREP_DATA_MESSAGE1", value=prep_data_message1)
 
-
                 prepared_data_list = dataset_df.to_dict("records")
                 utils.populate_texts_table_sql(texts_list=prepared_data_list, table_name="prepTexts")
                 records_limit = 100
@@ -287,23 +286,23 @@ def begin_labeling_new_dataset():
     text_id_col_sql = utils.get_variable_value(name="TEXT_ID_COL")
     text_value_col_sql = utils.get_variable_value(name="TEXT_VALUE_COL")
 
-    conn = utils.get_db_connection()
-    available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
-    conn.close()
+    available_datasets = utils.get_available_datasets()
 
-    texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus, vectorizer, corpus_text_ids = \
-        utils.load_new_data(dataset_name_sql,
-                            text_id_col=text_id_col_sql,
-                            text_value_col=text_value_col_sql,
-                            source_folder="./output/upload/",
-                            shuffle_by=shuffle_by_sql,
-                            table_limit=table_limit_sql,
-                            texts_limit=texts_limit_sql,
-                            max_features=max_features_sql,
-                            y_classes=y_classes_sql,
-                            rnd_state=random_state_sql)
+    text_list_full_sql, texts_list_list_sql, adj_text_ids, total_pages, vectorized_corpus, vectorizer, \
+        corpus_text_ids = \
+            utils.load_new_data_sql(dataset_name_sql,
+                                    text_id_col=text_id_col_sql,
+                                    text_value_col=text_value_col_sql,
+                                    source_folder="./output/upload/",
+                                    shuffle_by=shuffle_by_sql,
+                                    table_limit=table_limit_sql,
+                                    texts_limit=texts_limit_sql,
+                                    max_features=max_features_sql,
+                                    y_classes=y_classes_sql,
+                                    rnd_state=random_state_sql)
 
-    utils.populate_texts_table_sql(texts_list=texts_list, table_name="texts")
+    corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
+    print("len(corpus_text_ids_sql) :", len(corpus_text_ids_sql))
 
     utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
@@ -327,11 +326,10 @@ def begin_labeling_new_dataset():
 
     page_number = 0
 
-    text_list_full_sql = utils.get_text_list(table_name="texts")
-    text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
-                                                     sub_list_limit=table_limit_sql)
+    # text_list_full_sql = utils.get_text_list(table_name="texts")
+    # text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
+    #                                                  sub_list_limit=table_limit_sql)
     page_navigation_message = "Displaying {:,} texts ({} per page)".format(len(text_list_full_sql), table_limit_sql)
-    search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
     initialize_flags_sql = utils.get_panel_flags()
     search_exclude_already_labeled_sql = utils.get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
@@ -363,7 +361,7 @@ def begin_labeling_new_dataset():
                            page_number=page_number,
                            y_classes=y_classes_sql,
                            total_pages=total_pages_sql,
-                           texts_list=text_list_list_sql[page_number],
+                           texts_list=texts_list_list_sql[page_number],
                            texts_group_1=[],
                            group1_table_limit_value=group_1_keep_top_sql,
                            texts_group_2=[],
@@ -402,7 +400,10 @@ def text_labeling():
     html_config_template_sql = utils.get_variable_value(name="HTML_CONFIG_TEMPLATE")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
     keep_original_sql = utils.get_variable_value(name="KEEP_ORIGINAL")
+
     corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
+    print("len(corpus_text_ids_sql) :", len(corpus_text_ids_sql))
+
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
     group_1_exclude_already_labeled_sql = utils.get_variable_value(name="GROUP_1_EXCLUDE_ALREADY_LABELED")
     similar_text_verbose_sql = utils.get_variable_value(name="SIMILAR_TEXT_VERBOSE")
