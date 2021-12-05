@@ -157,13 +157,14 @@ def get_value_log():
     return click_log_sql
 
 
-def add_log_click_record_sql(record):
+def add_log_click_record_sql(records):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""INSERT INTO clickRecord (click_id, click_location, click_type, click_object, click_date_time) 
-                    VALUES (?, ?, ?, ?, ?)""", (record[0]["click_id"], record[0]["click_location"], record[0]["click_type"],
-                                                record[0]["click_object"], record[0]["click_date_time"]))
+    for record in records:
+        cur.execute("""INSERT INTO clickRecord (click_id, click_location, click_type, click_object, click_date_time) 
+                        VALUES (?, ?, ?, ?, ?)""", (record["click_id"], record["click_location"], record["click_type"],
+                                                    record["click_object"], record["click_date_time"]))
 
     conn.commit()
     conn.close()
@@ -171,12 +172,14 @@ def add_log_click_record_sql(record):
     return None
 
 
-def add_log_click_value_sql(record):
+def add_log_click_value_sql(records):
+    print("records :", records)
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""INSERT INTO valueRecord (click_id, value_type, value) 
-                    VALUES (?, ?, ?)""", (record[0]["click_id"], record[0]["value_type"], record[0]["value"]))
+    for record in records:
+        cur.execute("""INSERT INTO valueRecord (click_id, value_type, value) 
+                        VALUES (?, ?, ?)""", (record["click_id"], record["value_type"], record["value"]))
 
     conn.commit()
     conn.close()
@@ -325,12 +328,21 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
     cur = conn.cursor()
 
     if selected_label and update_ids and not update_objs:
-        update_query = "UPDATE texts SET label = ? WHERE id IN (%s)" % ",".join("?"*len(update_ids))
-        update_values = [selected_label]
-        update_values.extend(update_ids)
-        cur.execute(update_query, update_values)
+        if update_in_place:
+            # print("Trying update method 2")
+            # for update_id in update_ids:
+            #     update_query = "UPDATE texts SET label = ? WHERE id = ?"
+            #     cur.execute(update_query, (selected_label, update_id))
 
-        if not update_in_place:
+            print("Trying update method 1")
+            update_query = "UPDATE texts SET label = ? WHERE id IN (%s)" % ",".join("?"*len(update_ids))
+            update_values = [selected_label]
+            update_values.extend(update_ids)
+            cur.execute(update_query, update_values)
+            conn.commit()
+            conn.close()
+
+        else:
             cur.execute("""
                         IF OBJECT_ID(N'tempdb..#tempTexts') IS NOT NULL
                         BEGIN
@@ -343,8 +355,8 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
             cur.executemany("DELETE FROM texts WHERE id IN (%s)" % ",".join("?" * len(update_ids)), update_ids)
             cur.execute("SELECT * INTO texts FROM #tempTexts;")
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
 
     # updated_texts_list_df = pd.DataFrame.from_dict(texts_list) # .copy()
     #
@@ -1352,7 +1364,7 @@ def text_labeling():
                                                      click_type="text_id_selected",
                                                      click_object="link",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     # Group 1 ************************************************************************************
     vectorized_corpus_sql = get_pkl(name="VECTORIZED_CORPUS")
@@ -1456,7 +1468,7 @@ def go_to_page():
                                                      click_type=selection,
                                                      click_object="link",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     return render_template(html_config_template_sql,
                            selected_text_id="None",
@@ -1529,12 +1541,12 @@ def single_text():
                                                      click_type="single_label_assigned",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=new_label)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
     value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=new_id)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     if new_label is None or new_label == "" or new_id == "None":
         if new_label == "":
@@ -1683,10 +1695,10 @@ def grouped_1_texts():
                                                      click_type="group_label_assigned",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_group1)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     texts_group_1_sql = get_texts_group_x(table_name="group1Texts")
     if (selected_label_group1 == "None") or (selected_label_group1 is None) or (selected_label_group1 == "") or \
@@ -1734,7 +1746,7 @@ def grouped_1_texts():
             update_ids.append(obj["id"])
             obj["label"] = selected_label_group1
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
-            add_log_click_value_sql(record=value_record)
+            add_log_click_value_sql(records=value_record)
 
         text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=selected_label_group1,
                                                                               update_ids=update_ids,
@@ -1849,10 +1861,10 @@ def grouped_2_texts():
                                                      click_type="group_label_assigned",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_group2)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     info_message = ""
     if (selected_label_group2 is None) or (selected_label_group2 == "None") or (selected_label_group2 == "") or \
@@ -1902,7 +1914,7 @@ def grouped_2_texts():
             update_ids.append(obj["id"])
             obj["label"] = selected_label_group2
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
-            add_log_click_value_sql(record=value_record)
+            add_log_click_value_sql(records=value_record)
 
         text_list_full_sql, texts_list_list_sql = update_texts_list_by_id_sql(selected_label=selected_label_group2,
                                                                               update_ids=update_ids,
@@ -2022,7 +2034,7 @@ def label_all():
                                                      click_type="group_label_assigned",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     if html_config_template_sql in ["text_labeling_2.html"]:
         scroll_to_id = "labelAllButton"
@@ -2151,7 +2163,7 @@ def label_all():
 
             for labeled_text_id in labeled_text_ids:
                 value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
-                add_log_click_value_sql(record=value_record)
+                add_log_click_value_sql(records=value_record)
 
             total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
                 generate_summary_sql(text_lists=text_list_full_sql)
@@ -2221,7 +2233,7 @@ def export_records():
                                                      click_type="export_records",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     download_files = []
 
@@ -2285,7 +2297,7 @@ def save_state():
                                                      click_type="save_state",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     table_limit_sql = get_variable_value(name="TABLE_LIMIT")
     y_classes_sql = get_y_classes()
@@ -2423,10 +2435,10 @@ def label_selected():
                                                      click_type="label_selected",
                                                      click_object="radio_button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=label_selected)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     # Group 1 ************************************************************************************
     if selected_text_id == "None":
@@ -2508,7 +2520,9 @@ def generate_difficult_texts():
 
     y_classes_sql = get_y_classes()
     text_list_full_sql = get_text_list(table_name="texts")
-    table_limit = int(request.form.get("group1_table_limit", None))
+    table_limit = request.form.get("group1_table_limit", None)
+    print("table_limit :", table_limit)
+    table_limit = int(table_limit)
     texts_list_list_sql = create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit)
     html_config_template_sql = get_variable_value(name="HTML_CONFIG_TEMPLATE")
     total_pages_sql = get_variable_value(name="TOTAL_PAGES")
@@ -2530,7 +2544,7 @@ def generate_difficult_texts():
                                                      click_type="generate_list",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     # Group 3 ************************************************************************************
 
@@ -2603,9 +2617,9 @@ def set_group_1_record_limit():
                                                      click_type="set_table_limit",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
     value_record = utils.generate_value_record(guid=guid, value_type="table_limit", value=table_limit)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     # Group 1 ************************************************************************************
     if selected_text_id == "None":
@@ -2637,7 +2651,7 @@ def set_group_1_record_limit():
     texts_group_3_sql = get_difficult_texts_sql()
     texts_group_2_sql = get_texts_group_x(table_name="group2Texts")
     # texts_group_1_sql = get_texts_group_x(table_name="group1Texts")
-    print("texts_group_1_sql :", texts_group_1_sql)
+
     search_exclude_already_labeled_sql = get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
@@ -2701,9 +2715,9 @@ def set_group_2_record_limit():
                                                      click_type="set_table_limit",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
     value_record = utils.generate_value_record(guid=guid, value_type="table_limit", value=group_2_table_limit)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     # Group 2 ************************************************************************************
     classifier_sql = get_pkl(name="CLASSIFIER")
@@ -2793,11 +2807,11 @@ def search_all_texts():
                                                      click_type="search_texts",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
     value_record_1 = utils.generate_value_record(guid=guid, value_type="include_search_term", value=include_search_term)
-    add_log_click_value_sql(record=value_record_1)
+    add_log_click_value_sql(records=value_record_1)
     value_record_2 = utils.generate_value_record(guid=guid, value_type="exclude_search_term", value=exclude_search_term)
-    add_log_click_value_sql(record=value_record_2)
+    add_log_click_value_sql(records=value_record_2)
 
     y_classes_sql = get_y_classes()
 
@@ -2954,10 +2968,10 @@ def grouped_search_texts():
                                                      click_type="group_label_assigned",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
 
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_search_texts)
-    add_log_click_value_sql(record=value_record)
+    add_log_click_value_sql(records=value_record)
 
     if (selected_label_search_texts == "None") or (selected_label_search_texts is None) \
             or (selected_label_search_texts == ""):
@@ -2995,26 +3009,59 @@ def grouped_search_texts():
                                search_exclude_already_labeled=search_exclude_already_labeled_sql)
 
     else:
+        test_start_time = datetime.now()
         texts_group_updated = get_text_list(table_name="searchResults")
-        update_ids = []
+        test_end_time = datetime.now()
+        test_duration = test_end_time - test_start_time
+        print("texts_group_updated - test_start_time :", test_start_time.strftime("%H:%M:%S"))
+        print("texts_group_updated - test_end_time :", test_end_time.strftime("%H:%M:%S"))
+        print("texts_group_updated - test_duration :", test_duration)
+
+        test_start_time = datetime.now()
+        update_ids = list()
+        value_records = list()
         for obj in texts_group_updated:
             update_ids.append(obj["id"])
             obj["label"] = selected_label_search_texts
             value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=obj["id"])
-            add_log_click_value_sql(record=value_record)
+            value_records.append(value_record)
+        add_log_click_value_sql(records=value_record)
 
+        test_end_time = datetime.now()
+        test_duration = test_end_time - test_start_time
+        print("update_ids - test_start_time :", test_start_time.strftime("%H:%M:%S"))
+        print("update_ids - test_end_time :", test_end_time.strftime("%H:%M:%S"))
+        print("update_ids - test_duration :", test_duration)
+
+        test_start_time = datetime.now()
         text_list_full_sql, text_list_list_sql = \
             update_texts_list_by_id_sql(selected_label=selected_label_search_texts,
                                         update_ids=update_ids,
                                         sub_list_limit=table_limit_sql,
                                         labels_got_overridden_flag=[],
                                         update_in_place=True)
+        test_end_time = datetime.now()
+        test_duration = test_end_time - test_start_time
+        print("update_texts_list_by_id_sql - test_start_time :", test_start_time.strftime("%H:%M:%S"))
+        print("update_texts_list_by_id_sql - test_end_time :", test_end_time.strftime("%H:%M:%S"))
+        print("update_texts_list_by_id_sql - test_duration :", test_duration)
 
+        test_start_time = datetime.now()
         set_text_list(label=selected_label_search_texts, table_name="searchResults")
+        test_end_time = datetime.now()
+        test_duration = test_end_time - test_start_time
+        print("set_text_list - test_start_time :", test_start_time.strftime("%H:%M:%S"))
+        print("set_text_list - test_end_time :", test_end_time.strftime("%H:%M:%S"))
+        print("set_text_list - test_duration :", test_duration)
 
+        test_start_time = datetime.now()
         total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
             generate_summary_sql(text_lists=text_list_full_sql)
-
+        test_end_time = datetime.now()
+        test_duration = test_end_time - test_start_time
+        print("generate_summary_sql - test_start_time :", test_start_time.strftime("%H:%M:%S"))
+        print("generate_summary_sql - test_end_time :", test_end_time.strftime("%H:%M:%S"))
+        print("generate_summary_sql - test_duration :", test_duration)
         # Group 2 **************************************************************************************
         labels_got_overridden_flag_sql = get_variable_value(name="LABELS_GOT_OVERRIDDEN_FLAG")
         classifier_sql = fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
@@ -3131,7 +3178,7 @@ def clear_search_all_texts():
                                                      click_type="clear_search",
                                                      click_object="button",
                                                      guid=None)
-    add_log_click_record_sql(record=click_record)
+    add_log_click_record_sql(records=click_record)
     search_message_sql = get_variable_value(name="SEARCH_MESSAGE")
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
