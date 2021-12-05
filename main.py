@@ -12,38 +12,25 @@ from werkzeug.utils import secure_filename
 import os
 
 
-
-start_time = datetime.now()
-print("*"*20, "Process started @", start_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
-
 app = Flask(__name__)
 # Session(app)
 # app.secret_key = "super secret key"
 app.config.from_object(__name__)
 app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.config["MAX_CONTENT_PATH"] = 10000
-
 app.jinja_env.add_extension('jinja2.ext.do')
-
-
-end_time = datetime.now()
-print("*"*20, "Process ended @", end_time.strftime("%m/%d/%Y, %H:%M:%S"), "*"*20)
-duration = end_time - start_time
-print("*"*20, "Process duration -", duration, "*"*20)
 
 
 @app.route('/label_entered', methods=['POST'])
 def label_entered():
     if request.form["action"] == "add":
         label_entered = request.form["labelEntered"]
-        print("label_entered :", label_entered)
 
         utils.add_y_classes([label_entered], begin_fresh=False)
-        y_classes_sql = utils.get_y_classes()
-        entered_labels = ", ".join(y_classes_sql)
+        entered_labels = utils.get_y_classes()
     else:
         utils.add_y_classes([], begin_fresh=True)
-        entered_labels = ""
+        entered_labels = [""]
 
     prep_data_message1_sql = utils.get_variable_value(name="PREP_DATA_MESSAGE1")
     if len(prep_data_message1_sql) > 0:
@@ -54,9 +41,10 @@ def label_entered():
     records_limit = 100
 
     prep_data_message2_sql = utils.get_variable_value(name="PREP_DATA_MESSAGE2")
-    prepared_data_list_sql = utils.get_text_list(table_name="prepData")
+    prepared_data_list_sql = utils.get_text_list(table_name="prepTexts")
+    dataset_list_sql = utils.get_available_datasets()
     return render_template("start.html",
-                           dataset_list=config.DATASETS_AVAILABLE,
+                           dataset_list=dataset_list_sql,
                            prep_data_message1=prep_data_message1,
                            prep_data_message2=prep_data_message2_sql,
                            prepared_data_list=prepared_data_list_sql[:records_limit],
@@ -76,7 +64,7 @@ def upload_file():
         utils.set_variable(name="TEXT_ID_COL", value=text_id_col)
         utils.set_variable(name="TEXT_VALUE_COL", value=text_value_col)
 
-        datasets_available_sql = utils.get_variable_value(name="DATASETS_AVAILABLE")
+        datasets_available_sql = utils.get_available_datasets()
 
         utils.clear_y_classes()
 
@@ -110,7 +98,7 @@ def upload_file():
                 utils.set_variable(name="DATE_TIME", value=date_time)
 
                 return render_template("start.html",
-                                       dataset_list=config.DATASETS_AVAILABLE,
+                                       dataset_list=datasets_available_sql,
                                        prep_data_message1=prep_data_message1,
                                        prep_data_message2=prep_data_message2,
                                        prepared_data_list=prepared_texts_sql[:records_limit])
@@ -131,8 +119,6 @@ def home():
 
 @app.route("/")
 def index():
-    search_exclude_already_labeled_sql = utils.get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
-    print("search_exclude_already_labeled_sql :", search_exclude_already_labeled_sql)
     available_datasets_sql = utils.get_available_datasets()
     return render_template("start.html", dataset_list=available_datasets_sql)
 
@@ -141,14 +127,14 @@ def index():
 def dataset_selected():
     dataset_name = request.args.get("dataset_name", None)
     utils.set_variable(name="DATASET_NAME", value=dataset_name)
+    utils.set_pkl(name="DATASET_NAME", pkl_data=dataset_name, reset=False)
     dataset_name_sql = utils.get_variable_value(name="DATASET_NAME")
 
     dataset_url = request.args.get("dataset_url", None)
     utils.set_variable(name="DATASET_URL", value=dataset_url)
+    utils.set_pkl(name="DATASET_URL", pkl_data=dataset_url, reset=False)
 
-    conn = utils.get_db_connection()
-    available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
-    conn.close()
+    available_datasets = utils.get_available_datasets()
 
     table_limit_sql = utils.get_variable_value(name="TABLE_LIMIT")
 
@@ -160,6 +146,8 @@ def dataset_selected():
 
         y_classes_sql = utils.get_y_classes()
         utils.set_variable(name="SHUFFLE_BY", value="random")
+        utils.set_pkl(name="Y_CLASSES", pkl_data=y_classes_sql, reset=False)
+
         shuffle_by_sql = utils.get_variable_value(name="SHUFFLE_BY")
         texts_limit_sql = utils.get_variable_value(name="TEXTS_LIMIT")
         max_features_sql = utils.get_variable_value(name="MAX_FEATURES")
@@ -177,16 +165,14 @@ def dataset_selected():
         utils.populate_texts_table_sql(texts_list=texts_list)
 
         text_list_full_sql = utils.get_text_list(table_name="texts")
-        text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
-
+        text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
+                                                         sub_list_limit=table_limit_sql)
         utils.set_variable(name="TOTAL_PAGES", value=total_pages)
         utils.set_variable(name="SEARCH_MESSAGE", value="")
-
-        utils.set_pkl(name="CLASSIFIER", pkl_data=None, reset=True)
+        utils.set_pkl(name="CLASSIFIER", pkl_data=None, reset=False)
         utils.set_texts_group_x(None, table_name="group1Texts")
         utils.set_texts_group_x(None, table_name="group2Texts")
         utils.reset_difficult_texts_sql()
-
         utils.set_variable(name="OVERALL_QUALITY_SCORE", value="-")
 
         return render_template("start.html",
@@ -219,6 +205,7 @@ def begin_labeling():
 
     date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
     utils.set_variable(name="DATE_TIME", value=date_time)
+    utils.set_pkl(name="DATE_TIME", pkl_data=date_time, reset=False)
 
     conn = utils.get_db_connection()
     available_datasets = conn.execute('SELECT * FROM availableDatasets').fetchall()
@@ -297,7 +284,7 @@ def begin_labeling_new_dataset():
     texts_limit_sql = utils.get_variable_value(name="TEXTS_LIMIT")
     max_features_sql = utils.get_variable_value(name="MAX_FEATURES")
     random_state_sql = utils.get_variable_value(name="RND_STATE")
-    text_id_col_sql = utils.get_pkl(name="TEXT_ID_COL")
+    text_id_col_sql = utils.get_variable_value(name="TEXT_ID_COL")
     text_value_col_sql = utils.get_variable_value(name="TEXT_VALUE_COL")
 
     conn = utils.get_db_connection()
@@ -316,22 +303,10 @@ def begin_labeling_new_dataset():
                             y_classes=y_classes_sql,
                             rnd_state=random_state_sql)
 
-    conn = utils.get_db_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM texts;")
-    for text_record in texts_list:
-        cur.execute("INSERT INTO texts (id, text, label) VALUES (?, ?, ?)",
-                    (text_record["id"], text_record["text"], "-"))
-    conn.commit()
-    conn.close()
+    utils.populate_texts_table_sql(texts_list=texts_list, table_name="texts")
 
-    # for master, update in zip([config.TEXTS_LIST, config.TEXTS_LIST_LIST, config.ADJ_TEXT_IDS,
-    #                            config.TOTAL_PAGES, config.VECTORIZED_CORPUS, config.VECTORIZER_LIST,
-    #                            config.CORPUS_TEXT_IDS],
-    #                           [texts_list, texts_list_list, adj_text_ids, total_pages, vectorized_corpus,
-    #                            vectorizer, corpus_text_ids]):
-    #     master.clear()
-    #     master.append(update)
+    utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
+    search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
 
     utils.set_variable(name="TOTAL_PAGES", value=total_pages)
     total_pages_sql = utils.get_variable_value(name="TOTAL_PAGES")
@@ -353,7 +328,9 @@ def begin_labeling_new_dataset():
     page_number = 0
 
     text_list_full_sql = utils.get_text_list(table_name="texts")
-    text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
+    text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
+                                                     sub_list_limit=table_limit_sql)
+    page_navigation_message = "Displaying {:,} texts ({} per page)".format(len(text_list_full_sql), table_limit_sql)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
     initialize_flags_sql = utils.get_panel_flags()
@@ -380,6 +357,7 @@ def begin_labeling_new_dataset():
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            info_message="No label selected",
+                           page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
                            page_number=page_number,
@@ -1336,8 +1314,6 @@ def export_records():
 
     download_files = []
 
-    print("After download_files")
-
     text_list_full_sql = utils.get_text_list(table_name="texts")
     texts_df = pd.DataFrame.from_dict(text_list_full_sql)
     texts_df.to_csv("./output/labeled_texts.csv", index=False)
@@ -1353,7 +1329,6 @@ def export_records():
     value_log_df.to_csv("./output/value_log.csv", index=False)
     download_files.append("./output/value_log.csv")
 
-    print("After value_log_sql")
     classifier_sql = utils.get_pkl(name="CLASSIFIER")
     if classifier_sql:
         filename = "trained-classifier.pkl"
@@ -1406,12 +1381,23 @@ def save_state():
     page_navigation_message = "Displaying {:,} texts ({} per page)".format(len(text_list_full_sql), table_limit_sql)
     initialize_flags_sql = utils.get_panel_flags()
 
+    utils.set_pkl(name="CLICK_LOG", pkl_data=utils.get_click_log(), reset=False)
+    utils.set_pkl(name="VALUE_LOG", pkl_data=utils.get_value_log(), reset=False)
+    utils.set_pkl(name="TOTAL_SUMMARY", pkl_data=utils.get_total_summary_sql(), reset=False)
+    utils.set_pkl(name="LABEL_SUMMARY", pkl_data=utils.get_label_summary_sql(), reset=False)
+
+    dataset_name_pkl = utils.get_pkl(name="DATASET_NAME")
+    dataset_url_pkl = utils.get_pkl(name="DATASET_URL")
+    date_time_pkl = utils.get_pkl(name="DATE_TIME")
+    y_classes_pkl = utils.get_pkl(name="Y_CLASSES")
+    click_log_pkl = utils.get_pkl(name="CLICK_LOG")
+    value_log_pkl = utils.get_pkl(name="VALUE_LOG")
+    total_summary_pkl = utils.get_pkl(name="TOTAL_SUMMARY")
+    label_summary_pkl = utils.get_pkl(name="LABEL_SUMMARY")
+
     classifier_sql = utils.get_pkl(name="CLASSIFIER")
     vectorizer_sql = utils.get_pkl(name="VECTORIZER")
     vectorized_corpus_sql = utils.get_pkl(name="VECTORIZED_CORPUS")
-    click_log_sql = utils.get_click_log()
-    value_log_sql = utils.get_value_log()
-
     total_summary_sql = utils.get_total_summary_sql()
     label_summary_sql = utils.get_label_summary_sql()
 
@@ -1447,7 +1433,7 @@ def save_state():
     # save_state["TOTAL_PAGES_FULL"] = config.TOTAL_PAGES_FULL
     # save_state["ADJ_TEXT_IDS"] = config.ADJ_TEXT_IDS
     save_state["TOTAL_PAGES"] = utils.get_variable_value(name="TOTAL_PAGES")
-    save_state["Y_CLASSES"] = utils.get_variable_value(name="Y_CLASSES")
+    save_state["Y_CLASSES"] = utils.get_y_classes()
 
     save_state["SHUFFLE_BY"] = utils.get_variable_value(name="SHUFFLE_BY")
     save_state["NUMBER_UNLABELED_TEXTS"] = utils.get_variable_value(name="NUMBER_UNLABELED_TEXTS")
@@ -1458,17 +1444,23 @@ def save_state():
     with open("./output/save/save_state.json", "w") as outfile:
         json.dump(save_state, outfile)
 
-    files = [classifier_sql, vectorizer_sql, vectorized_corpus_sql, click_log_sql, value_log_sql]
-    filenames = ["CLASSIFIER", "VECTORIZER", "VECTORIZED_CORPUS", "CLICK_LOG", "VALUE_LOG"]
+    files = [classifier_sql, vectorizer_sql, vectorized_corpus_sql, click_log_pkl, value_log_pkl, total_summary_pkl,
+             label_summary_pkl, dataset_name_pkl, dataset_url_pkl, date_time_pkl, y_classes_pkl]
+
+    filenames = ["CLASSIFIER", "VECTORIZER", "VECTORIZED_CORPUS", "CLICK_LOG", "VALUE_LOG", "TOTAL_SUMMARY",
+                 "LABEL_SUMMARY", "DATASET_NAME", "DATASET_URL", "DATE_TIME", "Y_CLASSES"]
 
     for file, filename in zip(files, filenames):
         temp_filename = filename + ".pkl"
-        pickle.dump(file, open("./output/save/" + temp_filename), "wb")
+        with open("./output/save/" + temp_filename, "wb") as f:
+            pickle.dump(file, f)
+
+    print(">> save_state >>", y_classes_sql)
 
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
-                           info_message="No label selected",
+                           info_message="Work saved",
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -1500,10 +1492,8 @@ def update_panels():
 @app.route('/update_search_exclude_already_labeled_sql', methods=['POST'])
 def update_search_exclude_already_labeled_sql():
     search_exclude_already_labeled = request.args.get("search_exclude_already_labeled", None)
-    print("search_exclude_already_labeled :", search_exclude_already_labeled)
     utils.set_variable(name="SEARCH_EXCLUDE_ALREADY_LABELED", value=search_exclude_already_labeled)
     search_exclude_already_labeled_sql = utils.get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
-    print("search_exclude_already_labeled_sql :", search_exclude_already_labeled_sql)
     return search_exclude_already_labeled
 
 
@@ -2196,16 +2186,17 @@ def grouped_search_texts():
         print("generate_summary_sql - test_duration :", test_duration)
         # Group 2 **************************************************************************************
         labels_got_overridden_flag_sql = utils.get_variable_value(name="LABELS_GOT_OVERRIDDEN_FLAG")
-        classifier_sql = utils.fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
-                                                  corpus_text_ids=corpus_text_ids_sql,
-                                                  texts_list=text_list_full_sql,
-                                                  texts_list_labeled=texts_group_updated,
-                                                  y_classes=y_classes_sql,
-                                                  verbose=fit_classifier_verbose_sql,
-                                                  random_state=random_state_sql,
-                                                  n_jobs=-1,
-                                                  labels_got_overridden_flag=labels_got_overridden_flag_sql,
-                                                  full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden_sql)
+        classifier_sql = \
+            utils.fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
+                                     corpus_text_ids=corpus_text_ids_sql,
+                                     texts_list=text_list_full_sql,
+                                     texts_list_labeled=texts_group_updated,
+                                     y_classes=y_classes_sql,
+                                     verbose=fit_classifier_verbose_sql,
+                                     random_state=random_state_sql,
+                                     n_jobs=-1,
+                                     labels_got_overridden_flag=labels_got_overridden_flag_sql,
+                                     full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden_sql)
 
         if classifier_sql and \
                 (selected_label_search_texts is not None and

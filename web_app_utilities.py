@@ -69,7 +69,8 @@ def populate_texts_table_sql(texts_list, table_name="texts"):
 def set_pkl(name, pkl_data, reset=False):
     if not reset:
         pathlib.Path("./output/pkl/").mkdir(parents=True, exist_ok=True)
-        pickle.dump(pkl_data, open("./output/pkl/" + name + ".pkl", "wb"))
+        with open("./output/pkl/" + name + ".pkl", "wb") as f:
+            pickle.dump(pkl_data, f)
     else:
         if os.path.exists("./output/pkl/" + name + ".pkl"):
             os.remove("./output/pkl/" + name + ".pkl")
@@ -598,15 +599,16 @@ def get_available_datasets():
     cur.execute("INSERT INTO availableDatasets SELECT * FROM fixedDatasets;")
     conn.commit()
     conn.close()
-    dataset_name, dataset_url, date_time, y_classes, total_summary = config.has_save_data(source_dir="./output/save")
+    dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data(source_dir="./output/save")
+
     if dataset_name:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",
-                    (dataset_name[0] + "-" + date_time[0],
+                    (dataset_name + "-" + date_time,
                      "A partially labeled dataset having " + total_summary[2]["percentage"] +
                      " of " + total_summary[0]["number"] + " texts labeled.",
-                     dataset_url[0]))
+                     dataset_url))
         conn.commit()
         conn.close()
 
@@ -614,6 +616,18 @@ def get_available_datasets():
     available_datasets_sql = conn.execute('SELECT * FROM availableDatasets').fetchall()
     conn.close()
     return available_datasets_sql
+
+
+def has_save_data(source_dir="./output"):
+    # try:
+    dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
+    dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
+    date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
+    y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
+    total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
+    return dataset_name, dataset_url, date_time, y_classes, total_summary
+    # except:
+    #     return None, None, None, None, None
 
 
 def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
@@ -830,9 +844,9 @@ def load_new_data(source_file,
                   y_classes=["Label 1", "Label 2", "Label 3", "Label 4"], rnd_state=258):
 
     data_df = get_new_data(source_file=source_file,
-                                 source_folder=source_folder,
-                                 number_samples=None,
-                                 random_state=rnd_state)
+                           source_folder=source_folder,
+                           number_samples=None,
+                           random_state=rnd_state)
     print("data_df :")
     print(data_df.head())
     corpus_text_ids = [str(x) for x in data_df[text_id_col].values]

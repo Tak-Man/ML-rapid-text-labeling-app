@@ -243,7 +243,13 @@
                         <button id="enterLabelButton" type="submit" class="appButton" name="action" value="add">Enter Label</button>
                         <button id="clearLabelButton" type="submit" class="appButton" name="action" value="clear">Clear Labels</button>
                     </form>
-                    <div id="displayEnteredLabels">{{ entered_labels }}</div>
+                    <div id="displayEnteredLabels">
+                        <p>
+                            {% for label in entered_labels %}
+                            {{ label }}<br>
+                            {% endfor %}
+                        </p>
+                    </div>
                 </div>
 
                 <h2>Select a Layout</h2>
