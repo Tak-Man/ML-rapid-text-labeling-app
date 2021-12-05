@@ -1492,10 +1492,19 @@ def save_state():
 
 @app.route('/update_panels', methods=['GET', 'POST'])
 def update_panels():
-    # panel_flags_sql = utils.get_panel_flags()
     panel_flag = eval(request.args.get("panel_flag", None))
     utils.update_panel_flags_sql(update_flag=panel_flag)
     return panel_flag
+
+
+@app.route('/update_search_exclude_already_labeled_sql', methods=['POST'])
+def update_search_exclude_already_labeled_sql():
+    search_exclude_already_labeled = request.args.get("search_exclude_already_labeled", None)
+    print("search_exclude_already_labeled :", search_exclude_already_labeled)
+    utils.set_variable(name="SEARCH_EXCLUDE_ALREADY_LABELED", value=search_exclude_already_labeled)
+    search_exclude_already_labeled_sql = utils.get_variable_value(name="SEARCH_EXCLUDE_ALREADY_LABELED")
+    print("search_exclude_already_labeled_sql :", search_exclude_already_labeled_sql)
+    return search_exclude_already_labeled
 
 
 @app.route('/label_selected', methods=['GET', 'POST'])

@@ -9,6 +9,19 @@
     </style>
 </head>
 <body>
+    <script>
+    function yesSearchOverride() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="Yes") }}', true);
+        xhttp.send();
+    }
+
+    function noSearchOverride() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="No") }}', true);
+        xhttp.send();
+    }
+    </script>
     <div class="container">
         <div id="divHeader">
             <h1 title="This tool is meant to be used for situations where a large number of texts records are to be evaluated so that a small number of labels can be assigned to them. The tool provides labeling methods that should be faster than a person labeling each text one at a time.">Rapid Labeling of Text Corpora Using Machine-Learning</h1>
@@ -368,7 +381,7 @@
                             {% endif %}
                         </table>
                         <div id="difficultTextMessage">
-                            Try to provide at least 1,000 examples for each label are assigned.
+                            Try to provide at least 1,000 examples for each label.
                             Then, try to get an ‘Overall Quality Score’ close to 100%.<br>
                             The ‘Overall Quality Score’ can be improved by examining the ‘Difficult Texts’.
                             Texts that are difficult to separate into one label appear at the top of the
@@ -444,19 +457,23 @@
                         <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
                             <div id="divSearchOverrideMessage">
                                 <label id="searchOverrideMessage">Allow search to override existing labels : </label>
-                                {% if search_exclude_already_labeled %}
+                                {% if search_exclude_already_labeled == "Yes" %}
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio" value="Yes">Yes
+                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio"
+                                           value="Yes" onclick="noSearchOverride()">Yes
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio" value="No" checked>No
+                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio"
+                                           value="No" onclick="yesSearchOverride()" checked>No
                                 </label>
                                 {% else %}
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio" value="Yes" checked>Yes
+                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio"
+                                           value="Yes" onclick="noSearchOverride()" checked>Yes
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio" value="No">No
+                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio"
+                                           value="No" onclick="yesSearchOverride()">No
                                 </label>
                                 {% endif %}
                             </div>
