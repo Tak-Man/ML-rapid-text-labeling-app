@@ -136,8 +136,6 @@ div {
     border-radius: var(--main-radius);
 }
 
-
-
 #divLabeling {
     background-color: #c2c4c6; /*#959ea7; dark grey/*#f2f2f1; light grey #ffcb05; yellow*/
     grid-area: divLabeling;
@@ -485,6 +483,55 @@ div {
     padding-top: 0.5vw;
     text-decoration: underline;
 }
+
+#alertMessage {
+    position: fixed;
+    top: 14vh;
+    left: 75vw;
+    width: 23.5vw;
+    height: 5vh;
+    padding: 1vh;
+    background: #92D293 ;
+    color: #333333;
+    font-family: sans-serif;
+    text-align: left;
+    border: 1px solid #aaaaaa;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    visibility: visible;
+    opacity: 0.85;
+    /*animation: fadeinout 8s linear forwards;*/
+    animation: hideAnimation 0s linear forwards 6s, flyInAnimation 0.75s linear, fadeOut 2s linear 4s;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; visibility: hidden;}
+  50% { opacity: 1; visibility: visible}
+}
+
+@keyframes hideAnimation {
+    to {
+    visibility: hidden;
+    width: 0;
+    height: 0;
+    }
+}
+
+@keyframes flyInAnimation {
+    0% {
+    transform: translateX(25%);
+    }
+    100% {
+    transform: translateX(0%);
+    }
+}
+
 
 .accordion {
     /*background-color: #eee;*/

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Rapid Text Labeling (Layout 2)</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='text_labeling_2_style.css') }}" media="all">
-
     <style>
     </style>
 </head>
@@ -423,10 +422,18 @@
                 {{ label_summary_string }}, Overall Quality : -
                 {% endif %}
             </div>
+
         </div>
         <div id="divLabeling">
             <h2>Select Labeling Method</h2>
             <p class="subHeading">Select one or more method for labeling below</p>
+
+            {% if alert_message | length > 0 %}
+            <div id=alertMessage class="alertMessage">
+            {{ alert_message }}
+            </div>
+            {% endif %}
+
             <button class="accordion">Label Single Text</button>
             <div class="panel" value="0">
                 <p class="subHeading">Label texts one at a time to increase accuracy</p>

@@ -1,7 +1,6 @@
-from flask import Flask, render_template, request, jsonify, flash, make_response, redirect, g, send_file, session
+from flask import Flask, render_template, request, make_response, redirect, send_file, session
 from flask_session import Session
 import web_app_utilities as utils
-import configuration as config
 import copy
 import pandas as pd
 from datetime import datetime
@@ -13,13 +12,13 @@ import os
 
 
 app = Flask(__name__)
-# Session(app)
-# app.secret_key = "super secret key"
+
+app.secret_key = "super_secret_key"
 app.config.from_object(__name__)
 app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.config["MAX_CONTENT_PATH"] = 10000
-app.jinja_env.add_extension('jinja2.ext.do')
-
+# app.jinja_env.add_extension('jinja2.ext.do')
+# Session(app)
 
 @app.route('/label_entered', methods=['POST'])
 def label_entered():
@@ -248,10 +247,13 @@ def begin_labeling():
     overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
 
+    info_message = "No label selected"
+    alert_message = "Begin labeling texts to get a 'Quality Score'"
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
-                           info_message="No label selected",
+                           info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -351,10 +353,15 @@ def begin_labeling_new_dataset():
     search_message_sql = utils.get_variable_value(name="SEARCH_MESSAGE")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
     overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
+
+    info_message = "No label selected"
+    alert_message = "Begin labeling texts to get a 'Quality Score'"
+
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
-                           info_message="No label selected",
+                           info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -466,11 +473,14 @@ def text_labeling():
     label_summary_sql = utils.get_label_summary_sql()
     texts_group_3_sql = utils.get_difficult_texts_sql()
 
+    info_message = "Text selected"
+    alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
-                           info_message="Text selected",
+                           info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -527,11 +537,14 @@ def go_to_page():
                                                      guid=None)
     utils.add_log_click_record_sql(records=[click_record])
 
+    info_message = ""
+    alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
                            label_selected=label_selected,
-                           info_message="",
+                           info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -609,17 +622,19 @@ def single_text():
 
     if new_label is None or new_label == "" or new_id == "None":
         if new_label == "":
-            flash("Select a 'Label'.", "error")
             info_message += f"Select a 'Label'."
 
         if new_id == "None":
             info_message += "\n" + f"Select a 'Text ID'."
 
         text_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
+
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -683,12 +698,14 @@ def single_text():
             utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
                                                           full_fit_if_labels_got_overridden=True, round_to=1,
                                                           format_as_percentage=True)
-
+        info_message = "Label assigned"
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=new_label,
-                               info_message="Label assigned",
+                               info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -777,10 +794,12 @@ def grouped_1_texts():
         texts_group_3_sql = utils.get_difficult_texts_sql()
         texts_group_1_sql = utils.get_texts_group_x(table_name="group1Texts")
 
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -861,11 +880,14 @@ def grouped_1_texts():
         initialize_flags_sql = utils.get_panel_flags()
         texts_group_3_sql = utils.get_difficult_texts_sql()
 
+        info_message = "Labels assigned to group"
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group1,
-                               info_message="Labels assigned to group",
+                               info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -949,11 +971,14 @@ def grouped_2_texts():
         label_summary_sql = utils.get_label_summary_sql()
         label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
         overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
+
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label_group2,
                                info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -1035,12 +1060,14 @@ def grouped_2_texts():
             utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
                                                           full_fit_if_labels_got_overridden=True, round_to=1,
                                                           format_as_percentage=True)
-
+        info_message = "Labels assigned to group"
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_group2,
-                               info_message="Labels assigned to group",
+                               info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -1120,11 +1147,13 @@ def label_all():
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
                        "auto-labeling, then work through the 'Difficult Texts' to improve the quality."
         label_summary_message = info_message
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label,
                                info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -1159,11 +1188,13 @@ def label_all():
             temp_count = utils.get_variable_value(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS")
             utils.set_variable(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS", value=(temp_count + 1))
 
+            alert_message = info_message
             return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
+                                   alert_message=alert_message,
                                    page_navigation_message=page_navigation_message,
                                    search_message=search_message_sql,
                                    search_results_length=search_results_length_sql,
@@ -1194,12 +1225,13 @@ def label_all():
             label_summary_message = info_message
             temp_count = utils.get_variable_value(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS")
             utils.set_variable(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS", value=(temp_count + 1))
-
+            alert_message = info_message
             return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
+                                   alert_message=alert_message,
                                    page_navigation_message=page_navigation_message,
                                    search_message=search_message_sql,
                                    search_results_length=search_results_length_sql,
@@ -1246,12 +1278,13 @@ def label_all():
 
             label_summary_message = info_message
             texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
-
+            alert_message = info_message
             return render_template(html_config_template_sql,
                                    selected_text_id="None", # new_id,
                                    selected_text="Select a text below to label.", # new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
+                                   alert_message=alert_message,
                                    page_navigation_message=page_navigation_message,
                                    search_message=search_message_sql,
                                    search_results_length=search_results_length_sql,
@@ -1276,11 +1309,13 @@ def label_all():
     # **********************************************************************************************
     else:
         info_message = "Label more texts before trying again."
+        alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id=new_id,
                            selected_text=new_text,
                            label_selected=selected_label,
                            info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -1456,12 +1491,13 @@ def save_state():
         with open("./output/save/" + temp_filename, "wb") as f:
             pickle.dump(file, f)
 
-    print(">> save_state >>", y_classes_sql)
-
+    info_message = "Work saved"
+    alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
-                           info_message="Work saved",
+                           info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -1587,11 +1623,13 @@ def label_selected():
     label_summary_sql = utils.get_label_summary_sql()
     total_summary_sql = utils.get_total_summary_sql()
     texts_group_3_sql = utils.get_difficult_texts_sql()
+    alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id=selected_text_id,
                            selected_text=selected_text,
                            label_selected=label_selected,
                            info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -1667,11 +1705,13 @@ def generate_difficult_texts():
         scroll_to_id = None
         difficult_texts_message = None
 
+    alert_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id=id,
                            selected_text=text,
                            label_selected=label_selected,
                            info_message=info_message,
+                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -2107,10 +2147,12 @@ def grouped_search_texts():
         search_results_texts_list_list_sql = \
             utils.create_text_list_list(text_list_full_sql=search_results_texts_list_sql, 
                                         sub_list_limit=table_limit_sql)
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message_search,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -2227,11 +2269,14 @@ def grouped_search_texts():
         search_results_texts_list_list_sql = \
             utils.create_text_list_list(text_list_full_sql=search_results_texts_list_sql,
                                         sub_list_limit=table_limit_sql)
+        info_message = "Labels assigned to group"
+        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
                                label_selected=selected_label_search_texts,
-                               info_message="Labels assigned to group",
+                               info_message=info_message,
+                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message_search,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -2335,5 +2380,5 @@ def clear_search_all_texts():
 
 
 if __name__ == "__main__":
-    app.run() # host="127.0.0.1:5000"
+    app.run()
 
