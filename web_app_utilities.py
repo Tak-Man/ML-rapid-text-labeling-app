@@ -617,15 +617,15 @@ def get_available_datasets():
 
 
 def has_save_data(source_dir="./output"):
-    # try:
-    dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
-    dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
-    date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
-    y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
-    total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
-    return dataset_name, dataset_url, date_time, y_classes, total_summary
-    # except:
-    #     return None, None, None, None, None
+    try:
+        dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
+        dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
+        date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
+        y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
+        total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
+        return dataset_name, dataset_url, date_time, y_classes, total_summary
+    except:
+        return None, None, None, None, None
 
 
 def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,

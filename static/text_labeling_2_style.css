@@ -511,8 +511,8 @@ div {
 }
 
 @keyframes fadeInOut {
-  0%, 100% { opacity: 0; visibility: hidden;}
-  50% { opacity: 1; visibility: visible}
+  0%, 100% { opacity: 0; visibility: hidden; }
+  50% { opacity: 1; visibility: visible; }
 }
 
 @keyframes hideAnimation {
