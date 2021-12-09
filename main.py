@@ -1400,6 +1400,8 @@ def export_records():
 
     date_time_sql = utils.get_variable_value(name="DATE_TIME")
     filename = "rapid-labeling-results-" + date_time_sql + ".zip"
+    if not os.path.exists("./output/download/"):
+        os.makedirs("./output/download/")
     file_path = "./output/download/rapid-labeling-results-" + date_time_sql + ".zip"
     zip_file = zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED)
     for file in download_files:
