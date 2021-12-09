@@ -1470,6 +1470,8 @@ def save_state():
     save_state["LABEL_SUMMARY_STRING"] = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
 
     save_state["PREDICTIONS_NUMBER"] = utils.get_variable_value(name="PREDICTIONS_NUMBER")
+    if not os.path.exists("./output/save/"):
+        os.makedirs("./output/save/")
     with open("./output/save/save_state.json", "w") as outfile:
         json.dump(save_state, outfile)
 
