@@ -186,6 +186,51 @@ div {
     border-radius: var(--main-radius);
 }
 
+#bodyRight1 {
+    justify-content: center;
+}
+
+@keyframes gif1 {
+	0% { content: url(gif_11.png); }
+	25% { content: url(gif_12.png); }
+	50% { content: url(gif_13.png); }
+	75% { content: url(gif_14.png); }
+	100% { content: url(gif_15.png); }
+}
+
+#gif1 {
+	animation-name: gif1;
+	animation-duration: 7s;
+	animation-iteration-count: infinite;
+	height: 9vw;
+	width: 15vw;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #333333;
+    margin-left: 0.35vw;
+}
+
+
+@keyframes gif2 {
+	0% { content: url(gif_01.png); }
+	25% { content: url(gif_02.png); }
+	50% { content: url(gif_03.png); }
+	75% { content: url(gif_04.png); }
+	100% { content: url(gif_05.png); }
+}
+
+#gif2 {
+	animation-name: gif2;
+	animation-duration: 7s;
+	animation-iteration-count: infinite;
+	height: 9vw;
+	width: 15vw;
+    border-radius: var(--main-radius);
+    border: 1px solid;
+    border-color: #333333;
+    margin-left: 0.35vw;
+}
+
 #gridBottomRight {
     color: black; /* #0d57aa; /*blue*/
     background-color: #c2c4c6;

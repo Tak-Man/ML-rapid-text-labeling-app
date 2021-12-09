@@ -35,7 +35,7 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
-connection = sqlite3.connect('database.db')
+connection = sqlite3.connect('database.db', timeout=10)
 with open("schema.sql") as f:
     connection.executescript(f.read())
 
@@ -294,6 +294,7 @@ def set_total_summary(text_lists):
     number_unlabeled = label_counter["-"]
     number_labeled = total_texts - number_unlabeled
     total_texts_percentage = "100.00%"
+
     number_unlabeled_percentage = "{:.2%}".format(number_unlabeled / total_texts)
     number_labeled_percentage = "{:.2%}".format(number_labeled / total_texts)
 
@@ -621,10 +622,16 @@ def get_available_datasets():
     dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data(source_dir="./output/save")
 
     if dataset_name:
+        date_at_end_check = re.findall(r"(.*)\-[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}", dataset_name)
+        if len(date_at_end_check) > 0:
+            dataset_name_alt = date_at_end_check[0]
+        else:
+            dataset_name_alt = dataset_name
+
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",
-                    (dataset_name + "-" + date_time,
+                    (dataset_name_alt + "-" + date_time,
                      "A partially labeled dataset having " + total_summary[2]["percentage"] +
                      " of " + total_summary[0]["number"] + " texts labeled.",
                      dataset_url))
@@ -1042,17 +1049,6 @@ def get_top_similar_texts_sql(all_texts_json, similarities_series, top=5, exclud
     return top_texts
 
 
-
-
-
-
-
-
-
-
-
-
-
 def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="./output/upload"):
     try:
         dataset_df = pd.read_csv(os.path.join(source_dir, source_file_name))
@@ -1073,23 +1069,27 @@ def load_save_state_sql(source_dir="./output/save"):
     set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
     set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
     set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
-    set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")), reset=False)
+    set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")),
+            reset=False)
     set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
     set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
     set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
+    set_pkl(name="TEXTS_LIST_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST_LIST.pkl"), "rb")),
+            reset=False)
     set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")), reset=False)
+    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")),
+            reset=False)
     set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
     set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
     set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
 
-    set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
-    print('save_state_json["TOTAL_PAGES"] :', save_state_json["TOTAL_PAGES"])
     set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
     add_y_classes(y_classses_list=save_state_json["Y_CLASSES"], begin_fresh=True)
     set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
     set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
     set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+    test_dataset_name_sql = get_variable_value(name="DATASET_NAME")
+    print("test_dataset_name_sql :", test_dataset_name_sql)
     set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
     set_variable(name="NUMBER_UNLABELED_TEXTS", value=save_state_json["NUMBER_UNLABELED_TEXTS"])
     set_variable(name="LABEL_SUMMARY_STRING", value=save_state_json["LABEL_SUMMARY_STRING"])
@@ -1099,7 +1099,8 @@ def load_save_state_sql(source_dir="./output/save"):
                  value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS"])
     set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
                  value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
-    texts_list_sql = get_text_list(table_name="texts")
+    texts_list_sql = get_pkl(name="TEXTS_LIST")
+    texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
     generate_summary_sql(text_lists=texts_list_sql)
     return 1
     # except:

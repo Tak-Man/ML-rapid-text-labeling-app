@@ -631,7 +631,7 @@ def single_text():
         if new_id == "None":
             info_message += "\n" + f"Select a 'Text ID'."
 
-        text_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
+        texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                      sub_list_limit=table_limit_sql)
 
         alert_message = info_message
@@ -646,7 +646,7 @@ def single_text():
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
-                               texts_list=text_list_list[page_number],
+                               texts_list=texts_list_list[page_number],
                                texts_group_1=texts_group_1_sql,
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
@@ -1410,7 +1410,6 @@ def export_records():
 
 @app.route('/save_state', methods=['GET', 'POST'])
 def save_state():
-    print(">> /save_state >> I am here early")
     utils.set_variable(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS", value=0)
     click_record, guid = utils.generate_click_record(click_location="summary",
                                                      click_type="save_state",
@@ -1421,21 +1420,16 @@ def save_state():
     table_limit_sql = utils.get_variable_value(name="TABLE_LIMIT")
     y_classes_sql = utils.get_y_classes()
     text_list_full_sql = utils.get_text_list(table_name="texts")
-    texts_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, 
+    texts_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                       sub_list_limit=table_limit_sql)
     page_navigation_message = "Displaying {:,} texts ({} per page)".format(len(text_list_full_sql), table_limit_sql)
     initialize_flags_sql = utils.get_panel_flags()
 
-    print(">> /save_state >> I am here later than early ")
     dataset_name_pkl = utils.get_pkl(name="DATASET_NAME")
     dataset_url_pkl = utils.get_pkl(name="DATASET_URL")
     date_time_pkl = utils.get_pkl(name="DATE_TIME")
     y_classes_pkl = utils.get_pkl(name="Y_CLASSES")
-    click_log_pkl = utils.get_pkl(name="CLICK_LOG")
-    value_log_pkl = utils.get_pkl(name="VALUE_LOG")
-    total_summary_pkl = utils.get_pkl(name="TOTAL_SUMMARY")
-    label_summary_pkl = utils.get_pkl(name="LABEL_SUMMARY")
-    print(">> /save_state >> I am here again")
+
     corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
     classifier_sql = utils.get_pkl(name="CLASSIFIER")
     vectorizer_sql = utils.get_pkl(name="VECTORIZER")
@@ -1443,7 +1437,6 @@ def save_state():
     texts_group_2 = utils.get_texts_group_x(table_name="group2Texts")
     texts_group_3 = utils.get_difficult_texts_sql()
     vectorized_corpus_sql = utils.get_pkl(name="VECTORIZED_CORPUS")
-    print(">> /save_state >> I am here after texts_group_1")
     total_summary_sql = utils.get_total_summary_sql()
     label_summary_sql = utils.get_label_summary_sql()
 
@@ -1456,7 +1449,6 @@ def save_state():
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
 
-    print(">> /save_state >> I am here")
     save_state = {}
     save_state["DATASET_NAME"] = utils.get_variable_value(name="DATASET_NAME")
     save_state["DATASET_URL"] = utils.get_variable_value(name="DATASET_URL")
@@ -1468,7 +1460,7 @@ def save_state():
     save_state["RECOMMENDATIONS_SUMMARY"] = []
     search_message_sql = utils.get_variable_value(name="SEARCH_MESSAGE")
     save_state["SEARCH_MESSAGE"] = search_message_sql
-    texts_list_sql = utils.get_text_list(table_name="texts")
+
     save_state["CORPUS_TEXT_IDS"] = utils.get_pkl(name="CORPUS_TEXT_IDS")
     save_state["TOTAL_PAGES"] = utils.get_variable_value(name="TOTAL_PAGES")
     save_state["Y_CLASSES"] = utils.get_y_classes()
@@ -1485,15 +1477,19 @@ def save_state():
     utils.set_pkl(name="VALUE_LOG", pkl_data=utils.get_value_log(), reset=False)
     utils.set_pkl(name="TOTAL_SUMMARY", pkl_data=utils.get_total_summary_sql(), reset=False)
     utils.set_pkl(name="LABEL_SUMMARY", pkl_data=utils.get_label_summary_sql(), reset=False)
+    click_log_pkl = utils.get_pkl(name="CLICK_LOG")
+    value_log_pkl = utils.get_pkl(name="VALUE_LOG")
+    total_summary_pkl = utils.get_pkl(name="TOTAL_SUMMARY")
+    label_summary_pkl = utils.get_pkl(name="LABEL_SUMMARY")
 
     files = [corpus_text_ids_sql, texts_group_1, texts_group_2, texts_group_3,
-             texts_list_sql, classifier_sql, vectorizer_sql, vectorized_corpus_sql, click_log_pkl, value_log_pkl,
-             total_summary_pkl,
+             text_list_full_sql, classifier_sql, vectorizer_sql, vectorized_corpus_sql, click_log_pkl, value_log_pkl,
+             total_summary_pkl, texts_list_list_sql,
              label_summary_pkl, dataset_name_pkl, dataset_url_pkl, date_time_pkl, y_classes_pkl]
 
     filenames = ["CORPUS_TEXT_IDS", "TEXTS_GROUP_1", "TEXTS_GROUP_2", "TEXTS_GROUP_3",
                  "TEXTS_LIST", "CLASSIFIER", "VECTORIZER", "VECTORIZED_CORPUS", "CLICK_LOG", "VALUE_LOG",
-                 "TOTAL_SUMMARY",
+                 "TOTAL_SUMMARY", "TEXTS_LIST_LIST",
                  "LABEL_SUMMARY", "DATASET_NAME", "DATASET_URL", "DATE_TIME", "Y_CLASSES"]
 
     for file, filename in zip(files, filenames):
@@ -1573,7 +1569,6 @@ def label_selected():
     predictions_verbose_sql = utils.get_variable_value(name="PREDICTIONS_VERBOSE")
     group_2_exclude_already_labeled_sql = utils.get_variable_value(name="GROUP_2_EXCLUDE_ALREADY_LABELED")
     allow_search_to_override_existing_labels_sql = utils.get_variable_value(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS")
-    print(">> label_selected >> allow_search_to_override_existing_labels_sql >>", allow_search_to_override_existing_labels_sql)
     keep_original_sql = utils.get_variable_value(name="KEEP_ORIGINAL")
     similar_text_verbose_sql = utils.get_variable_value(name="SIMILAR_TEXT_VERBOSE")
 
@@ -2055,7 +2050,7 @@ def search_all_texts():
     else:
         info_message = "No search term entered"
         # text_list_full_sql = utils.get_text_list(table_name="texts")
-        text_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, 
+        texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, 
                                                      sub_list_limit=table_limit_sql)
         utils.set_variable(name="SEARCH_MESSAGE", value=info_message)
         return render_template(html_config_template_sql,
@@ -2069,7 +2064,7 @@ def search_all_texts():
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
-                               texts_list=text_list_list[page_number],
+                               texts_list=texts_list_list[page_number],
                                texts_group_1=texts_group_1_sql,
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
@@ -2146,7 +2141,7 @@ def grouped_search_texts():
         if selected_label_search_texts == "":
             info_message += f"Select a 'Label'."
 
-        # text_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
+        # texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
         total_summary_sql = utils.get_total_summary_sql()
         label_summary_sql = utils.get_label_summary_sql()
         label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
