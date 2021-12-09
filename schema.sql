@@ -1,3 +1,13 @@
+DROP TABLE IF EXISTS decimalValues;
+
+CREATE TABLE decimalValues (
+    name TEXT NOT NULL UNIQUE,
+    value DECIMAL(10, 5) NOT NULL
+);
+
+INSERT INTO decimalValues (name, value) VALUES ("OVERALL_QUALITY_SCORE_DECIMAL", 0.0);
+INSERT INTO decimalValues (name, value) VALUES ("OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS", 0.0);
+
 DROP TABLE IF EXISTS texts;
 
 CREATE TABLE texts (
@@ -119,7 +129,7 @@ INSERT INTO variables (name, value) VALUES ("OVERALL_QUALITY_SCORE", "-");
 INSERT INTO variables (name, value) VALUES ("GROUP_3_KEEP_TOP", 50);
 INSERT INTO variables (name, value) VALUES ("CONFIRM_LABEL_ALL_TEXTS_COUNTS", 0);
 INSERT INTO variables (name, value) VALUES ("LABELS_GOT_OVERRIDDEN_FLAG", "False");
-INSERT INTO variables (name, value) VALUES ("SEARCH_EXCLUDE_ALREADY_LABELED", "Yes");
+INSERT INTO variables (name, value) VALUES ("ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS", "No");
 INSERT INTO variables (name, value) VALUES ("UPDATE_TEXTS_IN_PLACE", "False");
 
 

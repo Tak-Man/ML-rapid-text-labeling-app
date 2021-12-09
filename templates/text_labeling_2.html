@@ -9,13 +9,13 @@
 </head>
 <body>
     <script>
-    function yesSearchOverride() {
+    function yesSearchExcludeAlreadyLabeled() {
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="Yes") }}', true);
         xhttp.send();
     }
 
-    function noSearchOverride() {
+    function noSearchExcludeAlreadyLabeled() {
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="No") }}', true);
         xhttp.send();
@@ -464,23 +464,23 @@
                         <form id="formSearchAllTexts" method="POST" action="{{ url_for('search_all_texts') }}">
                             <div id="divSearchOverrideMessage">
                                 <label id="searchOverrideMessage">Allow search to override existing labels : </label>
-                                {% if search_exclude_already_labeled == "Yes" %}
+                                {% if allow_search_to_override_existing_labels == "No" %}
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio"
-                                           value="Yes" onclick="noSearchOverride()">Yes
+                                    <input type="radio" id="searchAllTextRadioYes" name="allowSearchToOverrideExistingLabels"
+                                           value="Yes" onclick="yesSearchExcludeAlreadyLabeled()">Yes
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio"
-                                           value="No" onclick="yesSearchOverride()" checked>No
+                                    <input type="radio" id="searchAllTextRadioNo" name="allowSearchToOverrideExistingLabels"
+                                           value="No" onclick="noSearchExcludeAlreadyLabeled()" checked>No
                                 </label>
                                 {% else %}
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioYes" name="searchAllTextRadio"
-                                           value="Yes" onclick="noSearchOverride()" checked>Yes
+                                    <input type="radio" id="searchAllTextRadioYes" name="allowSearchToOverrideExistingLabels"
+                                           value="Yes" onclick="yesSearchExcludeAlreadyLabeled()" checked>Yes
                                 </label>
                                 <label class="radio-inline">
-                                    <input type="radio" id="searchAllTextRadioNo" name="searchAllTextRadio"
-                                           value="No" onclick="yesSearchOverride()">No
+                                    <input type="radio" id="searchAllTextRadioNo" name="allowSearchToOverrideExistingLabels"
+                                           value="No" onclick="noSearchExcludeAlreadyLabeled()">No
                                 </label>
                                 {% endif %}
                             </div>

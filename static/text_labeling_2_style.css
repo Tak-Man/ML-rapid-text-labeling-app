@@ -500,7 +500,8 @@ div {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     visibility: visible;
     opacity: 0.85;
-    /*animation: fadeinout 8s linear forwards;*/
+    white-space: normal;
+    overflow-wrap: break-word;
     animation: hideAnimation 0s linear forwards 6s, flyInAnimation 0.75s linear, fadeOut 2s linear 4s;
 }
 

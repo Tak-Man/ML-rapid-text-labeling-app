@@ -36,13 +36,6 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
-
-
-
-
-
-
-
 connection = sqlite3.connect('database.db')
 with open("schema.sql") as f:
     connection.executescript(f.read())
@@ -63,6 +56,31 @@ def populate_texts_table_sql(texts_list, table_name="texts"):
                     (text_record["id"], text_record["text"], "-"))
     conn.commit()
     conn.close()
+    return None
+
+
+def get_decimal_value(name):
+    conn = get_db_connection()
+    query = "SELECT name, value FROM decimalValues WHERE name = '%s' ;" % name
+    sql_table = conn.execute(query).fetchall()
+    decimal_value = [dict(row)["value"] for row in sql_table][0]
+    conn.close()
+    return decimal_value
+
+
+def set_decimal_value(name, value):
+    conn = get_db_connection()
+    query = "UPDATE decimalValues SET value = %s WHERE name = '%s' ;" % (value, name)
+    conn.execute(query)
+    conn.commit()
+    conn.close()
+    return None
+
+
+def update_overall_quality_scores(value):
+    current_score = get_decimal_value(name="OVERALL_QUALITY_SCORE_DECIMAL")
+    set_decimal_value(name="OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS", value=current_score)
+    set_decimal_value(name="OVERALL_QUALITY_SCORE_DECIMAL", value=value)
     return None
 
 
@@ -238,8 +256,11 @@ def update_panel_flags_sql(update_flag):
 def get_texts_group_x(table_name="group1Texts"):
     conn = get_db_connection()
     sql_table = conn.execute("SELECT id, text, label FROM " + table_name + ";").fetchall()
-    texts_group_2 = [{"id": dict(row)["id"], "text": dict(row)["text"], "label": dict(row)["label"]} for row in sql_table]
     conn.close()
+    if len(sql_table) > 0:
+        texts_group_2 = [{"id": dict(row)["id"], "text": dict(row)["text"], "label": dict(row)["label"]} for row in sql_table]
+    else:
+        texts_group_2 = []
     return texts_group_2
 
 
@@ -640,9 +661,6 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
     predictions_df = pd.DataFrame(predictions)
     predictions_df.columns = y_classes
 
-    # predictions_summary_full = predictions_df.describe()
-    # predictions_summary_alt = predictions_df.mean(axis=0)
-
     predictions_summary = predictions_df.replace(0.0, np.NaN).mean(axis=0)
 
     predictions_df["id"] = corpus_text_ids
@@ -656,6 +674,7 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
 
     pred_scores = score_predictions(predictions_df[y_classes], use_entropy=True, num_labels=len(y_classes))
     overall_quality = np.mean(pred_scores)
+    overall_quality_score_decimal_sql = overall_quality
     predictions_df["pred_scores"] = pred_scores
 
     if round_to and not format_as_percentage:
@@ -724,18 +743,12 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
         texts_group_3_sql.append({key: value for key, value in dict(row).items()})
     conn.close()
 
-    # predictions_summary_df = pd.DataFrame({"label": predictions_summary.index,
-    #                                        "avg_confidence": predictions_summary.values})
-    # predictions_summary_list = predictions_summary_df.to_dict("records")
-    # predictions_report.clear()
-    # predictions_report.extend(predictions_summary_list)
-
-    # overall_quality_score.clear()
-    # overall_quality_score.append(overall_quality)
+    update_overall_quality_scores(value=overall_quality_score_decimal_sql)
     set_variable(name="OVERALL_QUALITY_SCORE", value=overall_quality)
-    overall_quality_score_sql = get_variable_value(name="OVERALL_QUALITY_SCORE")
-
-    return texts_group_3_sql, overall_quality_score_sql
+    overall_quality_score_sql = overall_quality
+    overall_quality_score_decimal_previous_sql = get_decimal_value(name="OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS")
+    return texts_group_3_sql, overall_quality_score_sql, \
+           overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
 
 
 def get_top_predictions_sql(selected_class, fitted_classifier, sparse_vectorized_corpus, corpus_text_ids,
@@ -829,8 +842,7 @@ def fit_classifier_sql(sparse_vectorized_corpus, corpus_text_ids, texts_list, te
         clf.partial_fit(X_train, y_train, classes=y_classes)
 
     set_pkl(name="CLASSIFIER", pkl_data=clf, reset=False)
-    classifier_sql = get_pkl(name="CLASSIFIER")
-    return classifier_sql
+    return clf
 
 
 def load_new_data_sql(source_file,
@@ -974,7 +986,8 @@ def generate_all_predictions_if_appropriate(n_jobs=-1,
                                    full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden)
 
             top_sql = get_variable_value(name="GROUP_3_KEEP_TOP")
-            texts_group_3_sql, overall_quality_score_sql = \
+            texts_group_3_sql, overall_quality_score_sql, \
+            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
                 get_all_predictions_sql(fitted_classifier=classifier_sql,
                                         sparse_vectorized_corpus=vectorized_corpus_sql,
                                         corpus_text_ids=corpus_text_ids_sql,
@@ -984,15 +997,17 @@ def generate_all_predictions_if_appropriate(n_jobs=-1,
                                         verbose=predictions_verbose_sql,
                                         round_to=round_to,
                                         format_as_percentage=format_as_percentage)
-            return 1, "The difficult texts list has been generated.", texts_group_3_sql, overall_quality_score_sql
+            return 1, "The difficult texts list has been generated.", \
+                   texts_group_3_sql, overall_quality_score_sql, \
+                   overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
         else:
             return 0, """Examples of all labels are not present. 
-                              Label more texts then try generating the difficult text list.""", [], None
+                              Label more texts then try generating the difficult text list.""", [], None, None, None
     else:
-            return 0, "Label more texts then try generating the difficult text list.", [], None
+            return 0, "Label more texts then try generating the difficult text list.", [], None, None, None
 
     # except:
-    #     return -1, "An error occurred when trying to generate the difficult texts.", [], None
+    #     return -1, "An error occurred when trying to generate the difficult texts.", [], None, None, None
 
 
 def get_top_similar_texts_sql(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, verbose=True):
@@ -1053,58 +1068,42 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
 
 
 def load_save_state_sql(source_dir="./output/save"):
-    try:
-        save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
-        set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
-        set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
-        set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
-        set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")), reset=False)
-        set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
-        set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-        set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
-        set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-        set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")), reset=False)
-        set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
-        set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
-        set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
+    # try:
+    save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
+    set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
+    set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
+    set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
+    set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")), reset=False)
+    set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
+    set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+    set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
+    set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")), reset=False)
+    set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
+    set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
+    set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
 
-        set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
-        set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
-        set_variable(name="Y_CLASSES", value=save_state_json["Y_CLASSES"])
-        set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
-        set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
-        set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
-        set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
-        # config.TOTAL_SUMMARY = save_state_json["TOTAL_SUMMARY"]
-        # config.LABEL_SUMMARY = save_state_json["LABEL_SUMMARY"]
-
-        config.RECOMMENDATIONS_SUMMARY = save_state_json["RECOMMENDATIONS_SUMMARY"]
-        config.TEXTS_LIST_LABELED = save_state_json["TEXTS_LIST_LABELED"]
-
-        config.TEXTS_LIST_FULL = save_state_json["TEXTS_LIST_FULL"]
-        config.TEXTS_LIST_LIST = save_state_json["TEXTS_LIST_LIST"]
-        config.TEXTS_LIST_LIST_FULL = save_state_json["TEXTS_LIST_LIST_FULL"]
-        config.TOTAL_PAGES_FULL = save_state_json["TOTAL_PAGES_FULL"]
-        config.ADJ_TEXT_IDS = save_state_json["ADJ_TEXT_IDS"]
-
-
-        # config.NUMBER_UNLABELED_TEXTS = save_state_json["NUMBER_UNLABELED_TEXTS"]
-
-        # config.LABEL_SUMMARY_STRING = save_state_json["LABEL_SUMMARY_STRING"]
-        texts_list_sql = get_text_list(table_name="texts")
-        total_summary_sql = get_total_summary_sql()
-        label_summary_sql = get_label_summary_sql()
-        number_unlabeled_texts_sql = get_variable_value(name="NUMBER_UNLABELED_TEXTS")
-        label_summary_string_sql = get_variable_value(name="LABEL_SUMMARY_STRING")
-        generate_summary_sql(text_lists=texts_list_sql,
-                             first_labeling_flag=config.FIRST_LABELING_FLAG,
-                             total_summary=total_summary_sql,
-                             label_summary=label_summary_sql,
-                             number_unlabeled_texts=number_unlabeled_texts_sql,
-                             label_summary_string=label_summary_string_sql)
-        return 1
-    except:
-        return 0
+    set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+    print('save_state_json["TOTAL_PAGES"] :', save_state_json["TOTAL_PAGES"])
+    set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
+    add_y_classes(y_classses_list=save_state_json["Y_CLASSES"], begin_fresh=True)
+    set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
+    set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
+    set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+    set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
+    set_variable(name="NUMBER_UNLABELED_TEXTS", value=save_state_json["NUMBER_UNLABELED_TEXTS"])
+    set_variable(name="LABEL_SUMMARY_STRING", value=save_state_json["LABEL_SUMMARY_STRING"])
+    set_variable(name="OVERALL_QUALITY_SCORE", value=save_state_json["OVERALL_QUALITY_SCORE"])
+    set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL", value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL"])
+    set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS",
+                 value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS"])
+    set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
+                 value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
+    texts_list_sql = get_text_list(table_name="texts")
+    generate_summary_sql(text_lists=texts_list_sql)
+    return 1
+    # except:
+    #     return 0
 
 
 def get_disaster_tweet_demo_data(number_samples=None,
@@ -1270,14 +1269,14 @@ def filter_all_texts(all_text, filter_list, exclude_already_labeled=False):
 
 
 def search_all_texts_sql(all_text, include_search_term, exclude_search_term,
-                         search_exclude_already_labeled=False,
+                         allow_search_to_override_existing_labels="No",
                          include_behavior="conjunction",
                          exclude_behavior="disjunction",
                          all_upper=True):
 
     all_text_df = pd.DataFrame(all_text)
 
-    if search_exclude_already_labeled:
+    if allow_search_to_override_existing_labels == "No":
         filtered_all_text_df = all_text_df[all_text_df["label"].isin(["-"])]
     else:
         filtered_all_text_df = all_text_df
@@ -1458,6 +1457,32 @@ def add_log_record(record, log=[]):
     return None
 
 
+def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql):
+    print(">> get_alert_message >> label_summary_sql :")
+    print(label_summary_sql)
+
+    print(">> overall_quality_score_decimal_sql >> overall_quality_score_decimal_sql :")
+    print(overall_quality_score_decimal_sql)
+
+    print(">> overall_quality_score_decimal_previous_sql >> overall_quality_score_decimal_previous_sql :")
+    print(overall_quality_score_decimal_previous_sql)
+
+    if not overall_quality_score_decimal_previous_sql and not overall_quality_score_decimal_sql:
+        alert_message = ""
+    elif not overall_quality_score_decimal_previous_sql and overall_quality_score_decimal_sql:
+        if overall_quality_score_decimal_sql < 0.50:
+            alert_message = "More labels are required to improve the overall quality score."
+        elif overall_quality_score_decimal_sql < 0.80:
+            alert_message = "This is a fairly good start. Keep labeling to try to get the quality score close to 100%"
+        else:
+            alert_message = "This is a reasonable quality score. Click on the score above to go to the difficult text section."
+    elif overall_quality_score_decimal_previous_sql < overall_quality_score_decimal_sql:
+        alert_message = "The quality score is improving. Keep labeling."
+    elif overall_quality_score_decimal_previous_sql > overall_quality_score_decimal_sql:
+        alert_message = "The quality score has dropped. Examine the texts more carefully before assigning a label."
+    else:
+        alert_message = ""
+    return alert_message
 
 
 if __name__ == "__main__":
