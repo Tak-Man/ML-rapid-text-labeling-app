@@ -2209,7 +2209,7 @@ def grouped_search_texts():
                                      texts_list=text_list_full_sql,
                                      texts_list_labeled=texts_group_updated,
                                      y_classes=y_classes_sql,
-                                     verbose=fit_classifier_verbose_sql,
+                                     verbose=True, #fit_classifier_verbose_sql,
                                      random_state=random_state_sql,
                                      n_jobs=-1,
                                      labels_got_overridden_flag=labels_got_overridden_flag_sql,

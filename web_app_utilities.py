@@ -13,7 +13,6 @@ import itertools
 import re
 from scipy.stats import entropy
 import uuid
-import configuration as config
 import pickle
 import json
 import os
@@ -51,6 +50,7 @@ def populate_texts_table_sql(texts_list, table_name="texts"):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM " + table_name + ";")
+    conn.commit()
     for text_record in texts_list:
         cur.execute("INSERT INTO " + table_name + " (id, text, label) VALUES (?, ?, ?)",
                     (text_record["id"], text_record["text"], "-"))
@@ -987,27 +987,27 @@ def generate_all_predictions_if_appropriate(n_jobs=-1,
 
             top_sql = get_variable_value(name="GROUP_3_KEEP_TOP")
             texts_group_3_sql, overall_quality_score_sql, \
-            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-                get_all_predictions_sql(fitted_classifier=classifier_sql,
-                                        sparse_vectorized_corpus=vectorized_corpus_sql,
-                                        corpus_text_ids=corpus_text_ids_sql,
-                                        texts_list=text_list_full_sql,
-                                        top=top_sql,
-                                        y_classes=y_classes_sql,
-                                        verbose=predictions_verbose_sql,
-                                        round_to=round_to,
-                                        format_as_percentage=format_as_percentage)
+                overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+                    get_all_predictions_sql(fitted_classifier=classifier_sql,
+                                            sparse_vectorized_corpus=vectorized_corpus_sql,
+                                            corpus_text_ids=corpus_text_ids_sql,
+                                            texts_list=text_list_full_sql,
+                                            top=top_sql,
+                                            y_classes=y_classes_sql,
+                                            verbose=predictions_verbose_sql,
+                                            round_to=round_to,
+                                            format_as_percentage=format_as_percentage)
             return 1, "The difficult texts list has been generated.", \
-                   texts_group_3_sql, overall_quality_score_sql, \
-                   overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
+                    texts_group_3_sql, overall_quality_score_sql, \
+                        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
         else:
             return 0, """Examples of all labels are not present. 
-                              Label more texts then try generating the difficult text list.""", [], None, None, None
+                              Label more texts then try generating the difficult text list.""", [], "-", 0.0, 0.0
     else:
-            return 0, "Label more texts then try generating the difficult text list.", [], None, None, None
+            return 0, "Label more texts then try generating the difficult text list.", [], "-", 0.0, 0.0
 
     # except:
-    #     return -1, "An error occurred when trying to generate the difficult texts.", [], None, None, None
+    #     return -1, "An error occurred when trying to generate the difficult texts.", [], "-", 0.0, 0.0
 
 
 def get_top_similar_texts_sql(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, verbose=True):
