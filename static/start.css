@@ -191,11 +191,11 @@ div {
 }
 
 @keyframes gif1 {
-	0% { content: url(gif_11.png); }
-	25% { content: url(gif_12.png); }
-	50% { content: url(gif_13.png); }
-	75% { content: url(gif_14.png); }
-	100% { content: url(gif_15.png); }
+	0% { content: url(gif_11_33.jpg); }
+	25% { content: url(gif_12_33.jpg); }
+	50% { content: url(gif_13_33.jpg); }
+	75% { content: url(gif_14_33.jpg); }
+	100% { content: url(gif_15_33.jpg); }
 }
 
 #gif1 {
@@ -212,11 +212,11 @@ div {
 
 
 @keyframes gif2 {
-	0% { content: url(gif_01.png); }
-	25% { content: url(gif_02.png); }
-	50% { content: url(gif_03.png); }
-	75% { content: url(gif_04.png); }
-	100% { content: url(gif_05.png); }
+	0% { content: url(gif_01_33.jpg); }
+	25% { content: url(gif_02_33.jpg); }
+	50% { content: url(gif_03_33.jpg); }
+	75% { content: url(gif_04_33.jpg); }
+	100% { content: url(gif_05_33.jpg); }
 }
 
 #gif2 {
