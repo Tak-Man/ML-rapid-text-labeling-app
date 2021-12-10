@@ -1458,7 +1458,11 @@ def add_log_record(record, log=[]):
     return None
 
 
-def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql):
+def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql,
+                      texts_group_3_sql):
+    print("texts_group_3_sql :")
+    print(texts_group_3_sql)
+
     print(">> get_alert_message >> label_summary_sql :")
     print(label_summary_sql)
 

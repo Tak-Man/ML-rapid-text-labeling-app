@@ -253,7 +253,8 @@ def begin_labeling():
     info_message = "No label selected"
     alert_message = "Begin labeling texts to get a 'Quality Score'"
 
-    utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql)
+    utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
+                            overall_quality_score_decimal_previous_sql, texts_group_3_sql=None)
     return render_template(html_config_template_sql,
                            selected_text_id="None",
                            selected_text="Select a text to begin labeling.",
@@ -705,7 +706,8 @@ def single_text():
                                                           full_fit_if_labels_got_overridden=True, round_to=1,
                                                           format_as_percentage=True)
         info_message = "Label assigned"
-        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql)
+        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
+                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
@@ -888,7 +890,8 @@ def grouped_1_texts():
         texts_group_3_sql = utils.get_difficult_texts_sql()
 
         info_message = "Labels assigned to group"
-        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql)
+        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
+                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql) #recommendations_summary_sql
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
@@ -1069,7 +1072,8 @@ def grouped_2_texts():
                                                           full_fit_if_labels_got_overridden=True, round_to=1,
                                                           format_as_percentage=True)
         info_message = "Labels assigned to group"
-        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql)
+        alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
+                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
@@ -2108,7 +2112,7 @@ def grouped_search_texts():
     search_message_sql = utils.get_variable_value(name="SEARCH_MESSAGE")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
     overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
-    selected_label_search_texts = request.form["selected_label_search_texts"]
+    selected_label_search_texts = request.form.get("selected_label_search_texts", None)
     vectorized_corpus_sql = utils.get_pkl(name="VECTORIZED_CORPUS")
     texts_group_1_sql = utils.get_texts_group_x(table_name="group1Texts")
     texts_group_3_sql = utils.get_difficult_texts_sql()
@@ -2140,20 +2144,23 @@ def grouped_search_texts():
     value_record = utils.generate_value_record(guid=guid, value_type="label", value=selected_label_search_texts)
     utils.add_log_click_value_sql(records=[value_record])
 
-    if (selected_label_search_texts == "None") or (selected_label_search_texts is None) \
-            or (selected_label_search_texts == ""):
-        if selected_label_search_texts == "":
-            info_message += f"Select a 'Label'."
+    texts_group_updated = utils.get_text_list(table_name="searchResults")
 
-        # texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, sub_list_limit=table_limit_sql)
+    if selected_label_search_texts == "":
         total_summary_sql = utils.get_total_summary_sql()
         label_summary_sql = utils.get_label_summary_sql()
         label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
         search_results_texts_list_sql = utils.get_text_list(table_name="searchResults")
-        search_results_texts_list_list_sql = \
-            utils.create_text_list_list(text_list_full_sql=search_results_texts_list_sql, 
-                                        sub_list_limit=table_limit_sql)
 
+        if len(search_results_texts_list_sql) > 0:
+            search_results_texts_list_list_sql = \
+                utils.create_text_list_list(text_list_full_sql=search_results_texts_list_sql,
+                                            sub_list_limit=table_limit_sql)
+            texts_list = search_results_texts_list_list_sql
+            info_message += f"Select a 'Label'."
+        else:
+            texts_list = text_list_list_sql
+            info_message += f"Enter search terms."
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
@@ -2164,7 +2171,7 @@ def grouped_search_texts():
                                page_number=page_number,
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
-                               texts_list=search_results_texts_list_list_sql[page_number],
+                               texts_list=texts_list[page_number],
                                texts_group_1=texts_group_1_sql,
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=[],
@@ -2179,7 +2186,7 @@ def grouped_search_texts():
                                allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
 
     else:
-        texts_group_updated = utils.get_text_list(table_name="searchResults")
+
         update_ids = list()
         value_records = list()
         for obj in texts_group_updated:
@@ -2208,7 +2215,7 @@ def grouped_search_texts():
                                      texts_list=text_list_full_sql,
                                      texts_list_labeled=texts_group_updated,
                                      y_classes=y_classes_sql,
-                                     verbose=True, #fit_classifier_verbose_sql,
+                                     verbose=fit_classifier_verbose_sql,
                                      random_state=random_state_sql,
                                      n_jobs=-1,
                                      labels_got_overridden_flag=labels_got_overridden_flag_sql,
@@ -2245,7 +2252,7 @@ def grouped_search_texts():
                                         sub_list_limit=table_limit_sql)
         info_message = "Labels assigned to group"
         alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
-                                                overall_quality_score_decimal_previous_sql)
+                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
                                selected_text_id="None", # new_id,
                                selected_text="Select a text below to label.", # new_text,
