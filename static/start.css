@@ -210,6 +210,11 @@ div {
     margin-left: 0.35vw;
 }
 
+#video1, #video2 {
+    margin-left: 0.35vw;
+    height: 9vw;
+    width: 15vw;
+}
 
 @keyframes gif2 {
 	0% { content: url(gif_01_33.jpg); }
