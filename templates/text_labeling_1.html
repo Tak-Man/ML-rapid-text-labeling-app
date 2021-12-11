@@ -631,6 +631,7 @@
                             <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                             <input name="page_number" type="hidden" value="{{ page_number }}">
                             <input name="selected_label" type="hidden" value="{{ label_selected }}">
+                            <input id="label_all_batch_no" name="label_all_batch_no" type="hidden" value="{{ label_all_batch_no }}">
                             <input id="labelAllButton"
                                    type="submit"
                                    class="appButton"
@@ -740,6 +741,18 @@
         <div id="divBodyRight"></div>
         <div id="divFooter">Completed as part of the University of Michigan (School of Information) Master of Applied Data Science Program by Michael Penrose and Carlo Tak (December 2021)</div>
     </div>
+    <script>
+        var labelAllForm = document.getElementById("formLabelAll");
+        var labelAllFormButton = document.getElementById("labelAllButton");
 
+        if ( '{{ label_all_batch_no }}' !== '') {
+            var label_all_batch_no = parseInt('{{ label_all_batch_no }}');
+            var label_all_total_batches = parseInt('{{ label_all_total_batches }}');
+            if ( label_all_batch_no < label_all_total_batches ) {
+                document.getElementById("label_all_batch_no").value = label_all_batch_no + 1;
+                labelAllFormButton.click();
+            }
+        };
+    </script>
 </body>
 </html>

@@ -131,7 +131,10 @@ INSERT INTO variables (name, value) VALUES ("CONFIRM_LABEL_ALL_TEXTS_COUNTS", 0)
 INSERT INTO variables (name, value) VALUES ("LABELS_GOT_OVERRIDDEN_FLAG", "False");
 INSERT INTO variables (name, value) VALUES ("ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS", "No");
 INSERT INTO variables (name, value) VALUES ("UPDATE_TEXTS_IN_PLACE", "False");
-
+INSERT INTO variables (name, value) VALUES("LABEL_ALL_BATCH_NO", -99);
+INSERT INTO variables (name, value) VALUES("LABEL_ALL_TOTAL_BATCHES", 0);
+INSERT INTO variables (name, value) VALUES("NUMBER_AUTO_LABELED", 0);
+INSERT INTO variables (name, value) VALUES("LABEL_ALL_BATCH_SIZE", 500);
 
 DROP TABLE IF EXISTS initializeFlags;
 

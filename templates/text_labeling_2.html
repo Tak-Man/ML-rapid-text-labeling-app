@@ -9,17 +9,17 @@
 </head>
 <body>
     <script>
-    function yesSearchExcludeAlreadyLabeled() {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="Yes") }}', true);
-        xhttp.send();
-    }
+        function yesSearchExcludeAlreadyLabeled() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="Yes") }}', true);
+            xhttp.send();
+        }
 
-    function noSearchExcludeAlreadyLabeled() {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="No") }}', true);
-        xhttp.send();
-    }
+        function noSearchExcludeAlreadyLabeled() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("POST", '{{ url_for('update_search_exclude_already_labeled_sql', search_exclude_already_labeled="No") }}', true);
+            xhttp.send();
+        }
     </script>
     <div class="container">
         <div id="divHeader">
@@ -94,7 +94,7 @@
                 </form>
             </div>
         </div>
-        <div id="divSpare"></div>
+        <div id="divSpare">{{ label_all_batch_no }}</div>
         <div id="divSelectText">
             <h2>Select a Text to Label</h2>
             <br>
@@ -397,6 +397,7 @@
                     <input name="selected_text_id" type="hidden" value="{{ selected_text_id }}">
                     <input name="page_number" type="hidden" value="{{ page_number }}">
                     <input name="selected_label" type="hidden" value="{{ label_selected }}">
+                    <input id="label_all_batch_no" name="label_all_batch_no" type="hidden" value="{{ label_all_batch_no }}">
                     <input id="labelAllButton"
                            type="submit"
                            class="appButton"
@@ -804,5 +805,18 @@
         document.getElementById('{{ scroll_to_id }}').scrollIntoView();
     </script>
     {% endif %}
+    <script>
+        var labelAllForm = document.getElementById("formLabelAll");
+        var labelAllFormButton = document.getElementById("labelAllButton");
+
+        if ( '{{ label_all_batch_no }}' !== '') {
+            var label_all_batch_no = parseInt('{{ label_all_batch_no }}');
+            var label_all_total_batches = parseInt('{{ label_all_total_batches }}');
+            if ( label_all_batch_no < label_all_total_batches ) {
+                document.getElementById("label_all_batch_no").value = label_all_batch_no + 1;
+                labelAllFormButton.click();
+            }
+        };
+    </script>
 </body>
 </html>

@@ -174,6 +174,9 @@ def dataset_selected():
         utils.set_variable(name="OVERALL_QUALITY_SCORE", value="-")
         utils.set_decimal_value(name="OVERALL_QUALITY_SCORE_DECIMAL", value=0.0)
 
+        utils.set_variable(name="LABEL_ALL_BATCH_NO", value=-99)
+        utils.set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=0)
+        utils.set_variable(name="NUMBER_AUTO_LABELED", value=0)
         return render_template("start.html",
                                dataset_list=available_datasets,
                                texts_list=text_list_list_sql[0],
@@ -640,7 +643,6 @@ def single_text():
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
-                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -802,12 +804,10 @@ def grouped_1_texts():
         texts_group_3_sql = utils.get_difficult_texts_sql()
         texts_group_1_sql = utils.get_texts_group_x(table_name="group1Texts")
 
-        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                info_message=info_message,
-                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -982,13 +982,11 @@ def grouped_2_texts():
         label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
         overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
 
-        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label_group2,
                                info_message=info_message,
-                               alert_message=alert_message,
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -1159,13 +1157,12 @@ def label_all():
         info_message = "There are no more unlabeled texts. If you are unhappy with the quality of the " \
                        "auto-labeling, then work through the 'Difficult Texts' to improve the quality."
         label_summary_message = info_message
-        alert_message = ""
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
                                label_selected=selected_label,
                                info_message=info_message,
-                               alert_message=alert_message,
+
                                page_navigation_message=page_navigation_message,
                                search_message=search_message_sql,
                                search_results_length=search_results_length_sql,
@@ -1188,8 +1185,13 @@ def label_all():
                                label_summary_message=label_summary_message,
                                allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
 
+    label_summary_sql = utils.get_label_summary_sql()
+    label_summary_df = pd.DataFrame.from_dict(label_summary_sql)
+    y_classes_labeled = label_summary_df["name"].values
+    y_classes_sql = utils.get_y_classes()
+    all_classes_present = all(label in y_classes_labeled for label in y_classes_sql)
     classifier_sql = utils.get_pkl(name="CLASSIFIER")
-    if classifier_sql:
+    if classifier_sql and all_classes_present:
         confirm_label_all_texts_counts_sql = utils.get_variable_value(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS")
         if confirm_label_all_texts_counts_sql == 0:
             info_message = \
@@ -1200,13 +1202,11 @@ def label_all():
             temp_count = utils.get_variable_value(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS")
             utils.set_variable(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS", value=(temp_count + 1))
 
-            alert_message = info_message
             return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
-                                   alert_message=alert_message,
                                    page_navigation_message=page_navigation_message,
                                    search_message=search_message_sql,
                                    search_results_length=search_results_length_sql,
@@ -1237,13 +1237,12 @@ def label_all():
             label_summary_message = info_message
             temp_count = utils.get_variable_value(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS")
             utils.set_variable(name="CONFIRM_LABEL_ALL_TEXTS_COUNTS", value=(temp_count + 1))
-            alert_message = info_message
+
             return render_template(html_config_template_sql,
                                    selected_text_id=new_id,
                                    selected_text=new_text,
                                    label_selected=selected_label,
                                    info_message=info_message,
-                                   alert_message=alert_message,
                                    page_navigation_message=page_navigation_message,
                                    search_message=search_message_sql,
                                    search_results_length=search_results_length_sql,
@@ -1267,67 +1266,129 @@ def label_all():
                                    allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
 
         elif confirm_label_all_texts_counts_sql > 1:
-            info_message = \
-                f"{number_unlabeled_texts_sql} texts were auto-labeled."
+            batch_size = utils.get_variable_value(name="LABEL_ALL_BATCH_SIZE")
+            batched_text_list_full = \
+                [text_list_full_sql[i:i + batch_size] for i in range(0, len(text_list_full_sql), batch_size)]
 
             classifier_sql = utils.get_pkl(name="CLASSIFIER")
             vectorized_corpus_sql = utils.get_pkl(name="VECTORIZED_CORPUS")
-            text_list_full_sql, texts_list_list_sql, labeled_text_ids = \
-                utils.label_all_sql(fitted_classifier=classifier_sql,
-                                    sparse_vectorized_corpus=vectorized_corpus_sql,
-                                    corpus_text_ids=corpus_text_ids_sql,
-                                    texts_list=text_list_full_sql,
-                                    label_only_unlabeled=True,
-                                    sub_list_limit=table_limit_sql,
-                                    update_in_place=update_in_place_sql)
-
-            for labeled_text_id in labeled_text_ids:
-                value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
-                utils.add_log_click_value_sql(records=[value_record])
-
-            total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
-                utils.generate_summary_sql(text_lists=text_list_full_sql)
-
-            label_summary_message = info_message
             texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
-            alert_message = info_message
-            return render_template(html_config_template_sql,
-                                   selected_text_id="None", # new_id,
-                                   selected_text="Select a text below to label.", # new_text,
-                                   label_selected=selected_label,
-                                   info_message=info_message,
-                                   alert_message=alert_message,
-                                   page_navigation_message=page_navigation_message,
-                                   search_message=search_message_sql,
-                                   search_results_length=search_results_length_sql,
-                                   page_number=page_number,
-                                   y_classes=y_classes_sql,
-                                   total_pages=total_pages_sql,
-                                   texts_list=texts_list_list_sql[page_number],
-                                   texts_group_1=[], # texts_group_1_updated,
-                                   group1_table_limit_value=group_1_keep_top_sql,
-                                   texts_group_2=texts_group_2_sql,
-                                   group2_table_limit_value=predictions_number_sql,
-                                   texts_group_3=texts_group_3_sql,
-                                   total_summary=total_summary_sql,
-                                   label_summary=label_summary_sql,
-                                   recommendations_summary=[],
-                                   overall_quality_score=overall_quality_score_sql,
-                                   label_summary_string=label_summary_string_sql,
-                                   initialize_flags=initialize_flags_sql,
-                                   scroll_to_id=scroll_to_id,
-                                   label_summary_message=label_summary_message,
-                                   allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
+
+            utils.set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=len(batched_text_list_full))
+            label_all_total_batches = len(batched_text_list_full)
+
+            label_all_batch_no = request.form["label_all_batch_no"]
+            if label_all_batch_no:
+                label_all_batch_no = int(label_all_batch_no)
+                utils.set_variable(name="LABEL_ALL_BATCH_NO", value=label_all_batch_no)
+            else:
+                label_all_batch_no = utils.get_variable_value(name="LABEL_ALL_BATCH_NO")
+                if label_all_batch_no == -99:
+                    label_all_batch_no = 0
+
+            if label_all_batch_no < label_all_total_batches:
+                batch_texts = batched_text_list_full[label_all_batch_no]
+                # *******************Batch Processing*********************************************************
+                text_list_full_sql, texts_list_list_sql, labeled_text_ids = \
+                    utils.label_all_sql(fitted_classifier=classifier_sql,
+                                        sparse_vectorized_corpus=vectorized_corpus_sql,
+                                        corpus_text_ids=corpus_text_ids_sql,
+                                        texts_list=batch_texts,
+                                        label_only_unlabeled=True,
+                                        sub_list_limit=table_limit_sql,
+                                        update_in_place=True)
+
+                if len(labeled_text_ids) > 0:
+                    for labeled_text_id in labeled_text_ids:
+                        value_record = utils.generate_value_record(guid=guid, value_type="text_id", value=labeled_text_id)
+                        utils.add_log_click_value_sql(records=[value_record])
+
+                    total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
+                        utils.generate_summary_sql(text_lists=text_list_full_sql)
+
+                number_texts_auto_labeled_sql = utils.get_variable_value(name="NUMBER_AUTO_LABELED")
+                total_texts_auto_labeled = number_texts_auto_labeled_sql + len(labeled_text_ids)
+                utils.set_variable(name="NUMBER_AUTO_LABELED", value=total_texts_auto_labeled)
+                info_message = \
+                    f"{number_texts_auto_labeled_sql + len(labeled_text_ids)} texts were auto-labeled."
+                label_summary_message = info_message
+                text_list_list_sql, text_list_appropriate_sql, total_pages_sql = \
+                    utils.get_appropriate_text_list_list(text_list_full_sql=text_list_full_sql,
+                                                         total_pages_sql=total_pages_sql,
+                                                         search_results_length_sql=search_results_length_sql,
+                                                         table_limit_sql=table_limit_sql)
+
+                texts_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_appropriate_sql,
+                                                                  sub_list_limit=table_limit_sql)
+                return render_template(html_config_template_sql,
+                                       label_all_batch_no=label_all_batch_no,
+                                       label_all_total_batches=label_all_total_batches,
+                                       selected_text_id="None", # new_id,
+                                       selected_text="Select a text below to label.", # new_text,
+                                       label_selected=selected_label,
+                                       info_message=info_message,
+                                       page_navigation_message=page_navigation_message,
+                                       search_message=search_message_sql,
+                                       search_results_length=search_results_length_sql,
+                                       page_number=page_number,
+                                       y_classes=y_classes_sql,
+                                       total_pages=total_pages_sql,
+                                       texts_list=texts_list_list_sql[page_number],
+                                       texts_group_1=[], # texts_group_1_updated,
+                                       group1_table_limit_value=group_1_keep_top_sql,
+                                       texts_group_2=texts_group_2_sql,
+                                       group2_table_limit_value=predictions_number_sql,
+                                       texts_group_3=texts_group_3_sql,
+                                       total_summary=total_summary_sql,
+                                       label_summary=label_summary_sql,
+                                       recommendations_summary=[],
+                                       overall_quality_score=overall_quality_score_sql,
+                                       label_summary_string=label_summary_string_sql,
+                                       initialize_flags=initialize_flags_sql,
+                                       scroll_to_id=scroll_to_id,
+                                       label_summary_message=label_summary_message,
+                                       allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
+            else:
+                utils.set_variable(name="LABEL_ALL_BATCH_NO", value=-99)
+                utils.set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=0)
+                utils.set_variable(name="NUMBER_AUTO_LABELED", value=0)
+                info_message = "All unlabeled texts were labeled."
+                label_summary_message = info_message
+                return render_template(html_config_template_sql,
+                                       selected_text_id="None",  # new_id,
+                                       selected_text="Select a text below to label.",  # new_text,
+                                       label_selected=selected_label,
+                                       info_message=info_message,
+                                       page_navigation_message=page_navigation_message,
+                                       search_message=search_message_sql,
+                                       search_results_length=search_results_length_sql,
+                                       page_number=page_number,
+                                       y_classes=y_classes_sql,
+                                       total_pages=total_pages_sql,
+                                       texts_list=texts_list_list_sql[page_number],
+                                       texts_group_1=[],  # texts_group_1_updated,
+                                       group1_table_limit_value=group_1_keep_top_sql,
+                                       texts_group_2=texts_group_2_sql,
+                                       group2_table_limit_value=predictions_number_sql,
+                                       texts_group_3=texts_group_3_sql,
+                                       total_summary=total_summary_sql,
+                                       label_summary=label_summary_sql,
+                                       recommendations_summary=[],
+                                       overall_quality_score=overall_quality_score_sql,
+                                       label_summary_string=label_summary_string_sql,
+                                       initialize_flags=initialize_flags_sql,
+                                       scroll_to_id=scroll_to_id,
+                                       label_summary_message=label_summary_message,
+                                       allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
     # **********************************************************************************************
     else:
-        info_message = "Label more texts before trying again."
-        alert_message = info_message
+        info_message = "Label more texts before trying again. Make sure that all label types are represented."
+        label_summary_message = info_message
     return render_template(html_config_template_sql,
                            selected_text_id=new_id,
                            selected_text=new_text,
                            label_selected=selected_label,
                            info_message=info_message,
-                           alert_message=alert_message,
                            page_navigation_message=page_navigation_message,
                            search_message=search_message_sql,
                            search_results_length=search_results_length_sql,
@@ -1347,6 +1408,7 @@ def label_all():
                            label_summary_string=label_summary_string_sql,
                            initialize_flags=initialize_flags_sql,
                            scroll_to_id=scroll_to_id,
+                           label_summary_message=label_summary_message,
                            allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
 
 
@@ -2145,12 +2207,12 @@ def grouped_search_texts():
     utils.add_log_click_value_sql(records=[value_record])
 
     texts_group_updated = utils.get_text_list(table_name="searchResults")
+    search_results_texts_list_sql = utils.get_text_list(table_name="searchResults")
 
-    if selected_label_search_texts == "":
+    if selected_label_search_texts == "" or len(search_results_texts_list_sql) == 0:
         total_summary_sql = utils.get_total_summary_sql()
         label_summary_sql = utils.get_label_summary_sql()
         label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
-        search_results_texts_list_sql = utils.get_text_list(table_name="searchResults")
 
         if len(search_results_texts_list_sql) > 0:
             search_results_texts_list_list_sql = \
@@ -2297,7 +2359,11 @@ def clear_search_all_texts():
     html_config_template_sql = utils.get_variable_value(name="HTML_CONFIG_TEMPLATE")
     predictions_number_sql = utils.get_variable_value(name="PREDICTIONS_NUMBER")
     overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
+
+    utils.clear_text_list(table_name="searchResults")
+    utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
+
     label_summary_sql = utils.get_label_summary_sql()
     label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
     total_summary_sql = utils.get_total_summary_sql()
@@ -2311,7 +2377,6 @@ def clear_search_all_texts():
     info_message = "Search cleared"
     utils.set_variable(name="SEARCH_MESSAGE", value="Displaying all texts")
     total_pages_sql = utils.get_variable_value(name="TOTAL_PAGES")
-    utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
 
     click_record, guid = utils.generate_click_record(click_location="all_texts",
                                                      click_type="clear_search",

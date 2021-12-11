@@ -119,6 +119,15 @@ def set_text_list(label, table_name="searchResults"):
     return None
 
 
+def clear_text_list(table_name="searchResults"):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM " + table_name + ";")
+    conn.commit()
+    conn.close()
+    return None
+
+
 def get_appropriate_text_list_list(text_list_full_sql, total_pages_sql, search_results_length_sql, table_limit_sql):
     if search_results_length_sql > 0:
         text_list_full_sql = get_text_list(table_name="searchResults")
@@ -374,17 +383,13 @@ def create_text_list_list(text_list_full_sql, sub_list_limit):
 def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_ids=None, sub_list_limit=10,
                                 labels_got_overridden_flag=[],
                                 update_in_place=True):
+    text_list_full = get_text_list(table_name="texts")
+
     conn = get_db_connection()
     cur = conn.cursor()
 
     if selected_label and update_ids and not update_objs:
         if update_in_place:
-            # print("Trying update method 2")
-            # for update_id in update_ids:
-            #     update_query = "UPDATE texts SET label = ? WHERE id = ?"
-            #     cur.execute(update_query, (selected_label, update_id))
-
-            print("Trying update method 1")
             update_query = "UPDATE texts SET label = ? WHERE id IN (%s)" % ",".join("?"*len(update_ids))
             update_values = [selected_label]
             update_values.extend(update_ids)
@@ -411,26 +416,6 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
 
     elif update_objs and not selected_label and not update_ids:
         if update_in_place:
-            # print("Method 1")
-            # start_time = datetime.now()
-            # print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"))
-            #
-            # update_query = "UPDATE texts SET label = ? WHERE id = ?"
-            # print("update_query :", update_query)
-            # update_values = [(obj["label"], obj["id"]) for obj in update_objs]
-            # for update_value in update_values:
-            #     cur.execute(update_query, update_value)
-            # conn.commit()
-            # conn.close()
-            # end_time = datetime.now()
-            # duration = end_time - start_time
-            #
-            # print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"))
-            # print(">> Duration :", duration)
-
-            print("Method 2")
-            start_time = datetime.now()
-            print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"))
             labels = set([obj["label"] for obj in update_objs])
             for label in labels:
                 update_ids = [obj["id"] for obj in update_objs if obj["label"] == label]
@@ -440,11 +425,6 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
                 conn.execute(update_query, (label, ))
             conn.commit()
             conn.close()
-
-            end_time = datetime.now()
-            duration = end_time - start_time
-            print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"))
-            print(">> Duration :", duration)
         else:
             cur.execute("DROP TABLE IF EXISTS temp_table;")
             cur.execute("""
@@ -472,6 +452,7 @@ def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_id
 
     text_list_full = get_text_list(table_name="texts")
     texts_list_list = create_text_list_list(text_list_full_sql=text_list_full, sub_list_limit=sub_list_limit)
+
     return text_list_full, texts_list_list
 
 
@@ -485,34 +466,37 @@ def label_all_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, 
         predictions_df = pd.DataFrame(predictions)
         predictions_df["id"] = corpus_text_ids
         labeled_text_ids = corpus_text_ids
+        number_to_label = len(labeled_text_ids)
     else:
         label_only_these_ids = texts_list_df[texts_list_df["label"] == "-"]["id"].values
         keep_indices = [corpus_text_ids.index(x) for x in label_only_these_ids]
-        sparse_vectorized_corpus_alt = sparse_vectorized_corpus[keep_indices, :]
-        predictions = fitted_classifier.predict(sparse_vectorized_corpus_alt)
-        predictions_df = pd.DataFrame(predictions)
-        predictions_df["id"] = label_only_these_ids
-        labeled_text_ids = label_only_these_ids
+        number_to_label = len(keep_indices)
 
-    predictions_df = predictions_df.rename(columns={0: "label"})
-    predictions_df = predictions_df.merge(texts_list_df[["id", "text"]], left_on="id", right_on="id", how="left")
-    predictions_df = predictions_df[["id", "text", "label"]]
-    update_objects = predictions_df.to_dict("records")
+    if number_to_label > 0:
+        if label_only_unlabeled:
+            sparse_vectorized_corpus_alt = sparse_vectorized_corpus[keep_indices, :]
+            predictions = fitted_classifier.predict(sparse_vectorized_corpus_alt)
+            predictions_df = pd.DataFrame(predictions)
+            predictions_df["id"] = label_only_these_ids
+            labeled_text_ids = label_only_these_ids
 
-    text_list_full, texts_list_list = \
-        update_texts_list_by_id_sql(update_objs=update_objects,
-                                    selected_label=None,
-                                    update_ids=None,
-                                    sub_list_limit=sub_list_limit,
-                                    labels_got_overridden_flag=[],
-                                    update_in_place=update_in_place)
+        predictions_df = predictions_df.rename(columns={0: "label"})
+        predictions_df = predictions_df.merge(texts_list_df[["id", "text"]], left_on="id", right_on="id",
+                                              how="left")
+        predictions_df = predictions_df[["id", "text", "label"]]
+        update_objects = predictions_df.to_dict("records")
 
-    # updated_texts_list, updated_texts_list_list, overridden =  \
-    #     update_texts_list_by_id(texts_list=texts_list,
-    #                             sub_list_limit=sub_list_limit,
-    #                             updated_obj_lst=update_objects,
-    #                             texts_list_list=texts_list_list,
-    #                             update_in_place=update_in_place)
+        text_list_full, texts_list_list = \
+            update_texts_list_by_id_sql(update_objs=update_objects,
+                                        selected_label=None,
+                                        update_ids=None,
+                                        sub_list_limit=sub_list_limit,
+                                        labels_got_overridden_flag=[],
+                                        update_in_place=update_in_place)
+    else:
+        text_list_full = get_text_list(table_name="texts")
+        texts_list_list = create_text_list_list(text_list_full_sql=text_list_full, sub_list_limit=sub_list_limit)
+        labeled_text_ids = []
 
     return text_list_full, texts_list_list, labeled_text_ids
 
@@ -560,7 +544,8 @@ def get_variable_value(name):
 
     if name in ["TOTAL_PAGES", "NUMBER_UNLABELED_TEXTS", "MAX_CONTENT_PATH", "TEXTS_LIMIT", "TABLE_LIMIT",
                 "MAX_FEATURES", "RND_STATE", "PREDICTIONS_NUMBER", "SEARCH_RESULTS_LENGTH", "GROUP_1_KEEP_TOP",
-                "GROUP_3_KEEP_TOP", "CONFIRM_LABEL_ALL_TEXTS_COUNTS", "SEARCH_TOTAL_PAGES"]:
+                "GROUP_3_KEEP_TOP", "CONFIRM_LABEL_ALL_TEXTS_COUNTS", "SEARCH_TOTAL_PAGES", "LABEL_ALL_BATCH_NO",
+                "LABEL_ALL_TOTAL_BATCHES", "NUMBER_AUTO_LABELED", "LABEL_ALL_BATCH_SIZE"]:
         value = int(value)
 
     if name in ["KEEP_ORIGINAL", "GROUP_1_EXCLUDE_ALREADY_LABELED", "GROUP_2_EXCLUDE_ALREADY_LABELED",
@@ -837,9 +822,8 @@ def fit_classifier_sql(sparse_vectorized_corpus, corpus_text_ids, texts_list, te
             y_train_all = all_texts_list_labeled_df["label"].values
             indices_all = [corpus_text_ids.index(x) for x in ids_all]
             X_train_all = sparse_vectorized_corpus[indices_all, :]
-            print("all_classes_present :", all_classes_present)
+
             if all_classes_present:
-                print("Classifier fitted on all labels.")
                 clf.fit(X_train_all, y_train_all)
             else:
                 clf.partial_fit(X_train_all, y_train_all, classes=y_classes)
@@ -1088,6 +1072,11 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
     set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
     set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+
+    set_variable(name="LABEL_ALL_BATCH_NO", value=-99)
+    set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=0)
+    set_variable(name="NUMBER_AUTO_LABELED", value=0)
+
     test_dataset_name_sql = get_variable_value(name="DATASET_NAME")
     print("test_dataset_name_sql :", test_dataset_name_sql)
     set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
@@ -1100,7 +1089,7 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
                  value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
     texts_list_sql = get_pkl(name="TEXTS_LIST")
-    texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
+    # texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
     generate_summary_sql(text_lists=texts_list_sql)
     return 1
     # except:
@@ -1475,7 +1464,7 @@ def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, over
     if not overall_quality_score_decimal_previous_sql and not overall_quality_score_decimal_sql:
         alert_message = ""
     elif not overall_quality_score_decimal_previous_sql and overall_quality_score_decimal_sql:
-        if overall_quality_score_decimal_sql < 0.50:
+        if overall_quality_score_decimal_sql < 0.60:
             alert_message = "More labels are required to improve the overall quality score."
         elif overall_quality_score_decimal_sql < 0.80:
             alert_message = "This is a fairly good start. Keep labeling to try to get the quality score close to 100%"
