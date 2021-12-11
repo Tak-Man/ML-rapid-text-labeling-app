@@ -35,13 +35,13 @@ random.seed(RND_SEED)
 np.random.seed(RND_SEED)
 
 
-connection = sqlite3.connect('database.db', timeout=10)
+connection = sqlite3.connect('database.db', timeout=30)
 with open("schema.sql") as f:
     connection.executescript(f.read())
 
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('database.db', timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
