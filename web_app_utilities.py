@@ -1449,17 +1449,15 @@ def add_log_record(record, log=[]):
 
 def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql,
                       texts_group_3_sql):
-    print("texts_group_3_sql :")
-    print(texts_group_3_sql)
-
-    print(">> get_alert_message >> label_summary_sql :")
-    print(label_summary_sql)
-
-    print(">> overall_quality_score_decimal_sql >> overall_quality_score_decimal_sql :")
-    print(overall_quality_score_decimal_sql)
-
-    print(">> overall_quality_score_decimal_previous_sql >> overall_quality_score_decimal_previous_sql :")
-    print(overall_quality_score_decimal_previous_sql)
+    # **** Future development ************************************************************************
+    # This section will use these variables for future development.
+    # The purpose is to give the user more sophisticated feedback while the user labels texts.
+    # print("texts_group_3_sql :")
+    # print(texts_group_3_sql)
+    #
+    # print(">> get_alert_message >> label_summary_sql :")
+    # print(label_summary_sql)
+    # **** Future development ************************************************************************
 
     if not overall_quality_score_decimal_previous_sql and not overall_quality_score_decimal_sql:
         alert_message = ""
@@ -1481,14 +1479,16 @@ def get_alert_message(label_summary_sql, overall_quality_score_decimal_sql, over
 
 if __name__ == "__main__":
     start_time = datetime.now()
-    # print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
+    print(">> Start time :", start_time.strftime("%m/%d/%Y %H:%M:%S"), "*"*100)
 
-    # ********************************************************************************************************
+    # ***** Add code for testing the functions here ********************************************************************
+
+    # ******************************************************************************************************************
     end_time = datetime.now()
     duration = end_time - start_time
 
-    # print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"), "*"*100)
-    # print(">> Duration :", duration, "*"*100)
+    print(">> End time :", end_time.strftime("%m/%d/%Y @ %H:%M:%S"), "*"*100)
+    print(">> Duration :", duration, "*"*100)
 
 
 
