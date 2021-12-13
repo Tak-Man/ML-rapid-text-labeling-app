@@ -20,6 +20,7 @@ app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.jinja_env.add_extension('jinja2.ext.do')
 Session(app)
 
+
 @app.route('/label_entered', methods=['POST'])
 def label_entered():
     if request.form["action"] == "add":
