@@ -18,7 +18,7 @@ app.config.from_object(__name__)
 app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.config["MAX_CONTENT_PATH"] = 10000
 # app.jinja_env.add_extension('jinja2.ext.do')
-# Session(app)
+Session(app)
 
 @app.route('/label_entered', methods=['POST'])
 def label_entered():
