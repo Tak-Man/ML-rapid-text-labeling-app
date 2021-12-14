@@ -1,10 +1,10 @@
-DROP TABLE IF EXISTS decimalValues;
-
+DROP TABLE IF EXISTS pkls;
 CREATE TABLE pkls (
     name TEXT NOT NULL UNIQUE,
     data BLOB NOT NULL
 );
 
+DROP TABLE IF EXISTS decimalValues;
 CREATE TABLE decimalValues (
     name TEXT NOT NULL UNIQUE,
     value DECIMAL(10, 5) NOT NULL
@@ -14,7 +14,6 @@ INSERT INTO decimalValues (name, value) VALUES ("OVERALL_QUALITY_SCORE_DECIMAL",
 INSERT INTO decimalValues (name, value) VALUES ("OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS", 0.0);
 
 DROP TABLE IF EXISTS texts;
-
 CREATE TABLE texts (
     id TEXT NOT NULL,
     text TEXT NOT NULL,
