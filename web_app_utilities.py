@@ -102,6 +102,20 @@ def get_pkl(name):
     except:
         return None
 
+    # conn = get_db_connection()
+    # query = "SELECT * FROM pkls WHERE name = " + name + ";"
+    # pkl_table = conn.execute(query).fetchall()
+    # pkl_data = [dict(row) ["data"] for row in pkl_table]
+    # conn.close()
+    # return pkl_data
+    #
+    # query = u'''insert into testtable VALUES(?)'''
+    # b = sqlite3.Binary(binarydata)
+    # cur.execute(query, (b,))
+    # con.commit()
+    #
+    # return None
+
 
 def get_text_list(table_name="texts"):
     conn = get_db_connection()

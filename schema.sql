@@ -1,5 +1,10 @@
 DROP TABLE IF EXISTS decimalValues;
 
+CREATE TABLE pkls (
+    name TEXT NOT NULL UNIQUE,
+    data BLOB NOT NULL
+);
+
 CREATE TABLE decimalValues (
     name TEXT NOT NULL UNIQUE,
     value DECIMAL(10, 5) NOT NULL
