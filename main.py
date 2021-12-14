@@ -194,6 +194,7 @@ def dataset_selected():
         if load_status == 1:
             y_classes_sql = utils.get_y_classes()
             text_list_full_sql = utils.get_text_list(table_name="texts")
+            # text_list_full_sql = utils.get_pkl(name="TEXTS_LIST")
             text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                              sub_list_limit=table_limit_sql)
             dataset_name_sql = utils.get_variable_value(name="DATASET_NAME")
@@ -318,7 +319,13 @@ def begin_labeling_new_dataset():
                                     y_classes=y_classes_sql,
                                     rnd_state=random_state_sql)
 
-    corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
+    # corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
+
+    # dataset_name_pkl = utils.get_pkl(name="DATASET_NAME")
+    # dataset_url_pkl = utils.get_pkl(name="DATASET_URL")
+    # date_time_pkl = utils.get_pkl(name="DATE_TIME")
+    # y_classes_pkl = utils.get_pkl(name="Y_CLASSES")
+
 
     utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")

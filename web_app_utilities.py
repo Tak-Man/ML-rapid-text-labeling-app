@@ -665,6 +665,7 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
     predictions = fitted_classifier.predict_proba(sparse_vectorized_corpus)
 
     predictions_df = pd.DataFrame(predictions)
+    y_classes = [x.replace(" ", "_") for x in y_classes]
     predictions_df.columns = y_classes
 
     predictions_summary = predictions_df.replace(0.0, np.NaN).mean(axis=0)
@@ -710,7 +711,7 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
 
     keep_cols = ["id", "text"]
     keep_cols.extend(y_classes)
-    sql_cols_list = [x + " TEXT NOT NULL" for x in keep_cols]
+    sql_cols_list = [x + ' TEXT NOT NULL' for x in keep_cols]
     sql_cols = ", ".join(sql_cols_list)
     top_texts = predictions_df.head(top)[keep_cols].to_dict("records")
 
@@ -862,8 +863,7 @@ def load_new_data_sql(source_file,
                            source_folder=source_folder,
                            number_samples=None,
                            random_state=rnd_state)
-    print("data_df :")
-    print(data_df.head())
+
     corpus_text_ids = [str(x) for x in data_df[text_id_col].values]
 
     vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words="english", max_features=max_features)
@@ -890,6 +890,12 @@ def load_new_data_sql(source_file,
                                                                    text_col=text_value_col,
                                                                    label_col="label")
     populate_texts_table_sql(texts_list=texts_list, table_name="texts")
+
+    set_pkl(name="DATASET_NAME", pkl_data=None, reset=True)
+    set_pkl(name="DATASET_NAME", pkl_data=source_file, reset=False)
+
+    set_pkl(name="DATASET_URL", pkl_data=None, reset=True)
+    set_pkl(name="DATASET_URL", pkl_data="-", reset=False)
 
     set_pkl(name="CORPUS_TEXT_IDS", pkl_data=None, reset=True)
     set_pkl(name="CORPUS_TEXT_IDS", pkl_data=adj_text_ids, reset=False)
@@ -1053,8 +1059,6 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
         dataset_df = dataset_df[[text_id_col, text_value_col]]
         dataset_df.rename(columns={text_id_col: "id", text_value_col: "text"}, inplace=True)
         dataset_df["label"] = "-"
-        print("dataset_df :")
-        print(dataset_df.head())
 
         return 1, dataset_df
     except:
@@ -1103,6 +1107,7 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
                  value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
     texts_list_sql = get_pkl(name="TEXTS_LIST")
+    populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts")
     # texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
     generate_summary_sql(text_lists=texts_list_sql)
     return 1
