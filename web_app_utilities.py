@@ -620,14 +620,13 @@ def get_available_datasets():
     conn.close()
     dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data(source_dir="./output/save")
 
-    print("dataset_name :", dataset_name)
     if dataset_name:
         date_at_end_check = re.findall(r"(.*)\-[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}", dataset_name)
         if len(date_at_end_check) > 0:
             dataset_name_alt = date_at_end_check[0]
         else:
             dataset_name_alt = dataset_name
-        print("dataset_name_alt :", dataset_name_alt)
+
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("INSERT INTO availableDatasets (name, description, url) VALUES (?, ?, ?)",

@@ -134,7 +134,7 @@ div {
 
 #option1NewData, #option1 {
     margin-left: 1vw;
-    width: 15vw;
+    width: 32.5vw;
 }
 
 #config1 {
@@ -192,9 +192,9 @@ div {
 
 
 #video1, #video2, #video3 {
-    margin-left: 0.35vw;
-    height: 9vw;
-    width: 15vw;
+    margin-left: 2.50vw;
+    height: 12vw;
+    width: 20vw;
 }
 
 
@@ -224,7 +224,7 @@ div {
 .container {
   display: grid;
   height: 145%;
-  grid-template-columns: 2% 40% 40% 16% 2%;
+  grid-template-columns: 2% 70% 0% 26% 2%;
   grid-template-rows: 5.5% 89% 5.5%;
   grid-template-areas:
     "divHeader divHeader divHeader divHeader divHeader"
@@ -246,6 +246,16 @@ div {
     margin-top: 1px;
     margin-bottom: 0.5vh;
     color: #0d57aa;
+}
+
+.subHeading1 {
+    font-weight: 100;
+    font-size: 0.75vw;
+    padding-left: 0.60vw;
+    margin-top: 1px;
+    margin-bottom: 0.5vh;
+    color: #0d57aa;
+    margin-left: 2.0vw;
 }
 
 #divBodyLeftTable2 {
@@ -372,6 +382,7 @@ div {
 
 #bodyLeftTable2 {
     height: 30vh;
+    width: 100%;
 }
 
 #loadNewDataSetMessage, #divBodyLeft2InfoMessage {
