@@ -13,7 +13,7 @@ import os
 
 app = Flask(__name__)
 
-app.secret_key = os.urandom(24) # "super_secret_key"
+# app.secret_key = os.urandom(24) # "super_secret_key"
 app.config.from_object(__name__)
 
 if not os.path.exists("./output/upload/"):
@@ -23,7 +23,7 @@ app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.config["MAX_CONTENT_PATH"] = 10000
 # app.jinja_env.add_extension('jinja2.ext.do')
 # app.config['SESSION_TYPE'] = 'filesystem'
-Session(app)
+# Session(app)
 
 
 @app.route('/label_entered', methods=['POST'])
