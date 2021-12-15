@@ -109,9 +109,6 @@ def set_pkl(name, pkl_data, reset=False):
 
         test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
         test_data = pickle.loads([dict(row)["data"] for row in test_query][0])
-        if name == "CORPUS_TEXT_IDS":
-            print(name, ":", test_data[:10])
-
     else:
         # if os.path.exists("./output/pkl/" + name + ".pkl"):
         #     os.remove("./output/pkl/" + name + ".pkl")
@@ -687,7 +684,7 @@ def has_save_data(source_dir="./output"):
     date_time = get_pkl(name="DATE_TIME")
     y_classes = get_pkl(name="Y_CLASSES")
     total_summary = get_pkl(name="TOTAL_SUMMARY")
-    print("dataset_name :", dataset_name)
+
     return dataset_name, dataset_url, date_time, y_classes, total_summary
     # except:
     #     return None, None, None, None, None
