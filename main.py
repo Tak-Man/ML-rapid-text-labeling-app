@@ -22,7 +22,7 @@ app.config["UPLOAD_FOLDER"] = "./output/upload/"
 
 # app.config["MAX_CONTENT_PATH"] = 10000
 # app.jinja_env.add_extension('jinja2.ext.do')
-app.config['SESSION_TYPE'] = 'filesystem'
+# app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 
