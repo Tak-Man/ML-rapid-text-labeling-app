@@ -1111,7 +1111,7 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
                  value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
     texts_list_sql = get_pkl(name="TEXTS_LIST")
-    populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts")
+    # populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts")
     # texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
     generate_summary_sql(text_lists=texts_list_sql)
     return 1

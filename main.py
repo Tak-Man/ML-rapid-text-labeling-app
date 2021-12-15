@@ -22,7 +22,7 @@ app.config["UPLOAD_FOLDER"] = "./output/upload/"
 
 # app.config["MAX_CONTENT_PATH"] = 10000
 # app.jinja_env.add_extension('jinja2.ext.do')
-app.config['SESSION_TYPE'] = 'filesystem'
+# app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
 
@@ -193,8 +193,8 @@ def dataset_selected():
         load_status = utils.load_save_state_sql(source_dir="./output/save/")
         if load_status == 1:
             y_classes_sql = utils.get_y_classes()
-            text_list_full_sql = utils.get_text_list(table_name="texts")
-            # text_list_full_sql = utils.get_pkl(name="TEXTS_LIST")
+            # text_list_full_sql = utils.get_text_list(table_name="texts")
+            text_list_full_sql = utils.get_pkl(name="TEXTS_LIST")
             text_list_list_sql = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                              sub_list_limit=table_limit_sql)
             dataset_name_sql = utils.get_variable_value(name="DATASET_NAME")
