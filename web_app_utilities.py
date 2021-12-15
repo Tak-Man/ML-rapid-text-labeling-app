@@ -24,6 +24,7 @@ import numpy as np
 from sklearn.linear_model import SGDClassifier
 import pathlib
 
+
 pd.options.display.max_columns = 50
 pd.options.display.max_colwidth = 200
 pd.options.display.max_colwidth = 200
@@ -46,14 +47,19 @@ def get_db_connection():
     return conn
 
 
-def populate_texts_table_sql(texts_list, table_name="texts"):
+def populate_texts_table_sql(texts_list, table_name="texts", reset_labels=True):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("DELETE FROM " + table_name + ";")
     conn.commit()
-    for text_record in texts_list:
-        cur.execute("INSERT INTO " + table_name + " (id, text, label) VALUES (?, ?, ?)",
-                    (text_record["id"], text_record["text"], "-"))
+    if reset_labels:
+        for text_record in texts_list:
+            cur.execute("INSERT INTO " + table_name + " (id, text, label) VALUES (?, ?, ?)",
+                        (text_record["id"], text_record["text"], "-"))
+    else:
+        for text_record in texts_list:
+            cur.execute("INSERT INTO " + table_name + " (id, text, label) VALUES (?, ?, ?)",
+                        (text_record["id"], text_record["text"], text_record["label"]))
     conn.commit()
     conn.close()
     return None
@@ -85,36 +91,55 @@ def update_overall_quality_scores(value):
 
 
 def set_pkl(name, pkl_data, reset=False):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
     if not reset:
-        pathlib.Path("./output/pkl/").mkdir(parents=True, exist_ok=True)
-        with open("./output/pkl/" + name + ".pkl", "wb") as f:
-            pickle.dump(pkl_data, f)
+        # pathlib.Path("./output/pkl/").mkdir(parents=True, exist_ok=True)
+        # with open("./output/pkl/" + name + ".pkl", "wb") as f:
+        #     pickle.dump(pkl_data, f)
+
+        test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
+        if len(test_query) > 0:
+            cur.execute('DELETE FROM pkls WHERE name = ?', (name,))
+
+        query = "INSERT INTO pkls (name, data) VALUES (?, ?)"
+        pkl_data_ = pickle.dumps(pkl_data)
+        cur.execute(query, (name, pkl_data_))
+
+        test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
+        test_data = pickle.loads([dict(row)["data"] for row in test_query][0])
+        if name == "CORPUS_TEXT_IDS":
+            print(name, ":", test_data[:10])
+
     else:
-        if os.path.exists("./output/pkl/" + name + ".pkl"):
-            os.remove("./output/pkl/" + name + ".pkl")
+        # if os.path.exists("./output/pkl/" + name + ".pkl"):
+        #     os.remove("./output/pkl/" + name + ".pkl")
+        cur.execute("DELETE FROM pkls WHERE name = '" + name + "';")
+
+    conn.commit()
+    conn.close()
     return None
 
 
 def get_pkl(name):
-    try:
-        pkl_data = pickle.load(open(os.path.join("./output/pkl", name + ".pkl"), "rb"))
-        return pkl_data
-    except:
-        return None
-
-    # conn = get_db_connection()
-    # query = "SELECT * FROM pkls WHERE name = " + name + ";"
-    # pkl_table = conn.execute(query).fetchall()
-    # pkl_data = [dict(row) ["data"] for row in pkl_table]
-    # conn.close()
+    # try:
+    # pkl_data = pickle.load(open(os.path.join("./output/pkl", name + ".pkl"), "rb"))
     # return pkl_data
-    #
-    # query = u'''insert into testtable VALUES(?)'''
-    # b = sqlite3.Binary(binarydata)
-    # cur.execute(query, (b,))
-    # con.commit()
-    #
-    # return None
+    conn = get_db_connection()
+    cur = conn.cursor()
+    query = "SELECT * FROM pkls WHERE name = '" + name + "';"
+    pkl_table = cur.execute(query).fetchall()
+
+    data = [dict(row)["data"] for row in pkl_table]
+    if len(data) > 0:
+        pkl_data = pickle.loads(data[0])
+    else:
+        pkl_data = None
+
+    conn.close()
+    return pkl_data
+    # except:
 
 
 def get_text_list(table_name="texts"):
@@ -541,8 +566,14 @@ def set_variable(name, value):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    query = """INSERT OR REPLACE INTO variables (name, value) VALUES (?, ?) 
-                """
+    test_query = cur.execute('SELECT * FROM variables WHERE name = ?', (name,)).fetchall()
+    if len(test_query) > 0:
+        cur.execute('DELETE FROM variables WHERE name = ?', (name,))
+        query = """INSERT INTO variables (name, value) VALUES (?, ?) 
+                    """
+    else:
+        query = """INSERT INTO variables (name, value) VALUES (?, ?) 
+                    """
     cur.execute(query, (name, value))
     conn.commit()
     conn.close()
@@ -620,7 +651,7 @@ def get_available_datasets():
     conn.close()
     dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data(source_dir="./output/save")
 
-    if dataset_name:
+    if dataset_name and date_time:
         date_at_end_check = re.findall(r"(.*)\-[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}", dataset_name)
         if len(date_at_end_check) > 0:
             dataset_name_alt = date_at_end_check[0]
@@ -644,15 +675,22 @@ def get_available_datasets():
 
 
 def has_save_data(source_dir="./output"):
-    try:
-        dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
-        dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
-        date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
-        y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
-        total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
-        return dataset_name, dataset_url, date_time, y_classes, total_summary
-    except:
-        return None, None, None, None, None
+    # try:
+        # dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
+        # dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
+        # date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
+        # y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
+        # total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
+
+    dataset_name = get_pkl(name="DATASET_NAME")
+    dataset_url = get_pkl(name="DATASET_URL")
+    date_time = get_pkl(name="DATE_TIME")
+    y_classes = get_pkl(name="Y_CLASSES")
+    total_summary = get_pkl(name="TOTAL_SUMMARY")
+    print("dataset_name :", dataset_name)
+    return dataset_name, dataset_url, date_time, y_classes, total_summary
+    # except:
+    #     return None, None, None, None, None
 
 
 def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
@@ -925,8 +963,8 @@ def load_demo_data_sql(dataset_name="Disaster Tweets Dataset", shuffle_by="kmean
                        y_classes=["Earthquake", "Fire", "Flood", "Hurricane"], rnd_state=258):
     if dataset_name == "Disaster Tweets Dataset":
         consolidated_disaster_tweet_data_df = get_disaster_tweet_demo_data(number_samples=None,
-                                                                                 filter_data_types=["train"],
-                                                                                 random_state=rnd_state)
+                                                                           filter_data_types=["train"],
+                                                                           random_state=rnd_state)
         corpus_text_ids = [str(x) for x in consolidated_disaster_tweet_data_df["tweet_id"].values]
         set_pkl(name="CORPUS_TEXT_IDS", pkl_data=corpus_text_ids, reset=False)
 
@@ -1071,23 +1109,25 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
 
 def load_save_state_sql(source_dir="./output/save"):
     # try:
-    save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
-    set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
-    set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
-    set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
-    set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")),
-            reset=False)
-    set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
-    set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-    set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
-    set_pkl(name="TEXTS_LIST_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST_LIST.pkl"), "rb")),
-            reset=False)
-    set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-    set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")),
-            reset=False)
-    set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
-    set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
-    set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
+    # save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
+    save_state_json = get_pkl(name="SAVE_STATE")
+
+    # set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
+    # set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
+    # set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
+    # set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")),
+    #         reset=False)
+    # set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
+    # set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+    # set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
+    # set_pkl(name="TEXTS_LIST_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST_LIST.pkl"), "rb")),
+    #         reset=False)
+    # set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
+    # set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")),
+    #         reset=False)
+    # set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
+    # set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
+    # set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
 
     set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
     add_y_classes(y_classses_list=save_state_json["Y_CLASSES"], begin_fresh=True)
@@ -1100,7 +1140,6 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="NUMBER_AUTO_LABELED", value=0)
 
     test_dataset_name_sql = get_variable_value(name="DATASET_NAME")
-    print("test_dataset_name_sql :", test_dataset_name_sql)
     set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
     set_variable(name="NUMBER_UNLABELED_TEXTS", value=save_state_json["NUMBER_UNLABELED_TEXTS"])
     set_variable(name="LABEL_SUMMARY_STRING", value=save_state_json["LABEL_SUMMARY_STRING"])
@@ -1111,7 +1150,7 @@ def load_save_state_sql(source_dir="./output/save"):
     set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
                  value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
     texts_list_sql = get_pkl(name="TEXTS_LIST")
-    # populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts")
+    populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts", reset_labels=False)
     # texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
     generate_summary_sql(text_lists=texts_list_sql)
     return 1

@@ -191,10 +191,11 @@ div {
 }
 
 
-#video1, #video2, #video3 {
+#video1, #video2, #video3, #video4 {
     margin-left: 2.50vw;
     height: 12vw;
     width: 20vw;
+    margin-bottom: 2vh;
 }
 
 
@@ -253,7 +254,7 @@ div {
     font-size: 0.75vw;
     padding-left: 0.60vw;
     margin-top: 1px;
-    margin-bottom: 0.5vh;
+    margin-bottom: 0.01vh;
     color: #0d57aa;
     margin-left: 2.0vw;
 }

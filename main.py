@@ -1551,15 +1551,18 @@ def save_state():
     save_state["LABEL_SUMMARY_STRING"] = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
 
     save_state["PREDICTIONS_NUMBER"] = utils.get_variable_value(name="PREDICTIONS_NUMBER")
-    if not os.path.exists("./output/save/"):
-        os.makedirs("./output/save/")
-    with open("./output/save/save_state.json", "w") as outfile:
-        json.dump(save_state, outfile)
+
+    utils.set_pkl(name="SAVE_STATE", pkl_data=save_state, reset=False)
+    # if not os.path.exists("./output/save/"):
+    #     os.makedirs("./output/save/")
+    # with open("./output/save/save_state.json", "w") as outfile:
+    #     json.dump(save_state, outfile)
 
     utils.set_pkl(name="CLICK_LOG", pkl_data=utils.get_click_log(), reset=False)
     utils.set_pkl(name="VALUE_LOG", pkl_data=utils.get_value_log(), reset=False)
     utils.set_pkl(name="TOTAL_SUMMARY", pkl_data=utils.get_total_summary_sql(), reset=False)
     utils.set_pkl(name="LABEL_SUMMARY", pkl_data=utils.get_label_summary_sql(), reset=False)
+
     click_log_pkl = utils.get_pkl(name="CLICK_LOG")
     value_log_pkl = utils.get_pkl(name="VALUE_LOG")
     total_summary_pkl = utils.get_pkl(name="TOTAL_SUMMARY")
@@ -1576,9 +1579,10 @@ def save_state():
                  "LABEL_SUMMARY", "DATASET_NAME", "DATASET_URL", "DATE_TIME", "Y_CLASSES"]
 
     for file, filename in zip(files, filenames):
-        temp_filename = filename + ".pkl"
-        with open("./output/save/" + temp_filename, "wb") as f:
-            pickle.dump(file, f)
+        utils.set_pkl(name=filename, pkl_data=file, reset=False)
+        # temp_filename = filename + ".pkl"
+        # with open("./output/save/" + temp_filename, "wb") as f:
+        #     pickle.dump(file, f)
 
     info_message = "Work saved"
     alert_message = info_message
