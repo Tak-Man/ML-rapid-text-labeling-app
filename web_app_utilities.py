@@ -340,8 +340,12 @@ def set_total_summary(text_lists):
     number_labeled = total_texts - number_unlabeled
     total_texts_percentage = "100.00%"
 
-    number_unlabeled_percentage = "{:.2%}".format(number_unlabeled / total_texts)
-    number_labeled_percentage = "{:.2%}".format(number_labeled / total_texts)
+    if total_texts > 0:
+        number_unlabeled_percentage = "{:.2%}".format(number_unlabeled / total_texts)
+        number_labeled_percentage = "{:.2%}".format(number_labeled / total_texts)
+    else:
+        number_unlabeled_percentage = "{:.2%}".format(1.0)
+        number_labeled_percentage = "{:.2%}".format(0.0)
 
     total_summary = list()
     total_summary.append({"name": "Total Texts",
@@ -646,9 +650,9 @@ def get_available_datasets():
     cur.execute("INSERT INTO availableDatasets SELECT * FROM fixedDatasets;")
     conn.commit()
     conn.close()
-    dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data(source_dir="./output/save")
+    dataset_name, dataset_url, date_time, y_classes, total_summary = has_save_data()
 
-    if dataset_name and date_time:
+    if dataset_name and date_time and y_classes and total_summary:
         date_at_end_check = re.findall(r"(.*)\-[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}", dataset_name)
         if len(date_at_end_check) > 0:
             dataset_name_alt = date_at_end_check[0]
@@ -671,7 +675,7 @@ def get_available_datasets():
     return available_datasets_sql
 
 
-def has_save_data(source_dir="./output"):
+def has_save_data():
     # try:
         # dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
         # dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
@@ -685,6 +689,8 @@ def has_save_data(source_dir="./output"):
     y_classes = get_pkl(name="Y_CLASSES")
     total_summary = get_pkl(name="TOTAL_SUMMARY")
 
+    print("dataset_name :", dataset_name)
+    print("date_time :", date_time)
     return dataset_name, dataset_url, date_time, y_classes, total_summary
     # except:
     #     return None, None, None, None, None
@@ -978,18 +984,18 @@ def load_demo_data_sql(dataset_name="Disaster Tweets Dataset", shuffle_by="kmean
             kmeans = KMeans(n_clusters=len(y_classes), random_state=rnd_state).fit(vectorized_corpus)
             kmeans_labels = kmeans.labels_
             texts_list, adj_text_ids = convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df,
-                                                                              limit=texts_limit,
-                                                                              keep_labels=False,
-                                                                              shuffle_list=kmeans_labels,
-                                                                              random_shuffle=False,
-                                                                              random_state=rnd_state)
+                                                                        limit=texts_limit,
+                                                                        keep_labels=False,
+                                                                        shuffle_list=kmeans_labels,
+                                                                        random_shuffle=False,
+                                                                        random_state=rnd_state)
         else:
             texts_list, adj_text_ids = convert_demo_data_into_list_json(consolidated_disaster_tweet_data_df,
-                                                                              limit=texts_limit,
-                                                                              keep_labels=False,
-                                                                              shuffle_list=[],
-                                                                              random_shuffle=True,
-                                                                              random_state=rnd_state)
+                                                                        limit=texts_limit,
+                                                                        keep_labels=False,
+                                                                        shuffle_list=[],
+                                                                        random_shuffle=True,
+                                                                        random_state=rnd_state)
 
     texts_list_list = [texts_list[i:i + table_limit] for i in range(0, len(texts_list), table_limit)]
 
@@ -1158,8 +1164,16 @@ def load_save_state_sql(source_dir="./output/save"):
 def get_disaster_tweet_demo_data(number_samples=None,
                                  filter_data_types=None,
                                  random_state=1144,
-                                 source_file="./data/consolidated_disaster_tweet_data.tsv"):
+                                 source_file="./data/consolidated_disaster_tweet_data.tsv",
+                                 retry_count=5):
+
     data_df = pd.read_csv(source_file, sep="\t")
+    for count in range(0, retry_count):
+        if len(data_df) == 0:
+            data_df = pd.read_csv(source_file, sep="\t")
+        else:
+            print("len(data_df) :", len(data_df))
+            break
 
     if filter_data_types:
         data_df = data_df[data_df["data_type"].isin(filter_data_types)]
