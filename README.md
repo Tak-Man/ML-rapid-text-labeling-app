@@ -51,7 +51,10 @@ $ python main.py
 ### 3. Accessing the Web App URL
 The web app is available here: [ML-rapid-text-labeling-app](http://ml-rapid-text-labeling-app.herokuapp.com/)
 
-As at 2021/12/12 a live version of the web app is available at this url. Please note that there is no guarantee that the web app will always be available here. 
+As at 2021/12/12 a live version of the web app is available at this url. 
+Please note that there is no guarantee that the web app will always be available here. 
+Also the app is for demonstration purposes and can accommodate single-user use only.
+
 
 ## Contributors
 * [https://github.com/Tak-Man](https://github.com/Tak-Man)
