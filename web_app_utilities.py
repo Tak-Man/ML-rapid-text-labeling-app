@@ -1,20 +1,12 @@
 import pandas as pd
-import numpy as np
 import random
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
 import sklearn.preprocessing as pp
 from datetime import datetime
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from collections import Counter
 import itertools
 import re
 from scipy.stats import entropy
 import uuid
 import pickle
-import json
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
@@ -22,14 +14,11 @@ import sqlite3
 from collections import Counter
 import numpy as np
 from sklearn.linear_model import SGDClassifier
-import pathlib
-
 
 pd.options.display.max_columns = 50
 pd.options.display.max_colwidth = 200
 pd.options.display.max_colwidth = 200
 pd.set_option('display.max_rows', None)
-
 
 RND_SEED = 45822
 random.seed(RND_SEED)
@@ -95,10 +84,6 @@ def set_pkl(name, pkl_data, reset=False):
     cur = conn.cursor()
 
     if not reset:
-        # pathlib.Path("./output/pkl/").mkdir(parents=True, exist_ok=True)
-        # with open("./output/pkl/" + name + ".pkl", "wb") as f:
-        #     pickle.dump(pkl_data, f)
-
         test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
         if len(test_query) > 0:
             cur.execute('DELETE FROM pkls WHERE name = ?', (name,))
@@ -107,11 +92,9 @@ def set_pkl(name, pkl_data, reset=False):
         pkl_data_ = pickle.dumps(pkl_data)
         cur.execute(query, (name, pkl_data_))
 
-        test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
-        test_data = pickle.loads([dict(row)["data"] for row in test_query][0])
+        # test_query = cur.execute('SELECT * FROM pkls WHERE name = ?', (name,)).fetchall()
+        # test_data = pickle.loads([dict(row)["data"] for row in test_query][0])
     else:
-        # if os.path.exists("./output/pkl/" + name + ".pkl"):
-        #     os.remove("./output/pkl/" + name + ".pkl")
         cur.execute("DELETE FROM pkls WHERE name = '" + name + "';")
 
     conn.commit()
@@ -120,23 +103,22 @@ def set_pkl(name, pkl_data, reset=False):
 
 
 def get_pkl(name):
-    # try:
-    # pkl_data = pickle.load(open(os.path.join("./output/pkl", name + ".pkl"), "rb"))
-    # return pkl_data
-    conn = get_db_connection()
-    cur = conn.cursor()
-    query = "SELECT * FROM pkls WHERE name = '" + name + "';"
-    pkl_table = cur.execute(query).fetchall()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        query = "SELECT * FROM pkls WHERE name = '" + name + "';"
+        pkl_table = cur.execute(query).fetchall()
 
-    data = [dict(row)["data"] for row in pkl_table]
-    if len(data) > 0:
-        pkl_data = pickle.loads(data[0])
-    else:
-        pkl_data = None
+        data = [dict(row)["data"] for row in pkl_table]
+        if len(data) > 0:
+            pkl_data = pickle.loads(data[0])
+        else:
+            pkl_data = None
 
-    conn.close()
-    return pkl_data
-    # except:
+        conn.close()
+        return pkl_data
+    except:
+        return None
 
 
 def get_text_list(table_name="texts"):
@@ -421,10 +403,7 @@ def create_text_list_list(text_list_full_sql, sub_list_limit):
 
 
 def update_texts_list_by_id_sql(update_objs=None, selected_label=None, update_ids=None, sub_list_limit=10,
-                                labels_got_overridden_flag=[],
                                 update_in_place=True):
-    text_list_full = get_text_list(table_name="texts")
-
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -531,7 +510,6 @@ def label_all_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, 
                                         selected_label=None,
                                         update_ids=None,
                                         sub_list_limit=sub_list_limit,
-                                        labels_got_overridden_flag=[],
                                         update_in_place=update_in_place)
     else:
         text_list_full = get_text_list(table_name="texts")
@@ -622,9 +600,7 @@ def get_difficult_texts_sql():
         for row in sql_table:
             temp_row = {col: dict(row)[col] for col in sql_cols_list_y_classes}
             total_summary.append(temp_row)
-        # total_summary = [{"name": dict(row)["name"],
-        #                   "number": dict(row)["number"],
-        #                   "percentage": dict(row)["percentage"]} for row in sql_table]
+
         conn.close()
         return total_summary
     except:
@@ -676,24 +652,15 @@ def get_available_datasets():
 
 
 def has_save_data():
-    # try:
-        # dataset_name = pickle.load(open(os.path.join(source_dir, "DATASET_NAME.pkl"), "rb"))
-        # dataset_url = pickle.load(open(os.path.join(source_dir, "DATASET_URL.pkl"), "rb"))
-        # date_time = pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb"))
-        # y_classes = pickle.load(open(os.path.join(source_dir, "Y_CLASSES.pkl"), "rb"))
-        # total_summary = pickle.load(open(os.path.join(source_dir, "TOTAL_SUMMARY.pkl"), "rb"))
-
-    dataset_name = get_pkl(name="DATASET_NAME")
-    dataset_url = get_pkl(name="DATASET_URL")
-    date_time = get_pkl(name="DATE_TIME")
-    y_classes = get_pkl(name="Y_CLASSES")
-    total_summary = get_pkl(name="TOTAL_SUMMARY")
-
-    print("dataset_name :", dataset_name)
-    print("date_time :", date_time)
-    return dataset_name, dataset_url, date_time, y_classes, total_summary
-    # except:
-    #     return None, None, None, None, None
+    try:
+        dataset_name = get_pkl(name="DATASET_NAME")
+        dataset_url = get_pkl(name="DATASET_URL")
+        date_time = get_pkl(name="DATE_TIME")
+        y_classes = get_pkl(name="Y_CLASSES")
+        total_summary = get_pkl(name="TOTAL_SUMMARY")
+        return dataset_name, dataset_url, date_time, y_classes, total_summary
+    except:
+        return None, None, None, None, None
 
 
 def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_text_ids, texts_list,
@@ -738,8 +705,7 @@ def get_all_predictions_sql(fitted_classifier, sparse_vectorized_corpus, corpus_
             .astype(float)\
             .applymap(lambda x: "{0:.0%}".format(x))
 
-        predictions_summary = (predictions_summary.astype(float) * 100).round(1).astype(str) + "%" # .applymap(lambda x: "{0:.0%}".format(x))
-
+        # predictions_summary = (predictions_summary.astype(float) * 100).round(1).astype(str) + "%"
         overall_quality = (overall_quality.astype(float) * 100).round(1).astype(str) + "%"
 
     predictions_df = predictions_df.sort_values(["pred_scores"], ascending=[True])
@@ -938,10 +904,6 @@ def load_new_data_sql(source_file,
     set_pkl(name="DATASET_URL", pkl_data=None, reset=True)
     set_pkl(name="DATASET_URL", pkl_data="-", reset=False)
 
-    # date_time = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
-    # set_pkl(name="DATE_TIME", pkl_data=date_time, reset=True)
-    # set_pkl(name="DATE_TIME", pkl_data="-", reset=False)
-
     set_pkl(name="CORPUS_TEXT_IDS", pkl_data=None, reset=True)
     set_pkl(name="CORPUS_TEXT_IDS", pkl_data=adj_text_ids, reset=False)
 
@@ -1013,57 +975,57 @@ def generate_all_predictions_if_appropriate(n_jobs=-1,
 
     classifier_sql = get_pkl(name="CLASSIFIER")
 
-    # try:
-    if classifier_sql:
-        label_summary_sql = get_label_summary_sql()
-        label_summary_df = pd.DataFrame.from_dict(label_summary_sql)
-        y_classes_labeled = label_summary_df["name"].values
-        y_classes_sql = get_y_classes()
-        all_classes_present = all(label in y_classes_labeled for label in y_classes_sql)
-        if all_classes_present:
-            force_full_fit_for_difficult_texts_sql = get_variable_value(name="FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS")
-            random_state_sql = get_variable_value(name="RND_STATE")
-            corpus_text_ids_sql = get_pkl(name="CORPUS_TEXT_IDS")
-            vectorized_corpus_sql = get_pkl(name="VECTORIZED_CORPUS")
-            predictions_verbose_sql = get_variable_value(name="PREDICTIONS_VERBOSE")
-            fit_classifier_verbose_sql = get_variable_value(name="FIT_CLASSIFIER_VERBOSE")
-            text_list_full_sql = get_text_list(table_name="texts")
+    try:
+        if classifier_sql:
+            label_summary_sql = get_label_summary_sql()
+            label_summary_df = pd.DataFrame.from_dict(label_summary_sql)
+            y_classes_labeled = label_summary_df["name"].values
+            y_classes_sql = get_y_classes()
+            all_classes_present = all(label in y_classes_labeled for label in y_classes_sql)
+            if all_classes_present:
+                force_full_fit_for_difficult_texts_sql = get_variable_value(name="FORCE_FULL_FIT_FOR_DIFFICULT_TEXTS")
+                random_state_sql = get_variable_value(name="RND_STATE")
+                corpus_text_ids_sql = get_pkl(name="CORPUS_TEXT_IDS")
+                vectorized_corpus_sql = get_pkl(name="VECTORIZED_CORPUS")
+                predictions_verbose_sql = get_variable_value(name="PREDICTIONS_VERBOSE")
+                fit_classifier_verbose_sql = get_variable_value(name="FIT_CLASSIFIER_VERBOSE")
+                text_list_full_sql = get_text_list(table_name="texts")
 
-            if force_full_fit_for_difficult_texts_sql:
-                fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
-                                   corpus_text_ids=corpus_text_ids_sql,
-                                   texts_list=text_list_full_sql,
-                                   texts_list_labeled=text_list_full_sql,
-                                   y_classes=y_classes_sql,
-                                   verbose=fit_classifier_verbose_sql,
-                                   random_state=random_state_sql,
-                                   n_jobs=n_jobs,
-                                   labels_got_overridden_flag=labels_got_overridden_flag,
-                                   full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden)
+                if force_full_fit_for_difficult_texts_sql:
+                    fit_classifier_sql(sparse_vectorized_corpus=vectorized_corpus_sql,
+                                       corpus_text_ids=corpus_text_ids_sql,
+                                       texts_list=text_list_full_sql,
+                                       texts_list_labeled=text_list_full_sql,
+                                       y_classes=y_classes_sql,
+                                       verbose=fit_classifier_verbose_sql,
+                                       random_state=random_state_sql,
+                                       n_jobs=n_jobs,
+                                       labels_got_overridden_flag=labels_got_overridden_flag,
+                                       full_fit_if_labels_got_overridden=full_fit_if_labels_got_overridden)
 
-            top_sql = get_variable_value(name="GROUP_3_KEEP_TOP")
-            texts_group_3_sql, overall_quality_score_sql, \
-                overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-                    get_all_predictions_sql(fitted_classifier=classifier_sql,
-                                            sparse_vectorized_corpus=vectorized_corpus_sql,
-                                            corpus_text_ids=corpus_text_ids_sql,
-                                            texts_list=text_list_full_sql,
-                                            top=top_sql,
-                                            y_classes=y_classes_sql,
-                                            verbose=predictions_verbose_sql,
-                                            round_to=round_to,
-                                            format_as_percentage=format_as_percentage)
-            return 1, "The difficult texts list has been generated.", \
-                    texts_group_3_sql, overall_quality_score_sql, \
-                        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
+                top_sql = get_variable_value(name="GROUP_3_KEEP_TOP")
+                texts_group_3_sql, overall_quality_score_sql, \
+                    overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+                        get_all_predictions_sql(fitted_classifier=classifier_sql,
+                                                sparse_vectorized_corpus=vectorized_corpus_sql,
+                                                corpus_text_ids=corpus_text_ids_sql,
+                                                texts_list=text_list_full_sql,
+                                                top=top_sql,
+                                                y_classes=y_classes_sql,
+                                                verbose=predictions_verbose_sql,
+                                                round_to=round_to,
+                                                format_as_percentage=format_as_percentage)
+                return 1, "The difficult texts list has been generated.", \
+                        texts_group_3_sql, overall_quality_score_sql, \
+                            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql
+            else:
+                return 0, """Examples of all labels are not present. 
+                                  Label more texts then try generating the difficult text list.""", [], "-", 0.0, 0.0
         else:
-            return 0, """Examples of all labels are not present. 
-                              Label more texts then try generating the difficult text list.""", [], "-", 0.0, 0.0
-    else:
-            return 0, "Label more texts then try generating the difficult text list.", [], "-", 0.0, 0.0
+                return 0, "Label more texts then try generating the difficult text list.", [], "-", 0.0, 0.0
 
-    # except:
-    #     return -1, "An error occurred when trying to generate the difficult texts.", [], "-", 0.0, 0.0
+    except:
+        return -1, "An error occurred when trying to generate the difficult texts.", [], "-", 0.0, 0.0
 
 
 def get_top_similar_texts_sql(all_texts_json, similarities_series, top=5, exclude_already_labeled=False, verbose=True):
@@ -1080,9 +1042,6 @@ def get_top_similar_texts_sql(all_texts_json, similarities_series, top=5, exclud
 
         similarities_df = similarities_df.merge(all_texts_df, left_on="id", right_on="id")
         similarities_df = similarities_df[similarities_df["label"].isin(["-"])]
-
-        # print(">> get_top_similar_texts > similarities_df :")
-        # print(similarities_df.head())
 
         filter_list = similarities_df.head(top)["id"].values
     else:
@@ -1110,55 +1069,35 @@ def read_new_dataset(source_file_name, text_id_col, text_value_col, source_dir="
         return 0, None
 
 
-def load_save_state_sql(source_dir="./output/save"):
-    # try:
-    # save_state_json = json.load(open(os.path.join(source_dir, "save_state.json"), "rb"))
-    save_state_json = get_pkl(name="SAVE_STATE")
+def load_save_state_sql():
+    try:
+        save_state_json = get_pkl(name="SAVE_STATE")
 
-    # set_pkl(name="DATE_TIME", pkl_data=pickle.load(open(os.path.join(source_dir, "DATE_TIME.pkl"), "rb")), reset=False)
-    # set_pkl(name="CLICK_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "CLICK_LOG.pkl"), "rb")), reset=False)
-    # set_pkl(name="VALUE_LOG", pkl_data=pickle.load(open(os.path.join(source_dir, "VALUE_LOG.pkl"), "rb")), reset=False)
-    # set_pkl(name="VECTORIZED_CORPUS", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZED_CORPUS.pkl"), "rb")),
-    #         reset=False)
-    # set_pkl(name="VECTORIZER", pkl_data=pickle.load(open(os.path.join(source_dir, "VECTORIZER.pkl"), "rb")), reset=False)
-    # set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-    # set_pkl(name="TEXTS_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST.pkl"), "rb")), reset=False)
-    # set_pkl(name="TEXTS_LIST_LIST", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_LIST_LIST.pkl"), "rb")),
-    #         reset=False)
-    # set_pkl(name="CLASSIFIER", pkl_data=pickle.load(open(os.path.join(source_dir, "CLASSIFIER.pkl"), "rb")), reset=False)
-    # set_pkl(name="CORPUS_TEXT_IDS", pkl_data=pickle.load(open(os.path.join(source_dir, "CORPUS_TEXT_IDS.pkl"), "rb")),
-    #         reset=False)
-    # set_pkl(name="TEXTS_GROUP_1", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_1.pkl"), "rb")), reset=False)
-    # set_pkl(name="TEXTS_GROUP_2", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_2.pkl"), "rb")), reset=False)
-    # set_pkl(name="TEXTS_GROUP_3", pkl_data=pickle.load(open(os.path.join(source_dir, "TEXTS_GROUP_3.pkl"), "rb")), reset=False)
+        set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
+        add_y_classes(y_classses_list=save_state_json["Y_CLASSES"], begin_fresh=True)
+        set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
+        set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
+        set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
 
-    set_variable(name="TOTAL_PAGES", value=save_state_json["TOTAL_PAGES"])
-    add_y_classes(y_classses_list=save_state_json["Y_CLASSES"], begin_fresh=True)
-    set_variable(name="SHUFFLE_BY", value=save_state_json["SHUFFLE_BY"])
-    set_variable(name="HTML_CONFIG_TEMPLATE", value=save_state_json["HTML_CONFIG_TEMPLATE"])
-    set_variable(name="DATASET_NAME", value=save_state_json["DATASET_NAME"])
+        set_variable(name="LABEL_ALL_BATCH_NO", value=-99)
+        set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=0)
+        set_variable(name="NUMBER_AUTO_LABELED", value=0)
 
-    set_variable(name="LABEL_ALL_BATCH_NO", value=-99)
-    set_variable(name="LABEL_ALL_TOTAL_BATCHES", value=0)
-    set_variable(name="NUMBER_AUTO_LABELED", value=0)
-
-    test_dataset_name_sql = get_variable_value(name="DATASET_NAME")
-    set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
-    set_variable(name="NUMBER_UNLABELED_TEXTS", value=save_state_json["NUMBER_UNLABELED_TEXTS"])
-    set_variable(name="LABEL_SUMMARY_STRING", value=save_state_json["LABEL_SUMMARY_STRING"])
-    set_variable(name="OVERALL_QUALITY_SCORE", value=save_state_json["OVERALL_QUALITY_SCORE"])
-    set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL", value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL"])
-    set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS",
-                 value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS"])
-    set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
-                 value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
-    texts_list_sql = get_pkl(name="TEXTS_LIST")
-    populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts", reset_labels=False)
-    # texts_list_list_sql = get_pkl(name="TEXTS_LIST_LIST")
-    generate_summary_sql(text_lists=texts_list_sql)
-    return 1
-    # except:
-    #     return 0
+        set_variable(name="SEARCH_MESSAGE", value=save_state_json["SEARCH_MESSAGE"])
+        set_variable(name="NUMBER_UNLABELED_TEXTS", value=save_state_json["NUMBER_UNLABELED_TEXTS"])
+        set_variable(name="LABEL_SUMMARY_STRING", value=save_state_json["LABEL_SUMMARY_STRING"])
+        set_variable(name="OVERALL_QUALITY_SCORE", value=save_state_json["OVERALL_QUALITY_SCORE"])
+        set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL", value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL"])
+        set_variable(name="OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS",
+                     value=save_state_json["OVERALL_QUALITY_SCORE_DECIMAL_PREVIOUS"])
+        set_variable(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS",
+                     value=save_state_json["ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS"])
+        texts_list_sql = get_pkl(name="TEXTS_LIST")
+        populate_texts_table_sql(texts_list=texts_list_sql, table_name="texts", reset_labels=False)
+        generate_summary_sql(text_lists=texts_list_sql)
+        return 1
+    except:
+        return 0
 
 
 def get_disaster_tweet_demo_data(number_samples=None,
@@ -1225,11 +1164,8 @@ def convert_demo_data_into_list_json(data_df, limit=50, keep_labels=False,
 
         sort_indices = []
         for sort_indices_tuple in itertools.zip_longest(*dictionaries):
-            # print("len(sort_indices_tuple) :", len(sort_indices_tuple))
-            # print("sort_indices_tuple :", sort_indices_tuple)
             temp_list = [x for x in [*sort_indices_tuple] if x is not None]
             sort_indices.extend(temp_list)
-            # sort_indices = list(filter(None, sort_indices))
 
         data_df = data_df.iloc[sort_indices, :]
 
@@ -1320,8 +1256,6 @@ def filter_all_texts(all_text, filter_list, exclude_already_labeled=False):
     # Fastest - 10,000 records - duration 0:00:00.102955
     all_text_df = pd.DataFrame(all_text)
     filtered_all_text_df = all_text_df[all_text_df["id"].isin(filter_list)]
-    # print(">> filter_all_texts > filtered_all_text_df :")
-    # print(filtered_all_text_df.head())
 
     if exclude_already_labeled:
         filtered_all_text_df = filtered_all_text_df[filtered_all_text_df["label"].isin(["-"])]
@@ -1388,13 +1322,11 @@ def search_all_texts_sql(all_text, include_search_term, exclude_search_term,
 
 
 def update_texts_list(texts_list, sub_list_limit, old_obj_lst=[], new_obj_lst=[], texts_list_list=[]):
-    # print("len(texts_list) :", texts_list)
-    updated_texts_list = texts_list # .copy()
+    updated_texts_list = texts_list
 
     if len(old_obj_lst) > 0 or len(new_obj_lst) > 0:
         if len(old_obj_lst) > 0:
             for old_obj in old_obj_lst:
-                # print(f"Trying to remove obj : {old_obj}")
                 updated_texts_list.remove(old_obj)
 
         if len(new_obj_lst) > 0:
@@ -1405,13 +1337,11 @@ def update_texts_list(texts_list, sub_list_limit, old_obj_lst=[], new_obj_lst=[]
     updated_texts_list_list = \
         [updated_texts_list[i:i + sub_list_limit] for i in range(0, len(updated_texts_list), sub_list_limit)]
     texts_list_list.extend(updated_texts_list_list)
-    # print("len(texts_list_list) :", len(texts_list_list))
     return updated_texts_list, updated_texts_list_list
 
 
 def cosine_similarities(mat):
     # https://stackoverflow.com/questions/17627219/whats-the-fastest-way-in-python-to-calculate-cosine-similarity-given-sparse-mat
-    #
     col_normed_mat = pp.normalize(mat.tocsc(), axis=1)
     return col_normed_mat * col_normed_mat.T
 
@@ -1433,9 +1363,6 @@ def get_all_similarities(sparse_vectorized_corpus, corpus_text_ids):
     similarities = cosine_similarities(sparse_vectorized_corpus)
     similarities_df = pd.DataFrame.sparse.from_spmatrix(similarities, columns=corpus_text_ids)
 
-    # print("similarities :")
-    # print(similarities)
-
     similarities_df["id"] = corpus_text_ids
     similarities_df = similarities_df.set_index(["id"])
     return similarities_df
@@ -1454,8 +1381,6 @@ def get_all_similarities_one_at_a_time(sparse_vectorized_corpus, corpus_text_ids
     similarities_series = similarities_series.filter(corpus_text_ids_adj)
     similarities_series.index.name = "id"
     similarities_series = similarities_series.sort_values(ascending=False)
-
-    # print(">> In 'get_all_similarities_one_at_a_time' similarities_series :", similarities_series)
 
     if keep_original:
         similarities_series = pd.concat([pd.Series(99.0, index=[text_id]), similarities_series])

@@ -6,14 +6,13 @@ import pandas as pd
 from datetime import datetime
 import zipfile
 import pickle
-import json
 from werkzeug.utils import secure_filename
 import os
 
 
 app = Flask(__name__)
 
-# app.secret_key = os.urandom(24) # "super_secret_key"
+app.secret_key = os.urandom(24)
 app.config.from_object(__name__)
 
 if not os.path.exists("./output/upload/"):
@@ -23,7 +22,7 @@ app.config["UPLOAD_FOLDER"] = "./output/upload/"
 # app.config["MAX_CONTENT_PATH"] = 10000
 # app.jinja_env.add_extension('jinja2.ext.do')
 # app.config['SESSION_TYPE'] = 'filesystem'
-# Session(app)
+Session(app)
 
 
 @app.route('/label_entered', methods=['POST'])
@@ -190,7 +189,7 @@ def dataset_selected():
                                dataset_labels=y_classes_sql)
 
     else:
-        load_status = utils.load_save_state_sql(source_dir="./output/save/")
+        load_status = utils.load_save_state_sql()
         if load_status == 1:
             y_classes_sql = utils.get_y_classes()
             # text_list_full_sql = utils.get_text_list(table_name="texts")
@@ -205,6 +204,11 @@ def dataset_selected():
                                    dataset_labels=y_classes_sql)
         else:
             print("Error loading dataset.")
+            return render_template("start.html",
+                                   dataset_list=available_datasets,
+                                   texts_list=[{"id": "-", "text": "The saved data could not load. Try refreshing the page.", "label": "-"}],
+                                   dataset_name=dataset_name_sql,
+                                   dataset_labels=[])
 
 
 @app.route("/begin_labeling", methods=["POST"])
@@ -318,14 +322,6 @@ def begin_labeling_new_dataset():
                                     max_features=max_features_sql,
                                     y_classes=y_classes_sql,
                                     rnd_state=random_state_sql)
-
-    # corpus_text_ids_sql = utils.get_pkl(name="CORPUS_TEXT_IDS")
-
-    # dataset_name_pkl = utils.get_pkl(name="DATASET_NAME")
-    # dataset_url_pkl = utils.get_pkl(name="DATASET_URL")
-    # date_time_pkl = utils.get_pkl(name="DATE_TIME")
-    # y_classes_pkl = utils.get_pkl(name="Y_CLASSES")
-
 
     utils.set_variable(name="SEARCH_RESULTS_LENGTH", value=0)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
@@ -479,6 +475,7 @@ def text_labeling():
     else:
         texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
     # **********************************************************************************************
+
     search_message_sql = utils.get_variable_value(name="SEARCH_MESSAGE")
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
     label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
@@ -651,7 +648,6 @@ def single_text():
         texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql,
                                                      sub_list_limit=table_limit_sql)
 
-        alert_message = info_message
         return render_template(html_config_template_sql,
                                selected_text_id=new_id,
                                selected_text=new_text,
@@ -681,7 +677,7 @@ def single_text():
         fit_classifier_verbose_sql = utils.get_variable_value(name="FIT_CLASSIFIER_VERBOSE")
         text_list_full_sql, texts_list_list_sql = \
             utils.update_texts_list_by_id_sql(selected_label=new_label, update_ids=[new_id],
-                                              sub_list_limit=table_limit_sql, labels_got_overridden_flag=[],
+                                              sub_list_limit=table_limit_sql,
                                               update_in_place=update_in_place_sql)
 
         total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
@@ -724,8 +720,8 @@ def single_text():
         alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
                                                 overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
-                               selected_text_id="None", # new_id,
-                               selected_text="Select a text below to label.", # new_text,
+                               selected_text_id="None",
+                               selected_text="Select a text below to label.",
                                label_selected=new_label,
                                info_message=info_message,
                                alert_message=alert_message,
@@ -736,7 +732,7 @@ def single_text():
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=texts_list_list_sql[page_number],
-                               texts_group_1=[], # TEXTS_GROUP_1,
+                               texts_group_1=[],
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
                                group2_table_limit_value=predictions_number_sql,
@@ -757,7 +753,6 @@ def grouped_1_texts():
 
     page_number = int(request.form["page_number"])
     new_id = request.form["selected_text_id"]
-    # new_text = request.form["selected_text"]
     selected_label_group1 = request.form["selected_label_group1"]
     info_message = ""
 
@@ -855,7 +850,7 @@ def grouped_1_texts():
 
         text_list_full_sql, texts_list_list_sql = \
             utils.update_texts_list_by_id_sql(selected_label=selected_label_group1, update_ids=update_ids,
-                                              sub_list_limit=table_limit_sql, labels_got_overridden_flag=[],
+                                              sub_list_limit=table_limit_sql,
                                               update_in_place=update_in_place_sql)
 
         total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
@@ -893,10 +888,10 @@ def grouped_1_texts():
             texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
 
         result, difficult_texts_message, recommendations_summary_sql, overall_quality_score_sql, \
-        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-            utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
-                                                          full_fit_if_labels_got_overridden=True, round_to=1,
-                                                          format_as_percentage=True)
+            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+                utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                              full_fit_if_labels_got_overridden=True, round_to=1,
+                                                              format_as_percentage=True)
 
         overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
         initialize_flags_sql = utils.get_panel_flags()
@@ -904,10 +899,10 @@ def grouped_1_texts():
 
         info_message = "Labels assigned to group"
         alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
-                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql) #recommendations_summary_sql
+                                                overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
-                               selected_text_id="None", # new_id,
-                               selected_text="Select a text below to label.", # new_text,
+                               selected_text_id="None",
+                               selected_text="Select a text below to label.",
                                label_selected=selected_label_group1,
                                info_message=info_message,
                                alert_message=alert_message,
@@ -918,7 +913,7 @@ def grouped_1_texts():
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=texts_list_list_sql[page_number],
-                               texts_group_1=[], # texts_group_1_updated,
+                               texts_group_1=[],
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
                                group2_table_limit_value=predictions_number_sql,
@@ -1035,7 +1030,6 @@ def grouped_2_texts():
             utils.update_texts_list_by_id_sql(selected_label=selected_label_group2,
                                               update_ids=update_ids,
                                               sub_list_limit=table_limit_sql,
-                                              labels_got_overridden_flag=[],
                                               update_in_place=update_in_place_sql)
 
         total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
@@ -1078,16 +1072,16 @@ def grouped_2_texts():
             texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
 
         result, difficult_texts_message, texts_group_3_sql, overall_quality_score_sql, \
-        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-            utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
-                                                          full_fit_if_labels_got_overridden=True, round_to=1,
-                                                          format_as_percentage=True)
+            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+                utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                              full_fit_if_labels_got_overridden=True, round_to=1,
+                                                              format_as_percentage=True)
         info_message = "Labels assigned to group"
         alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
                                                 overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
-                               selected_text_id="None", # new_id,
-                               selected_text="Select a text below to label.", # new_text,
+                               selected_text_id="None",
+                               selected_text="Select a text below to label.",
                                label_selected=selected_label_group2,
                                info_message=info_message,
                                alert_message=alert_message,
@@ -1098,7 +1092,7 @@ def grouped_2_texts():
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=texts_list_list_sql[page_number],
-                               texts_group_1=[], # texts_group_1_updated,
+                               texts_group_1=[],
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
                                group2_table_limit_value=predictions_number_sql,
@@ -1122,7 +1116,6 @@ def label_all():
     y_classes_sql = utils.get_y_classes()
 
     table_limit_sql = utils.get_variable_value(name="TABLE_LIMIT")
-    # text_list_search_results_sql = utils.get_text_list(table_name="searchResults")
     text_list_full_sql = utils.get_text_list(table_name="texts")
     new_text = utils.get_selected_text(selected_text_id=new_id, text_list_full_sql=text_list_full_sql)
     search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
@@ -1301,6 +1294,7 @@ def label_all():
 
             if label_all_batch_no < label_all_total_batches:
                 batch_texts = batched_text_list_full[label_all_batch_no]
+
                 # *******************Batch Processing*********************************************************
                 text_list_full_sql, texts_list_list_sql, labeled_text_ids = \
                     utils.label_all_sql(fitted_classifier=classifier_sql,
@@ -1553,10 +1547,6 @@ def save_state():
     save_state["PREDICTIONS_NUMBER"] = utils.get_variable_value(name="PREDICTIONS_NUMBER")
 
     utils.set_pkl(name="SAVE_STATE", pkl_data=save_state, reset=False)
-    # if not os.path.exists("./output/save/"):
-    #     os.makedirs("./output/save/")
-    # with open("./output/save/save_state.json", "w") as outfile:
-    #     json.dump(save_state, outfile)
 
     utils.set_pkl(name="CLICK_LOG", pkl_data=utils.get_click_log(), reset=False)
     utils.set_pkl(name="VALUE_LOG", pkl_data=utils.get_value_log(), reset=False)
@@ -1580,9 +1570,6 @@ def save_state():
 
     for file, filename in zip(files, filenames):
         utils.set_pkl(name=filename, pkl_data=file, reset=False)
-        # temp_filename = filename + ".pkl"
-        # with open("./output/save/" + temp_filename, "wb") as f:
-        #     pickle.dump(file, f)
 
     info_message = "Work saved"
     alert_message = info_message
@@ -1707,7 +1694,6 @@ def label_selected():
 
     info_message = f"'{label_selected}' selected"
 
-
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
     label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
     overall_quality_score_sql = utils.get_variable_value(name="OVERALL_QUALITY_SCORE")
@@ -1768,7 +1754,8 @@ def generate_difficult_texts():
     label_summary_sql = utils.get_label_summary_sql()
     label_summary_string_sql = utils.get_variable_value(name="LABEL_SUMMARY_STRING")
     initialize_flags_sql = utils.get_panel_flags()
-    allow_search_to_override_existing_labels_sql = utils.get_variable_value(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS")
+    allow_search_to_override_existing_labels_sql = \
+        utils.get_variable_value(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS")
 
     text = utils.get_selected_text(selected_text_id=id, text_list_full_sql=text_list_full_sql)
 
@@ -1781,10 +1768,10 @@ def generate_difficult_texts():
     # Group 3 ************************************************************************************
 
     result, message, texts_group_3_sql, overall_quality_score_sql, \
-    overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-        utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
-                                                      full_fit_if_labels_got_overridden=True, round_to=1,
-                                                      format_as_percentage=True)
+        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+            utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                          full_fit_if_labels_got_overridden=True, round_to=1,
+                                                          format_as_percentage=True)
     info_message = message
 
     # **********************************************************************************************
@@ -1888,7 +1875,6 @@ def set_group_1_record_limit():
 
     texts_group_3_sql = utils.get_difficult_texts_sql()
     texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
-    # texts_group_1_sql = utils.get_texts_group_x(table_name="group1Texts")
 
     allow_search_to_override_existing_labels_sql = utils.get_variable_value(name="ALLOW_SEARCH_TO_OVERRIDE_EXISTING_LABELS")
     return render_template(html_config_template_sql,
@@ -2030,7 +2016,6 @@ def search_all_texts():
     texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
     texts_group_3_sql = utils.get_difficult_texts_sql()
     group_1_keep_top_sql = utils.get_variable_value(name="GROUP_1_KEEP_TOP")
-    search_results_length_sql = utils.get_variable_value(name="SEARCH_RESULTS_LENGTH")
     initialize_flags_sql = utils.get_panel_flags()
 
     label_selected = request.form.get("label_selected", None)
@@ -2136,7 +2121,6 @@ def search_all_texts():
                                    allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
     else:
         info_message = "No search term entered"
-        # text_list_full_sql = utils.get_text_list(table_name="texts")
         texts_list_list = utils.create_text_list_list(text_list_full_sql=text_list_full_sql, 
                                                      sub_list_limit=table_limit_sql)
         utils.set_variable(name="SEARCH_MESSAGE", value=info_message)
@@ -2263,9 +2247,7 @@ def grouped_search_texts():
                                label_summary_string=label_summary_string_sql,
                                initialize_flags=initialize_flags_sql,
                                allow_search_to_override_existing_labels=allow_search_to_override_existing_labels_sql)
-
     else:
-
         update_ids = list()
         value_records = list()
         for obj in texts_group_updated:
@@ -2279,13 +2261,13 @@ def grouped_search_texts():
             utils.update_texts_list_by_id_sql(selected_label=selected_label_search_texts,
                                               update_ids=update_ids,
                                               sub_list_limit=table_limit_sql,
-                                              labels_got_overridden_flag=[],
                                               update_in_place=update_in_place_sql)
 
         utils.set_text_list(label=selected_label_search_texts, table_name="searchResults")
 
         total_summary_sql, label_summary_sql, number_unlabeled_texts_sql, label_summary_string_sql = \
             utils.generate_summary_sql(text_lists=text_list_full_sql)
+
         # Group 2 **************************************************************************************
         labels_got_overridden_flag_sql = utils.get_variable_value(name="LABELS_GOT_OVERRIDDEN_FLAG")
         classifier_sql = \
@@ -2319,10 +2301,10 @@ def grouped_search_texts():
             texts_group_2_sql = utils.get_texts_group_x(table_name="group2Texts")
 
         result, difficult_texts_message, texts_group_3_sql, overall_quality_score_sql, \
-        overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
-            utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
-                                                          full_fit_if_labels_got_overridden=True, round_to=1,
-                                                          format_as_percentage=True)
+            overall_quality_score_decimal_sql, overall_quality_score_decimal_previous_sql = \
+                utils.generate_all_predictions_if_appropriate(n_jobs=-1, labels_got_overridden_flag=True,
+                                                              full_fit_if_labels_got_overridden=True, round_to=1,
+                                                              format_as_percentage=True)
         # **********************************************************************************************
 
         search_results_texts_list_sql = utils.get_text_list(table_name="searchResults")
@@ -2333,8 +2315,8 @@ def grouped_search_texts():
         alert_message = utils.get_alert_message(label_summary_sql, overall_quality_score_decimal_sql,
                                                 overall_quality_score_decimal_previous_sql, texts_group_3_sql)
         return render_template(html_config_template_sql,
-                               selected_text_id="None", # new_id,
-                               selected_text="Select a text below to label.", # new_text,
+                               selected_text_id="None",
+                               selected_text="Select a text below to label.",
                                label_selected=selected_label_search_texts,
                                info_message=info_message,
                                alert_message=alert_message,
@@ -2345,7 +2327,7 @@ def grouped_search_texts():
                                y_classes=y_classes_sql,
                                total_pages=total_pages_sql,
                                texts_list=search_results_texts_list_list_sql[page_number],
-                               texts_group_1=[], # texts_group_1_updated,
+                               texts_group_1=[],
                                group1_table_limit_value=group_1_keep_top_sql,
                                texts_group_2=texts_group_2_sql,
                                group2_table_limit_value=predictions_number_sql,
