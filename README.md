@@ -11,11 +11,7 @@ user to rapidly label a text corpus and have control over how they manage
   The web app performed well in terms of speed and accuracy on this dataset.
   
 In particular, the web app resulted in an 82% time saving to achieve the same accuracy threshold by 
-smart selection of which texts to label next compared to labeling texts in a random order. The red bar  
-shows how long it takes for accuracy to reach a key threshold where labels are added in a random order. 
-The green bars show how quickly that threshold can be reached when the functionality of the app is used 
-to make the labeling process smarter. This is done by using the ML model in the app to indicate which 
-texts it is least confident about and getting the user to label those first.
+smart selection of which texts to label next compared to labeling texts in a random order. The red bar shows how long it takes for accuracy to reach a key threshold where labels are added in a random order. The green bars show how quickly that threshold can be reached when the functionality of the app is used to make the labeling process smarter. This is done by using the ML model in the app to indicate which texts it is least confident about and getting the user to label those first.
 
 ![time saving at 0.95 threshold using web app difficult texts functionality](https://github.com/Tak-Man/ML-rapid-text-labeling/blob/main/web-testing/viz/time_saving_0.95.png)
  
