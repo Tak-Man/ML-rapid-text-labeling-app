@@ -28,11 +28,11 @@ The web app can be used in one of 3 ways.
 
 ### 1. Using PIP Requirements
 ```
-$ pip install -r requirements.txt
+$ git clone https://github.com/Tak-Man/ML-rapid-text-labeling-app.git
 ```
 
 ```
-$ git clone https://github.com/Tak-Man/ML-rapid-text-labeling-app.git
+$ pip install -r requirements.txt
 ```
 
 ```
@@ -42,11 +42,11 @@ $ python main.py
 ### 2. Create a Conda environment
 This was the project development teams preferred method for setting up the environment required to run this code.
 ```
-$ conda env create -f environment.yml
+$ git clone https://github.com/Tak-Man/ML-rapid-text-labeling-app.git
 ```
 
 ```
-$ git clone https://github.com/Tak-Man/ML-rapid-text-labeling-app.git
+$ conda env create -f environment.yml
 ```
 
 ```
