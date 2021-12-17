@@ -15,6 +15,8 @@ smart selection of which texts to label next compared to labeling texts in a ran
 
 ![time saving at 0.95 threshold using web app difficult texts functionality](https://github.com/Tak-Man/ML-rapid-text-labeling/blob/main/web-testing/viz/time_saving_0.95.png)
  
+Details of the performance analysis can be found [here](https://github.com/Tak-Man/ML-rapid-text-labeling)
+ 
 It should be noted that in the intended real-world usage, the user would not
 have labeled data to work with, so one of the **innovations** of this app is
 an **in-app guide** of how well the user is doing. Using this, the user should be able
