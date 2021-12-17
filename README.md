@@ -23,6 +23,12 @@ user with an option to **auto-label** the rest of the corpus. The app also
 allows the user to **export a trained machine-learning classifier** (.pkl) that 
 can be used outside of the app to assign labels to similar texts.
 
+
+# Demo Video
+<video src="https://user-images.githubusercontent.com/48130648/146453588-6ce8dbb9-14d3-46e9-9dd2-abc9f4b70380.mp4" controls="controls" style="max-width: 730px;">
+</video>
+
+
 ## Prerequisites
 The web app can be used in one of 3 ways.
 
